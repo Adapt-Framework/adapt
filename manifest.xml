@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<adapt_framework>
+    <bundle>
+        <name>Adapt Framework</name>
+        <version>1.0.0</version>
+        <type>Framework</type>
+        <description></description>
+        <installed>No</installed>
+        <settings>
+            <category name="XML &amp; HTML Settings">
+                <setting>
+                    <key>xml.readable</key>
+                    <type>boolean</type>
+                    <label>Output readable XML/HTML?</label>
+                </setting>
+                <setting>
+                    <key>html.format</key>
+                    <type>list</type>
+                    <label>HTML Format</label>
+                    <allowed_values>
+                        <value>html5</value>
+                        <value>xhtml</value>
+                    </allowed_values>
+                </setting>
+                <setting>
+                    <key>html.closed_tags</key>
+                    <type>array</type>
+                    <label>Closed HTML tags</label>
+                </setting>
+            </category>
+            <category name="MySQL Settings">
+                <setting>
+                    <key>mysql.default_engine</key>
+                    <type>string</type>
+                    <label>Default storage engine</label>
+                </setting>
+                <setting>
+                    <key>mysql.default_character_set</key>
+                    <type>string</type>
+                    <label>Default character set</label>
+                </setting>
+                <setting>
+                    <key>mysql.default_collation</key>
+                    <type>string</type>
+                    <label>Default collation</label>
+                </setting>
+            </category>
+            <category name="Database connecton">
+                <setting>
+                    <key>data_source.driver</key>
+                    <type>array</type>
+                    <label>Driver</label>
+                </setting>
+                <setting>
+                    <key>data_source.host</key>
+                    <type>array</type>
+                    <label>Host</label>
+                </setting>
+                <setting>
+                    <key>data_source.schema</key>
+                    <type>array</type>
+                    <label>Host</label>
+                </setting>
+                <setting>
+                    <key>data_source.username</key>
+                    <type>array</type>
+                    <label>Username</label>
+                </setting>
+                <setting>
+                    <key>data_source.password</key>
+                    <type>array</type>
+                    <label>Password</label>
+                </setting>
+                <setting>
+                    <key>data_source.writable</key>
+                    <type>array</type>
+                    <label>Writable?</label>
+                </setting>
+            </category>
+            <category name="Applications">
+                <setting>
+                    <key>adapt.default_application</key>
+                    <label>Which application should be booted?</label>
+                    <type>string</type>
+                </setting>
+            </category>
+            <category name="URL Mapping">
+                <setting>
+                    <key>adapt.url_mapping</key>
+                    <label>Assoc array of url -> controller</label>
+                    <type>array</type>
+                </setting>
+            </category>
+            <category name="Locality settings">
+                <setting>
+                    <key>adapt.date_format</key>
+                    <label>Defaut date format</label>
+                    <type>string</type>
+                </setting>
+                <setting>
+                    <key>adapt.time_format</key>
+                    <label>Defaut time format</label>
+                    <type>string</type>
+                </setting>
+                <setting>
+                    <key>adapt.datetime_format</key>
+                    <label>Defaut date/time format</label>
+                    <type>string</type>
+                </setting>
+            </category>
+        </settings>
+    </bundle>
+</adapt_framework>
