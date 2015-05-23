@@ -304,6 +304,7 @@ namespace frameworks\adapt{
             return $this->_render($close_all_empty_tags, $add_slash_to_empty_tags, $depth);
         }
         
+        /* This function exists so that children can more easily override the default behaviour */
         public function _render($close_all_empty_tags = false, $add_slash_to_empty_tags = true, $depth = 0){
             $readable = $this->setting('xml.readable');
             $tag = $this->_tag;
