@@ -798,8 +798,10 @@ namespace frameworks\adapt{
                  * We are going to seek the
                  * base type from the schema's data_types
                  */
-                if (isset($this->schema['data_types'][$type]) && isset($this->schema['data_types'][$type]['based_on'])){
-                    return $this->convert_data_type($this->schema['data_types'][$type]['based_on']);
+                foreach($this->_data_types as $data_type){
+                    if ($data_type['name'] == $type && isset($data_type['based_on_data_type'])){
+                        return $this->convert_data_type($data_type['based_on_data_type']);
+                    }
                 }
             }
         }
