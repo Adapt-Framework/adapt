@@ -3,7 +3,7 @@
 namespace frameworks\adapt{
     
     /* Prevent direct access */
-    defined(ADAPT_STARTED) or die;
+    defined('ADAPT_STARTED') or die;
     
     class http extends base{
         
