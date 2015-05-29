@@ -61,4 +61,10 @@
         <key>adapt.datetime_format</key>
         <value>datetime</value>
     </setting>
+    <setting>
+        <key>repository.url</key>
+        <values>
+            <value>http://repo.adaptframework.com</value>
+        </values>
+    </setting>
 </adapt_framework>

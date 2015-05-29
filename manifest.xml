@@ -84,13 +84,6 @@
                     <type>string</type>
                 </setting>
             </category>
-            <category name="URL Mapping">
-                <setting>
-                    <key>adapt.url_mapping</key>
-                    <label>Assoc array of url -> controller</label>
-                    <type>array</type>
-                </setting>
-            </category>
             <category name="Locality settings">
                 <setting>
                     <key>adapt.date_format</key>
@@ -106,6 +99,23 @@
                     <key>adapt.datetime_format</key>
                     <label>Defaut date/time format</label>
                     <type>string</type>
+                </setting>
+            </category>
+            <category name="Repository settings">
+                <setting>
+                    <key>repository.url</key>
+                    <label>Repoistory URL</label>
+                    <type>array</type>
+                </setting>
+                <setting>
+                    <key>repository.username</key>
+                    <label>Repoistory Username</label>
+                    <type>array</type>
+                </setting>
+                <setting>
+                    <key>repository.password</key>
+                    <label>Repoistory Password</label>
+                    <type>array</type>
                 </setting>
             </category>
         </settings>
