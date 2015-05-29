@@ -1,0 +1,48 @@
+#!/usr/bin/php
+<?php
+
+if (is_dir($argv[1])){
+    $manifest = array();
+    process_directory($argv[1], "/", $manifest);
+    
+    $encoded = json_encode($manifest);
+    
+    $ofp = fopen($argv[2], "w");
+    if ($ofp){
+        fputs($ofp, $encoded . "\n");
+        $base = trim($argv[1], "/");
+        foreach($manifest as $file){
+            $ifp = fopen($base . "/" . $file['name'], "r");
+            if ($ifp){
+                fwrite($ofp, fread($ifp, $file['length']));
+            }
+            fclose($ifp);
+        }
+    }
+    
+    fclose($ofp);
+}
+
+function process_directory($dir, $path, &$file_list){
+    $dir = trim($dir, "/");
+    $files = scandir($dir);
+    
+    foreach($files as $file){
+        if (!preg_match("/^\./", $file)){
+            
+            if (is_dir($dir . "/" . $file)){
+                process_directory($dir . '/' . $file, $path . $file . '/', $file_list);
+            }else{
+                print "{$path}{$file}\n";
+                
+                $file_list[] = array(
+                    'name' => trim($path . $file, "/"),
+                    'length' => filesize($dir . "/" . $file)
+                );
+            }
+        }
+        
+    }
+}
+
+?>

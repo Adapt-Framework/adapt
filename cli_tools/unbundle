@@ -1,0 +1,35 @@
+#!/usr/bin/php
+<?php
+
+if (!empty($argv[1]) && file_exists($argv[1])){
+    $fp = fopen($argv[1], "r");
+    if ($fp){
+        $manifest = fgets($fp);
+        $manifest = json_decode($manifest, true);
+        
+        list($bundle_name, $extension) = explode(".", $argv[1]);
+        
+        if ($manifest && is_array($manifest) && $bundle_name){
+            mkdir($bundle_name);
+            
+            foreach($manifest as $file){
+                $path = $bundle_name . "/" . dirname($file['name']);
+                $path = trim($path, ".");
+                if (!is_dir($path)){
+                    mkdir($path);
+                }
+                print $bundle_name . "/" . $file['name'] . "\n";
+                $ofp = fopen($bundle_name . "/" . $file['name'], "w");
+                if ($ofp){
+                    fwrite($ofp, fread($fp, $file['length']));
+                    fclose($ofp);
+                }
+                
+            }
+        }
+        
+        fclose($fp);
+    }
+}
+
+?>
