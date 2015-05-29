@@ -44,6 +44,18 @@ namespace frameworks\adapt{
             return false;
         }
         
+        public function download_bundle($bundle_name){
+            //TODO: Check settings for a repository username/password or key and then auto login
+        }
+        
+        public function bundle($bundle_name){
+            //Creates a .bundle file from a bundle directory
+        }
+        
+        public function unbundle($bundle_file){
+            //Unbundles a .bundle file to the correct location
+        }
+        
         public function list_templates(){
             $templates = array();
             
