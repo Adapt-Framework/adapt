@@ -73,8 +73,7 @@ namespace frameworks\adapt{
                     }
                     $this->store('adapt.installing_bundle', '');
                     //TODO: Set the installed flag and save the manifest
-                    $this->_manifest->find('installed')->detach();
-                    $this->_manifest->find('bundle')->append(new xml_installed('Yes'));
+                    $this->_manifest->find('installed')->clear()->text('Yes');
                     $this->write_manifest();
                 }
             }

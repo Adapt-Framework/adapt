@@ -67,4 +67,16 @@
             <value>http://repo.adaptframework.com</value>
         </values>
     </setting>
+    <setting>
+        <key>repository.username</key>
+        <values>
+            <value></value>
+        </values>
+    </setting>
+    <setting>
+        <key>repository.password</key>
+        <values>
+            <value></value>
+        </values>
+    </setting>
 </adapt_framework>

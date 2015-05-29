@@ -28,7 +28,7 @@ namespace frameworks\adapt{
             $this->store('adapt.bundles', $bundles);
         }
         
-        public function get_bundle($name){
+        public function get_bundle($name, $download = true){
             $bundles = $this->get_loaded_bundles();
             
             if (is_array($bundles) && in_array($name, array_keys($bundles))){
@@ -38,6 +38,20 @@ namespace frameworks\adapt{
                 if ($bundle->is_loaded){
                     $this->cache_bundle($name, $bundle);
                     return $bundle;
+                }elseif($download == true){
+                    /*
+                     * Lets attempt to download the bundle
+                     * from the repository
+                     */
+                    if ($this->download_bundle($bundle_name)){
+                        /* This bundle should now be available */
+                        $bundle = new bundle($name);
+                        if ($bundle->is_loaded){
+                            /* Ok we sucessfully downloaded it, lets install it! */
+                            $bundle->install();
+                        }
+                    }
+                    
                 }
             }
             
@@ -45,15 +59,146 @@ namespace frameworks\adapt{
         }
         
         public function download_bundle($bundle_name){
-            //TODO: Check settings for a repository username/password or key and then auto login
+            $repos = $this->setting('repository.url');
+            $users = $this->setting('repository.username');
+            $passwords = $this->setting('repository.password');
+            
+            if (is_array($repos) && count($repos) && is_array($users) && is_array($passwords) && count($repos) == count($users) && count($users) == count($passwords)){
+                for($i = 0; $i < count($repos); $i++){
+                    $url = $repos[$i];
+                    $username = $users[$i];
+                    $password = $passwords[$i];
+                    
+                    /*
+                     * This code is to access the temp repo until the
+                     * real repo is build. Had to do it, couldn't continue
+                     * building the framework without repo support, couldn't
+                     * build the repo with out the framework :/ What can you do?
+                     */
+                    $http = new http();
+                    $response = $http->get($url . "/adapt/bundles/{$bundle_name}.bundle");
+                    if ($response['status'] == 200){
+                        /*
+                         * Ok we have a bundle so we need to write it
+                         * to the temp directory
+                         */
+                        $temp_name = TEMP_PATH . 'adapt' . md5(rand(0, 999999)) . '.bundle';
+                        $fp = fopen($temp_name, "w");
+                        if ($fp){
+                            fwrite($fp, $response['content']);
+                            fclose($fp);
+                            
+                            /* Lets unbundle the file */
+                            $output = $this->unbundle($temp_name);
+                            
+                            unlink($temp_name);
+                            
+                            return $output;
+                        }else{
+                            $this->error('Unable to write to temp directory: ' . TEMP_PATH);
+                        }
+                        break;
+                    }else{
+                        $this->error("Received {$response['status']} from the repository.");
+                    }
+                    
+                }
+            }
+            
+            return false;
         }
         
         public function bundle($bundle_name){
             //Creates a .bundle file from a bundle directory
         }
         
-        public function unbundle($bundle_file){
-            //Unbundles a .bundle file to the correct location
+        public function unbundle($bundle_file_path){
+            /*
+             * We need to extract the manifest
+             * to get the type and name.
+             */
+            $fp = fopen($bundle_file_path, "r");
+            if ($fp){
+                $raw_index = fgets($fp);
+                $bundle_index = json_decode($raw_index, true);
+                $offset = strlen($raw_index);
+                
+                if (is_array($bundle_index) && count($bundle_index)){
+                    foreach($bundle_index as $file){
+                        if ($file['name'] == 'manifest.xml'){
+                            fseek($fp, $offset);
+                            $manifest = fread($fp, $file['length']);
+                        }
+                        $offset += $file['length'];
+                    }
+                    
+                    if (xml::is_xml($manifest)){
+                        $manifest = xml::parse($manifest);
+                        $name = $manifest->find('name');
+                        $type = $manifest->find('type');
+                        $name = trim($name->get(0)->text);
+                        $type = trim($type->get(0)->text);
+                        
+                        if (in_array(strtolower($type), array('applications', 'extensions', 'frameworks', 'templates'))){
+                            /* Is this bundle already installed? */
+                            if ($this->get_bundle($name, false) === false){
+                                /*
+                                 * The bundle isn't installed so we are going
+                                 * to unbundle it
+                                 */
+                                $path = '';
+                                switch($type){
+                                case 'applications':
+                                    $path = FRAMEWORKS_PATH;
+                                    break;
+                                case 'templates':
+                                    $path = TEMPLATE_PATH;
+                                    break;
+                                case 'extensions':
+                                    $path = EXTENSION_PATH;
+                                    break;
+                                case 'frameworks':
+                                    $path = FRAMEWORK_PATH;
+                                    break;
+                                }
+                                
+                                mkdir($path . $name);
+                                $path .= $name . '/';
+                                
+                                /* Reset the bundle file point back to the start of the body */
+                                fseek($fp, strlen($raw_index));
+                                
+                                /* Lets extract the bundle */
+                                foreach($bundle_index as $file){
+                                    $file_path = $path . dirname($file['name']);
+                                    $ofp = fopen($file_path . "/" . $file['name'], "w");
+                                    
+                                    if ($ofp){
+                                        fwrite($ofp, fread($fp, $file['length']));
+                                        fclose($ofp);
+                                    }
+                                }
+                                
+                                fclose($fp);
+                                return true;
+                            }
+                        }
+                        
+                        
+                    }else{
+                        $this->error("Error unbundling {$bundle_file_path}, unable to read the manifest.");
+                    }
+                    
+                }else{
+                    $this->error("Error unbundling {$bundle_file_path}, unable to find the bundle index.");
+                }
+                
+                fclose($fp);
+            }else{
+                $this->error("Error unbundling {$bundle_file_path}, unable to read the file.");
+            }
+            
+            return false;
         }
         
         public function list_templates(){
@@ -112,14 +257,26 @@ namespace frameworks\adapt{
         }
         
         public function boot_frameworks(){
+            /*
+             * This function is no longer required
+             * as we now boot on demand
+             */
             return $this->boot_bundles('frameworks');
         }
         
         public function boot_extensions(){
+            /*
+             * This function is no longer required
+             * as we now boot on demand
+             */
             return $this->boot_bundles('extensions');
         }
         
         public function boot_templates(){
+            /*
+             * This function *may* no longer be required
+             * as we now boot on demand
+             */
             return $this->boot_bundles('templates');
         }
         

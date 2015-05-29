@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <adapt_framework>
     <bundle>
-        <name>Adapt Framework</name>
+        <label>Adapt Framework</label>
+        <name>adapt</name>
         <version>1.0.0</version>
-        <type>Framework</type>
-        <description></description>
-        <installed>No</installed>
+        <type>framework</type>
+        <namespace>/frameworks/adapt</namespace>
+        <description>Adapt framework is designed for rapid application and web deployment, built to scale it can meet the needs of the most demanding websites.</description>
+        <copyright>2015 Adapt Framework</copyright>
+        <license>MIT</license>
+        <website>http://www.adaptframework.com/documentation/frameworks/adapt</website>
         <settings>
             <category name="XML &amp; HTML Settings">
                 <setting>
@@ -81,23 +85,6 @@
                 <setting>
                     <key>adapt.default_application</key>
                     <label>Which application should be booted?</label>
-                    <type>string</type>
-                </setting>
-            </category>
-            <category name="Locality settings">
-                <setting>
-                    <key>adapt.date_format</key>
-                    <label>Defaut date format</label>
-                    <type>string</type>
-                </setting>
-                <setting>
-                    <key>adapt.time_format</key>
-                    <label>Defaut time format</label>
-                    <type>string</type>
-                </setting>
-                <setting>
-                    <key>adapt.datetime_format</key>
-                    <label>Defaut date/time format</label>
                     <type>string</type>
                 </setting>
             </category>
