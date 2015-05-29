@@ -28,8 +28,18 @@ namespace frameworks\adapt{
             return $this->_comment;
         }
         
-        public function render(){
-            $comment = "<!";
+        public function render($not_req_1 = null, $not_req_2 = null, $depth = 0){
+            /*
+             * We can ignore the first two input params because
+             * these are here only for compatibility with xml
+             */
+            $readable = $this->setting('xml.readable');
+            
+            $comment = "";
+            
+            if ($readable) for($i = 0; $i < $depth; $i++) $comment .= "  ";
+            
+            $comment .= "<!";
             if ($this->type == 0 || $this->type == 1){
                 $comment .= "-- ";
             }
@@ -39,6 +49,7 @@ namespace frameworks\adapt{
             }
             
             $comment .= ">";
+            if ($readable) $comment .= "\n";
             return $comment;
         }
     }
