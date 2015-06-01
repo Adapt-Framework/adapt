@@ -72,9 +72,10 @@ namespace frameworks\adapt{
                         require_once($this->path . "install.php");
                     }
                     $this->store('adapt.installing_bundle', '');
-                    //TODO: Set the installed flag and save the manifest
-                    $this->_manifest->find('installed')->clear()->text('Yes');
-                    $this->write_manifest();
+                    $this->_manifest->find('installed')->detach();
+                    $bundle = $this->_manifest->find('bundle')->first()->append(new xml_installed('Yes'));
+                    
+                    $this->write_manifest($this->bundle_name);
                 }
             }
         }
@@ -96,8 +97,39 @@ namespace frameworks\adapt{
         
         public function load_settings(){
             if ($this->is_loaded){
+                /* Load local settings */
                 if (file_exists($this->_path . "settings.xml")){
                     $settings_file = file_get_contents($this->_path . "settings.xml");
+                    if (xml::is_xml($settings_file)){
+                        $settings = xml::parse($settings_file);
+                        if ($settings instanceof xml){
+                            $pairs = $settings->find('setting')->get();
+                            foreach($pairs as $pair){
+                                $key = $pair->find('key')->text();
+                                $value = null;
+                                
+                                if (count($pair->find('values')->get()) == 1){
+                                    $value_tags = $pair->find('value')->get();
+                                    $value = array();
+                                    foreach($value_tags as $tag){
+                                        $value[] = $tag->get(0);
+                                    }
+                                }else{
+                                    $value = trim($pair->find('value')->get(0));
+                                    if (strtolower($value) === "true") $value = true;
+                                    if (strtolower($value) === "false") $value = false;
+                                }
+                                
+                                /* Set the setting */
+                                $this->setting($key, $value);
+                            }
+                        }
+                    }
+                }
+                
+                /* Load global settings */
+                if (file_exists(ADAPT_PATH . "settings.xml")){
+                    $settings_file = file_get_contents(ADAPT_PATH . "settings.xml");
                     if (xml::is_xml($settings_file)){
                         $settings = xml::parse($settings_file);
                         if ($settings instanceof xml){
@@ -289,15 +321,18 @@ namespace frameworks\adapt{
                 $paths = array(
                     FRAMEWORK_PATH,
                     EXTENSION_PATH,
-                    TEMPLATE_PATH
+                    TEMPLATE_PATH,
+                    APPLICATION_PATH
                 );
                 
-                if (defined('ACTIVE_APPLICATION_PATH')){
-                    $paths[] = ACTIVE_APPLICATION_PATH;
-                }
+                //if (defined('ACTIVE_APPLICATION_PATH')){
+                //    $paths[] = ACTIVE_APPLICATION_PATH;
+                //}
                 
                 foreach($paths as $path){
                     if (is_dir($path . $bundle_name)){
+                        //print $path . $bundle_name . '/manifest.xml';
+                        //exit(1);
                         $fp = fopen($path . $bundle_name . '/manifest.xml', 'w');
                         if ($fp){
                             fwrite($fp, $this->_manifest);

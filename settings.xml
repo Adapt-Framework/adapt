@@ -43,13 +43,6 @@
         </setting>
     </settings>
     <setting>
-        <key>adapt.url_mapping</key>
-        <values>
-            <key>_adapt/bundle_manager</key>
-            <value>/frameworks/adapt/controller_bundle_manager</value>
-        </values>
-    </setting>
-    <setting>
         <key>adapt.date_format</key>
         <value>date</value>
     </setting>

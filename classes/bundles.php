@@ -43,12 +43,14 @@ namespace frameworks\adapt{
                      * Lets attempt to download the bundle
                      * from the repository
                      */
-                    if ($this->download_bundle($bundle_name)){
+                    if ($this->download_bundle($name)){
                         /* This bundle should now be available */
                         $bundle = new bundle($name);
                         if ($bundle->is_loaded){
                             /* Ok we sucessfully downloaded it, lets install it! */
                             $bundle->install();
+                            $this->cache_bundle($name, $bundle);
+                            return $bundle;
                         }
                     }
                     
@@ -75,19 +77,25 @@ namespace frameworks\adapt{
                      * building the framework without repo support, couldn't
                      * build the repo with out the framework :/ What can you do?
                      */
-                    $http = new http();
-                    $response = $http->get($url . "/adapt/bundles/{$bundle_name}.bundle");
+                    //$http = new http();
+                    //$response = $http->get($url . "/adapt/bundles/{$bundle_name}.bundle");
+                    $response = array(
+                        'status' => 200,
+                        'content' => file_get_contents($url . "/adapt/bundles/{$bundle_name}.bundle")
+                    );
+                    
                     if ($response['status'] == 200){
                         /*
                          * Ok we have a bundle so we need to write it
                          * to the temp directory
                          */
                         $temp_name = TEMP_PATH . 'adapt' . md5(rand(0, 999999)) . '.bundle';
+                        //print "Writing bundle to: {$temp_name}";
                         $fp = fopen($temp_name, "w");
                         if ($fp){
                             fwrite($fp, $response['content']);
                             fclose($fp);
-                            
+                            //exit(1);
                             /* Lets unbundle the file */
                             $output = $this->unbundle($temp_name);
                             
@@ -95,6 +103,7 @@ namespace frameworks\adapt{
                             
                             return $output;
                         }else{
+                            //print "Failed to write to temp";
                             $this->error('Unable to write to temp directory: ' . TEMP_PATH);
                         }
                         break;
@@ -139,7 +148,7 @@ namespace frameworks\adapt{
                         $name = trim($name->get(0)->text);
                         $type = trim($type->get(0)->text);
                         
-                        if (in_array(strtolower($type), array('applications', 'extensions', 'frameworks', 'templates'))){
+                        if (in_array(strtolower($type), array('application', 'extension', 'framework', 'template'))){
                             /* Is this bundle already installed? */
                             if ($this->get_bundle($name, false) === false){
                                 /*
@@ -148,16 +157,16 @@ namespace frameworks\adapt{
                                  */
                                 $path = '';
                                 switch($type){
-                                case 'applications':
+                                case 'application':
                                     $path = FRAMEWORKS_PATH;
                                     break;
-                                case 'templates':
+                                case 'template':
                                     $path = TEMPLATE_PATH;
                                     break;
-                                case 'extensions':
+                                case 'extension':
                                     $path = EXTENSION_PATH;
                                     break;
-                                case 'frameworks':
+                                case 'framework':
                                     $path = FRAMEWORK_PATH;
                                     break;
                                 }
@@ -170,8 +179,16 @@ namespace frameworks\adapt{
                                 
                                 /* Lets extract the bundle */
                                 foreach($bundle_index as $file){
-                                    $file_path = $path . dirname($file['name']);
-                                    $ofp = fopen($file_path . "/" . $file['name'], "w");
+                                    $path_parts = explode('/', trim(dirname($file['name']), '/'));
+                                    $new_path = $path;
+                                    foreach($path_parts as $p){
+                                        $new_path .= "/{$p}";
+                                        if (!is_dir($new_path)){
+                                            mkdir($new_path);
+                                        }
+                                    }
+                                    
+                                    $ofp = fopen($path . $file['name'], "w");
                                     
                                     if ($ofp){
                                         fwrite($ofp, fread($fp, $file['length']));
@@ -300,7 +317,6 @@ namespace frameworks\adapt{
             }
             
             if (isset($bundle_name)){
-                
                 $bundle = $this->get_bundle($bundle_name);
                 if ($bundle instanceof bundle && $bundle->is_loaded){
                     
