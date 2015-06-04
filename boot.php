@@ -41,11 +41,21 @@ if (is_dir(FRAMEWORK_PATH . "adapt/config")){
 }
 
 /*
+ * Add handlers
+ */
+$adapt->add_handler("\\frameworks\\adapt\\xml");
+$adapt->add_handler("\\frameworks\\adapt\\html");
+$adapt->add_handler("\\frameworks\\adapt\\model");
+
+/*
  * Load settings
  */
 $bundles = new \frameworks\adapt\bundles();
-$bundle = $bundles->get_bundle('adapt');
-$bundle->load_settings();
+$bundle_adapt = $bundles->get('adapt');
+
+if ($bundle_adapt && $bundle_adapt instanceof \frameworks\adapt\bundle){
+    $bundle_adapt->apply_settings();
+}
 
 
 /*
@@ -54,17 +64,10 @@ $bundle->load_settings();
 $adapt->dom = new \frameworks\adapt\page();
 
 /*
- * Boot frameworks, extensions & templates
- */
-//$bundles->boot_frameworks();
-//$bundles->boot_extensions();
-//$bundles->boot_templates();
-
-
-/*
  * Boot the active application
  */
-$bundles->boot_application();
+$bundles->boot();
+
 
 /*
  * Are we working via the
@@ -104,7 +107,14 @@ if (isset($_SERVER['SHELL'])){
         }
     }else{
         //print "Unable to find root controller\n";
-        $adapt->dom->add(new \frameworks\adapt\html_h1('Unable to locate the root controller'));
+        $adapt->dom->add(new html_h1('Unable to locate the root controller'));
+        
+        $errors = $bundles->errors(true);
+        if (is_array($errors) && count($errors)){
+            foreach($errors as $error){
+                $adapt->dom->add(new html_p($error));
+            }
+        }
         print $adapt->dom;
     }
 }

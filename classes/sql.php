@@ -629,7 +629,7 @@ namespace frameworks\adapt{
                                             //print new html_pre(print_r($field, true));
                                             $sql->values(array_values($new_fields[$i]));
                                         }
-                                        print new html_pre($sql);
+                                        //print new html_pre($sql);
                                         $sql->execute();
                                     }
                                 }

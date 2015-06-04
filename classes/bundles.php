@@ -9,8 +9,12 @@ namespace frameworks\adapt{
     
     class bundles extends base{
         
+        protected $_settings;
+        
         public function __construct(){
             parent::__construct();
+            
+            $this->_settings = array();
             
             $bundles = $this->store('adapt.bundles');
             if (!is_array($bundles)){
@@ -18,49 +22,87 @@ namespace frameworks\adapt{
             }
         }
         
-        public function get_loaded_bundles(){
-            return $this->store('adapt.bundles');
-        }
-        
-        public function cache_bundle($key, $bundle){
-            $bundles = $this->get_loaded_bundles();
-            $bundles[$key] = $bundle;
-            $this->store('adapt.bundles', $bundles);
-        }
-        
-        public function get_bundle($name, $download = true){
-            $bundles = $this->get_loaded_bundles();
+        public function has($bundle_name){
+            $paths = array(
+                FRAMEWORK_PATH,
+                EXTENSION_PATH,
+                APPLICATION_PATH,
+                TEMPLATE_PATH
+            );
             
-            if (is_array($bundles) && in_array($name, array_keys($bundles))){
-                return $bundles[$name];
-            }else{
-                $bundle = new bundle($name);
-                if ($bundle->is_loaded){
-                    $this->cache_bundle($name, $bundle);
+            foreach($paths as $path){
+                if (in_array($bundle_name, scandir($path))){
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        public function get($bundle_name){
+            if ($this->has($bundle_name)){
+                $bundle = new bundle($bundle_name);
+                if (count($bundle->errors())){
+                    $errors = $bundle->errors(true);
+                    foreach($errors as $error){
+                        $this->error("Bundle {$bundle_name}: {$error}");
+                    }
+                }else{
                     return $bundle;
-                }elseif($download == true){
+                }
+            }else{
+                /* We couldn't find the bundle locally
+                 * so we are going to search the respository
+                 * and see if we can get us a copy.
+                 */
+                $results = $this->search_repository($bundle_name);
+                
+                if (count($results) >= 1){
                     /*
-                     * Lets attempt to download the bundle
-                     * from the repository
+                     * Lets see if it's in the results
                      */
-                    if ($this->download_bundle($name)){
-                        /* This bundle should now be available */
-                        $bundle = new bundle($name);
-                        if ($bundle->is_loaded){
-                            /* Ok we sucessfully downloaded it, lets install it! */
-                            $bundle->install();
-                            $this->cache_bundle($name, $bundle);
-                            return $bundle;
+                    foreach($results as $result){
+                        
+                        if ($result['name'] == $bundle_name){
+                            /* We've found it, so lets download it */
+                            $this->download($bundle_name);
+                            if ($this->has($bundle_name)){
+                                $bundle = new bundle($bundle_name);
+                                if (count($bundle->errors())){
+                                    $errors = $bundle->errors(true);
+                                    foreach($errors as $error){
+                                        $this->error("Bundle {$bundle_name}: {$error}");
+                                    }
+                                }else{
+                                    return $bundle;
+                                }
+                            }
                         }
                     }
                     
                 }
+                
+                $this->error("Unable to locate bundle {$bundle_name}");
             }
-            
-            return false;
         }
         
-        public function download_bundle($bundle_name){
+        public function search_repository($q){
+            /*
+             * TEMP CODE
+             * This code is here to simulate the
+             * respoitory, once the repository is
+             * built this code must be replaced
+             * with the proper code.
+             */
+            
+            return array(array(
+                'name' => $q,
+                'description' => '...',
+                'version' => '...',
+                '...' => '...'
+             ));
+        }
+        
+        public function download($bundle_name){
             $repos = $this->setting('repository.url');
             $users = $this->setting('repository.username');
             $passwords = $this->setting('repository.password');
@@ -117,10 +159,6 @@ namespace frameworks\adapt{
             return false;
         }
         
-        public function bundle($bundle_name){
-            //Creates a .bundle file from a bundle directory
-        }
-        
         public function unbundle($bundle_file_path){
             /*
              * We need to extract the manifest
@@ -134,7 +172,7 @@ namespace frameworks\adapt{
                 
                 if (is_array($bundle_index) && count($bundle_index)){
                     foreach($bundle_index as $file){
-                        if ($file['name'] == 'manifest.xml'){
+                        if ($file['name'] == 'bundle.xml'){
                             fseek($fp, $offset);
                             $manifest = fread($fp, $file['length']);
                         }
@@ -150,7 +188,7 @@ namespace frameworks\adapt{
                         
                         if (in_array(strtolower($type), array('application', 'extension', 'framework', 'template'))){
                             /* Is this bundle already installed? */
-                            if ($this->get_bundle($name, false) === false){
+                            if ($this->has($name) === false){
                                 /*
                                  * The bundle isn't installed so we are going
                                  * to unbundle it
@@ -158,7 +196,7 @@ namespace frameworks\adapt{
                                 $path = '';
                                 switch($type){
                                 case 'application':
-                                    $path = FRAMEWORKS_PATH;
+                                    $path = APPLICATION_PATH;
                                     break;
                                 case 'template':
                                     $path = TEMPLATE_PATH;
@@ -218,126 +256,185 @@ namespace frameworks\adapt{
             return false;
         }
         
-        public function list_templates(){
-            $templates = array();
+        public function bundle($bundle_path){
             
-            if ($dh = opendir(TEMPLATE_PATH)){
-                
-                while (false !== ($name = readdir($dh))){
-                    if (!in_array($name, array('.', '..')) && is_dir(TEMPLATE_PATH . $name)){
-                        $templates[] = $name;
-                    }
-                }
-                
-            }
-            
-            return $templates;
         }
         
-        public function list_bundles($directory){
-            $files = scandir($directory);
-            $files = array_remove($files, 0);
-            $files = array_remove($files, 0);
+        public function install($bundle_name){
             
-            return $files;
         }
         
-        public function boot_bundles($type){
-            $bundles = array();
-            
-            switch($type){
-            case "frameworks":
-                $bundles = $this->list_bundles(FRAMEWORK_PATH);
-                break;
-            case "extensions":
-                $bundles = $this->list_bundles(EXTENSION_PATH);
-                break;
-            case "templates":
-                $bundles = $this->list_bundles(TEMPLATE_PATH);
-                break;
-            case "applications":
-                $bundles = $this->list_bundles(APPLICATION_PATH);
-                break;
-            }
-            
-            foreach($bundles as $bundle_name){
-                $bundle = $this->get_bundle($bundle_name);
-                if ($bundle_name != 'adapt' && !is_null($bundle) && $bundle->installed == 'Yes'){
-                    if ($bundle->booted == 'No'){
-                        /* Check dependencies are booted */
-                        $bundle->boot();
-                        
-                        
-                    }
-                }
-            }
-        }
-        
-        public function boot_frameworks(){
-            /*
-             * This function is no longer required
-             * as we now boot on demand
-             */
-            return $this->boot_bundles('frameworks');
-        }
-        
-        public function boot_extensions(){
-            /*
-             * This function is no longer required
-             * as we now boot on demand
-             */
-            return $this->boot_bundles('extensions');
-        }
-        
-        public function boot_templates(){
-            /*
-             * This function *may* no longer be required
-             * as we now boot on demand
-             */
-            return $this->boot_bundles('templates');
-        }
-        
-        public function boot_application($bundle_name = null){
-            /*
-             * Boot order:
-             * 1. The bundle provided in the param
-             * 2. The bundle named in the setting
-             *    adapt.default_application
-             * 3. The first bundle in the application
-             *    folder
-             */
-            
+        public function boot($bundle_name = null){
             if (is_null($bundle_name)){
-                $bundle_name = $this->setting('adapt.default_application');
+                //Boots an application
+                if (count($this->_settings) == 0) $this->load_settings();
                 
-                if (is_null($bundle_name)){
-                    $applications = $this->list_bundles(APPLICATION_PATH);
-                    $bundle_name = array_pop($applications);
+                /* If we have a data_source lets connect it */
+                if (isset($this->_settings['datasource.driver']) && isset($this->_settings['datasource.host']) && isset($this->_settings['datasource.username'])){
+                    
+                    /* So we have found a data_source, lets connect it */
+                    $drivers = $this->_settings['datasource.driver'];
+                    $hosts = $this->_settings['datasource.host'];
+                    $usernames = $this->_settings['datasource.username'];
+                    $passwords = $this->_settings['datasource.password'];
+                    $schemas = $this->_settings['datasource.schema'];
+                    $writables = $this->_settings['datasource.writable'];
+                    
+                    if (is_array($drivers) && is_array($hosts) && is_array($schemas)
+                       && is_array($usernames) && is_array($passwords) && is_array($writables)
+                       && count($drivers) == count($hosts) && count($drivers) == count($schemas)
+                       && count($drivers) == count($usernames) && count($drivers) == count($passwords)
+                       && count($drivers) == count($writables)){
+                       
+                       for($i = 0; $i < count($drivers); $i++){
+                           if (class_exists($drivers[$i])){
+                               if (isset($this->data_source)){
+                                   /* Connect a new host */
+                                   if ($this->data_source instanceof $drivers[$i]){
+                                       $this->data_source->add($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+                                   }
+                               }else{
+                                   /* Create a new data source */
+                                   $driver = $drivers[$i];
+                                   $this->data_source = new $driver($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+                               }
+                           }
+                       }
+                       
+                    }else{
+                       $this->error('Unable to connect to the data base, the data source settings in settings.xml are not valid.');
+                    }
                 }
+                
+                /* Find the application to boot */
+                $bundle_name = null;
+                
+                if (isset($this->_settings['adapt.default_application'])){
+                    /* We have a default app */
+                    $bundle_name = $this->_settings['adapt.default_application'];
+                }else{
+                    /* We don't have a default app, so lets boot the first we find */
+                    $applications = scandir(APPLICATION_PATH);
+                    $applications = array_remove($applications, 0);
+                    $applications = array_remove($applications, 0);
+                    
+                    if (count($applications)){
+                        $bundle_name = $applications[0];
+                    }
+                }
+                
+                $this->setting('adapt.running_application', $bundle_name);
             }
             
-            if (isset($bundle_name)){
-                $bundle = $this->get_bundle($bundle_name);
-                if ($bundle instanceof bundle && $bundle->is_loaded){
+            if (!is_null($bundle_name)){
+                $bundle = $this->get($bundle_name);
+                if ($bundle && $bundle instanceof bundle && $bundle->is_loaded){
                     
-                    $this->store('adapt.running_application', $bundle_name);
-                    if ($bundle->boot()){
-                        return true;
+                    if ($bundle->booted == false){
+                        /* Before we boot this bundle we need to ensure
+                         * that all dependencies are booted first
+                         */
+                        $dependencies_resolved = true;
+                        
+                        foreach($bundle->depends_on as $dependent){
+                            if (!$this->boot($dependent)){
+                                $this->error("Unable to boot '{$bundle_name}' because it depends on '{$dependent}' which is unavailable");
+                                $dependencies_resolved = false;
+                            }
+                        }
+                        
+                        if ($dependencies_resolved){
+                            /*
+                             * This bundle has everything it needs to boot but
+                             * before we do so we need to import the bundles
+                             * settings followed by importing global settings.
+                             */
+                            $bundle->apply_settings();
+                            $this->apply_global_settings();
+                            
+                            return $bundle->boot();
+                        }
                     }
                     
-                    $this->error('Failed to boot application: ' . $bundle_name);
-                    $this->store('adapt.running_application', '');
                 }else{
-                    $this->error('Failed to load application: ' . $bundle_name);
+                    $this->error("Unable to boot application '{$bundle_name}'");
                 }
-                
             }else{
-                $this->error('No applications found');
+                $this->error('Unable to find a valid application to boot.');
             }
-            
-            return false;
         }
         
+        public function apply_global_settings(){
+            foreach($this->_settings as $name => $value){
+                if ($name && strlen($name) > 0){
+                    $this->setting($name, $value);
+                }
+            }
+        }
+        
+        public function load_settings(){
+            /*
+             * We are going to load the global
+             * settings and apply them to each bundle
+             * before booting.
+             */
+            if (count($this->_settings) == 0){
+                /* Only load them if they are not already loaded */
+                if (file_exists(ADAPT_PATH . "settings.xml")){
+                    $settings = trim(file_get_contents(ADAPT_PATH . "settings.xml"));
+                    
+                    if ($settings && strlen($settings) > 0 && xml::is_xml($settings)){
+                        
+                        $settings = xml::parse($settings);
+                        if ($settings instanceof xml){
+                            $settings = $settings->find('settings')->get(0);
+                            
+                            if ($settings instanceof xml){
+                                $children = $settings->get();
+                                foreach($children as $child){
+                                    
+                                    if ($child instanceof xml && strtolower($child->tag) == 'setting'){
+                                        $items = $child->get();
+                                        $name = null;
+                                        $value = null;
+                                        
+                                        foreach($items as $item){
+                                            if ($item instanceof xml){
+                                                $tag = strtolower($item->tag);
+                                                
+                                                switch($tag){
+                                                case "name":
+                                                    $name = $item->get(0);
+                                                    break;
+                                                case "value":
+                                                    $value = $item->get(0);
+                                                    break;
+                                                case "values":
+                                                    $value = array();
+                                                    $nodes = $item->get();
+                                                    foreach($nodes as $node){
+                                                        if ($node instanceof xml){
+                                                            if (strtolower($node->tag) == 'value'){
+                                                                $value[] = $node->get(0);
+                                                            }
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        
+                                        if (!is_null($name) && is_string($name) && strlen($name) > 0){
+                                            $this->_settings[$name] = $value;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     
 }

@@ -58,6 +58,21 @@ namespace frameworks\adapt{
                 }
             }
             
+            /* Has this property been added via extend()? */
+            $extensions = $this->store('adapt.extensions');
+    
+            if (isset($extensions) && is_array($extensions)){
+                $classes = array_keys($extensions);
+                foreach($classes as $class){
+                    if ($this instanceof $class){
+                        if (isset($extensions[$class][$k])){
+                            $args = array($this);
+                            return call_user_func_array($extensions[$class][$k], $args);
+                        }
+                    }
+                }
+            }
+            
             return null;
         }
         
@@ -72,6 +87,21 @@ namespace frameworks\adapt{
             foreach($keys as $k){
                 if (method_exists($this, $k)){
                     return $this->$k($value);
+                }
+            }
+            
+            /* Has this property been added via extend()? */
+            $extensions = $this->store('adapt.extensions');
+    
+            if (isset($extensions) && is_array($extensions)){
+                $classes = array_keys($extensions);
+                foreach($classes as $class){
+                    if ($this instanceof $class){
+                        if (isset($extensions[$class][$k])){
+                            $args = array($this, $value);
+                            return call_user_func_array($extensions[$class][$k], $args);
+                        }
+                    }
                 }
             }
             
@@ -101,9 +131,25 @@ namespace frameworks\adapt{
         }
         
         /*
+         * Class handlers
+         */
+        public function add_handler($namespace_and_class_name){
+            if (class_exists($namespace_and_class_name)){
+                $handlers = $this->store('adapt.handlers');
+                if (is_null($handlers)) $handlers = array();
+                
+                $handlers[] = $namespace_and_class_name;
+                $this->store('adapt.handlers', $handlers);
+                
+                return true;
+            }
+            
+            return false;
+        }
+        
+        /*
          * Error handling
          */
-        
         public function error($error){
             if (isset($error)){
                 $this->_errors[] = $error;
@@ -207,9 +253,9 @@ namespace frameworks\adapt{
         /*
          * Session property
          */
-        public function aget_session(){
-            return $this->store('adapt.session');
-        }
+        //public function aget_session(){
+        //    return $this->store('adapt.session');
+        //}
         
         /*
          * Notifcations
@@ -217,14 +263,14 @@ namespace frameworks\adapt{
          * - Messages
          * - Etc...
          */
-        public function aget_notifications(){
-            $notifications = $this->store('adapt.notifications');
-            if (is_null($notifications)){
-                $notifications = new \application\notifications();
-                $this->store('adapt.notifications', $notifications);
-            }
-            return $notifications;
-        }
+        //public function aget_notifications(){
+        //    $notifications = $this->store('adapt.notifications');
+        //    if (is_null($notifications)){
+        //        $notifications = new \application\notifications();
+        //        $this->store('adapt.notifications', $notifications);
+        //    }
+        //    return $notifications;
+        //}
         
         /*
          * Platform datasource property
@@ -266,8 +312,15 @@ namespace frameworks\adapt{
         /*
          * Cookie functions
          */
-        public function cookie($key, $value = null){
-            
+        public function cookie($key, $value = null, $expires = 0){
+            if (is_null($value)){
+                if (isset($_COOKIE[$key])){
+                    return $_COOKIE[$key];
+                }
+            }else{
+                /* Set a cookie */
+                setcookie($key, $value, $expires);
+            }
         }
         
         /*
