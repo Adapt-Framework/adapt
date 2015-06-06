@@ -40,6 +40,21 @@ namespace frameworks\adapt{
         
         public function get($bundle_name){
             if ($this->has($bundle_name)){
+                
+                /*
+                 * Is the bundle cached?
+                 */
+                $cached = $this->store('adapt.bundles');
+                foreach($cached as $name => $bd){
+                    if ($name == $bundle_name){
+                        return $bd;
+                    }
+                }
+                
+                /*
+                 * Lets load it
+                 */
+                
                 $bundle = new bundle($bundle_name);
                 if (count($bundle->errors())){
                     $errors = $bundle->errors(true);
@@ -47,6 +62,7 @@ namespace frameworks\adapt{
                         $this->error("Bundle {$bundle_name}: {$error}");
                     }
                 }else{
+                    $this->cache($bundle_name, $bundle);
                     return $bundle;
                 }
             }else{
@@ -83,6 +99,12 @@ namespace frameworks\adapt{
                 
                 $this->error("Unable to locate bundle {$bundle_name}");
             }
+        }
+        
+        public function cache($key, $bundle){
+            $bundles = $this->store('adapt.bundles');
+            $bundles[$key] = $bundle;
+            $this->store('adapt.bundles', $bundles);
         }
         
         public function search_repository($q){
@@ -328,6 +350,7 @@ namespace frameworks\adapt{
             
             if (!is_null($bundle_name)){
                 $bundle = $this->get($bundle_name);
+                
                 if ($bundle && $bundle instanceof bundle && $bundle->is_loaded){
                     
                     if ($bundle->booted == false){
@@ -354,6 +377,8 @@ namespace frameworks\adapt{
                             
                             return $bundle->boot();
                         }
+                    }else{
+                        return true;
                     }
                     
                 }else{

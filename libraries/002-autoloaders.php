@@ -77,8 +77,46 @@ function voodoo($class){
                 $class_loaded = true;
             }
         }
-    }else{
-        //No Namespace
+    }
+    
+    /*
+     * We haven't been able to find the class,
+     * if the class is a model it may have been
+     * declared in another bundle, so lets check.
+     */
+    if ($class_loaded == false){
+        if (substr($class_name, 0, 5) == 'model'){
+            $paths = array(
+                'frameworks',
+                'applications',
+                'extensions'
+            );
+            
+            foreach($paths as $path){
+                $bundle_list = scandir(ADAPT_PATH . $path);
+                foreach($bundle_list as $bundle){
+                    if (substr($bundle, 0, 1) != "."){
+                        $file_path = ADAPT_PATH . "{$path}/{$bundle}/models/{$class_name}.php";
+                        if (file_exists($file_path)){
+                            $namespace = "";
+                            if (count($namespaces) > 0){
+                                $namespace = implode("\\", $namespaces); 
+                            }
+                            
+                            $class_def = "class {$class_name} extends \\{$path}\\{$bundle}\\{$class_name}{}";
+                            if ($namespace != ""){
+                                $class_def = "namespace {$namespace}{{$class_def}}";
+                            }
+                            
+                            eval($class_def);
+                            $class_loaded = true;
+                        }
+                    }
+                }
+            }
+            
+        }
+        
     }
     
     /*
@@ -100,17 +138,9 @@ function voodoo($class){
                     $class_def = "\$params = array_reverse(func_get_args());";
                     $class_def .= "\$params[] = \"{$name}\";";
                     $class_def .= "\$params = array_reverse(\$params);";
-                    
-                    //$class_def .= "\$reflector = new ReflectionClass(get_class(\$this));";
-                    //$class_def .= "\$parent = \$reflector->getParentClass();";
-                    //$class_def .= "\$method = \$parent->getMethod('__construct');";
-                    //$class_def .= "\$method->invokeArgs(\$this, \$params);";
-                    
                     $class_def .= "call_user_func_array(array('parent', __FUNCTION__), \$params);";
-                    //$class_def .= "call_user_func_array(array(get_parent_class(\$this), \"__construct\"), \$params);";
                     
                     $class_def = "public function __construct(){{$class_def}}";
-                    
                     
                     $class_def = "class {$class_name} extends \\{$handler}{ {$class_def}}";
                     

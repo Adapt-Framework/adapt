@@ -229,6 +229,7 @@ namespace frameworks\adapt{
                     }
                 }
             }
+            $this->_booted = true;
             return true;
         }
         
@@ -286,6 +287,12 @@ namespace frameworks\adapt{
                             }
                             $cat_node->add($set_node);
                         }
+                    }
+                    $xml->add($node);
+                }elseif($key == 'depends_on'){
+                    $node = new xml_depends_on();
+                    foreach($value as $bundle){
+                        $node->add(new xml_bundle($bundle));
                     }
                     $xml->add($node);
                 }else{

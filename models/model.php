@@ -479,8 +479,20 @@ namespace frameworks\adapt{
                         $sql->select('*');
                         $sql->from($table_name);
                         
-                        $key = $keys[0];
-                        $where_sql = new sql_condition(new sql($key), ' = ', $this->$key);
+                        /*
+                         * Whats the relationship between the tables?
+                         */
+                        $relationship = $this->data_source->get_relationship($this->table_name, $table_name);
+                        
+                        if (is_array($relationship)){
+                            $field_key = $relationship['field1'];
+                            $where_sql = new sql_condition(new sql("{$relationship['field2']}"), ' = ', $this->$field_key);
+                        }else{
+                            $key = $keys[0];
+                            $where_sql = new sql_condition(new sql($key), ' = ', $this->$key);
+                        }
+                        
+                        
                         
                         /* Do we have a date_deleted field? */
                         $date_deleted = $this->data_source->get_field_structure($table_name, 'date_deleted');
@@ -1216,7 +1228,7 @@ namespace frameworks\adapt{
                     $this->push($data);
                 }
             }
-            
+            $this->trigger(self::EVENT_ON_PUSH, array('data' => $data));
             return;
             
             /*

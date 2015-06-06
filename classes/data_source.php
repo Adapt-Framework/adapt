@@ -210,6 +210,32 @@ namespace frameworks\adapt{
             //return $output;
         }
         
+        public function get_relationship($table1, $table2){
+            $schema = $this->_schema;
+            
+            if (is_array($schema)){
+                foreach($this->_schema as $field){
+                    if (strtolower($field['table_name']) == strtolower($table1)){
+                        if (strtolower($field['referenced_table_name']) == strtolower($table2)){
+                            return array(
+                                'field1' => $field['field_name'],
+                                'field2' => $field['referenced_field_name']
+                            );
+                        }
+                    }elseif (strtolower($field['table_name']) == strtolower($table2)){
+                        if (strtolower($field['referenced_table_name']) == strtolower($table1)){
+                            return array(
+                                'field2' => $field['field_name'],
+                                'field1' => $field['referenced_field_name']
+                            );
+                        }
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
         /*
          * Retrieve data types
          */

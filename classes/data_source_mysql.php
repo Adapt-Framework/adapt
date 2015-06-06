@@ -11,7 +11,6 @@ namespace frameworks\adapt{
          * SQL Execution
          */
         public function query($sql, $write = false){
-            //print $sql . "<br>";
             $host = $this->get_host($write);
             //print new html_pre(print_r($host, true));
             if (!is_null($host) && isset($host['handle'])){
@@ -369,19 +368,19 @@ namespace frameworks\adapt{
                     if (is_array($joins) && count($joins)){
                         foreach($joins as $join){
                             switch($join['type']){
-                            case \application\sql::LEFT_JOIN:
+                            case \frameworks\adapt\sql::LEFT_JOIN:
                                 $statement .= "LEFT JOIN ";
                                 break;
-                            case \application\sql::RIGHT_JOIN:
+                            case \frameworks\adapt\sql::RIGHT_JOIN:
                                 $statement .= "RIGHT JOIN ";
                                 break;
-                            case \application\sql::INNER_JOIN:
+                            case \frameworks\adapt\sql::INNER_JOIN:
                                 $statement .= "INNER JOIN ";
                                 break;
-                            case \application\sql::OUTER_JOIN:
+                            case \frameworks\adapt\sql::OUTER_JOIN:
                                 $statement .= "OUTER JOIN ";
                                 break;
-                            case \application\sql::JOIN:
+                            case \frameworks\adapt\sql::JOIN:
                             default:
                                 $statement .= "JOIN ";
                             }
@@ -638,10 +637,10 @@ namespace frameworks\adapt{
                     $charset = $this->setting('mysql.default_character_set');
                     $collation = $this->setting('mysql.default_collation');
                     
-                    //if (isset($engine)) $statement .= " ENGINE = {$engine}";
-                    //if (isset($charset)) $statement .= " DEFAULT CHARSET = {$charset}";
+                    if (isset($engine)) $statement .= " ENGINE = {$engine}";
+                    if (isset($charset)) $statement .= " DEFAULT CHARSET = {$charset}";
                     //if (isset($charset)) $statement .= " CHARACTER SET={$charset}";
-                    //if (isset($collation)) $statement .= " COLLATE={$collation}";
+                    if (isset($collation)) $statement .= " COLLATE={$collation}";
                     
                     $statement .= ";\n";
                     return $statement;

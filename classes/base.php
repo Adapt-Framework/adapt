@@ -60,19 +60,22 @@ namespace frameworks\adapt{
             
             /* Has this property been added via extend()? */
             $extensions = $this->store('adapt.extensions');
-    
+            
             if (isset($extensions) && is_array($extensions)){
                 $classes = array_keys($extensions);
                 foreach($classes as $class){
+                    $this_class = get_class($this);
                     if ($this instanceof $class){
-                        if (isset($extensions[$class][$k])){
-                            $args = array($this);
-                            return call_user_func_array($extensions[$class][$k], $args);
+                        foreach($keys as $k){
+                            if (isset($extensions[$class][$k])){
+                                $args = array($this);
+                                return call_user_func_array($extensions[$class][$k], $args);
+                                
+                            }
                         }
                     }
                 }
             }
-            
             return null;
         }
         
@@ -82,7 +85,7 @@ namespace frameworks\adapt{
                 "dset_{$key}", //Depricated
                 "aset_{$key}", //Depricated
                 "pset_{$key}", //Property set
-                "mget_{$key}"  //Model property set (Must return true)
+                "mset_{$key}"  //Model property set (Must return true)
             );
             foreach($keys as $k){
                 if (method_exists($this, $k)){
@@ -92,14 +95,18 @@ namespace frameworks\adapt{
             
             /* Has this property been added via extend()? */
             $extensions = $this->store('adapt.extensions');
-    
+            
             if (isset($extensions) && is_array($extensions)){
                 $classes = array_keys($extensions);
                 foreach($classes as $class){
+                    $this_class = get_class($this);
                     if ($this instanceof $class){
-                        if (isset($extensions[$class][$k])){
-                            $args = array($this, $value);
-                            return call_user_func_array($extensions[$class][$k], $args);
+                        foreach($keys as $k){
+                            if (isset($extensions[$class][$k])){
+                                $args = array($this, $value);
+                                return call_user_func_array($extensions[$class][$k], $args);
+                                
+                            }
                         }
                     }
                 }
@@ -109,6 +116,7 @@ namespace frameworks\adapt{
         }
         
         public function __call($name, $args){
+            //print new html_pre("Calling: {$name}");
             /* Check extensions */
             $extensions = $this->store('adapt.extensions');
             
@@ -319,7 +327,7 @@ namespace frameworks\adapt{
                 }
             }else{
                 /* Set a cookie */
-                setcookie($key, $value, $expires);
+                setcookie($key, $value, $expires, "/");
             }
         }
         
