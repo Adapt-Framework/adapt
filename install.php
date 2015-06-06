@@ -23,20 +23,6 @@ $sql->on('adapt.error', function($e){
 
 if ($sql && $sql instanceof \frameworks\adapt\sql){
     
-    if ($adapt->data_source instanceof data_source_mysql){
-        /*
-         * This is a hack to set the MySQL engine type
-         * because MySQL 5.6 and PHP 5.4 (mysqli)
-         * do not work correctly and setting the engine
-         * on the CREATE TABLE statement causes the
-         * statement to fail with varying errors
-         */
-        $engine = $adapt->setting('mysql.default_engine');
-        if ($engine){
-            $engine_fix = new \frameworks\adapt\sql("SET stoarge_engine={$engine};", $adapt->data_source);
-            $engine_fix->execute();
-        }
-    }
     
     /* Lets install the base classes */
     $sql->create_table('data_type')
