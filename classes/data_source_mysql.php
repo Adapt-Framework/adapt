@@ -357,7 +357,7 @@ namespace frameworks\adapt{
                                 $statement .= $value;
                             }
                             
-                            $statement .= " AS \"{$keys[0]}\"\n";
+                            $statement .= " AS {$keys[0]}\n";
                         }else{
                             $statement .= "FROM {$from[0]}\n";
                         }
@@ -392,7 +392,7 @@ namespace frameworks\adapt{
                             }
                             
                             if (!is_null($join['alias']) && $join['alias'] != ""){
-                                $statement .= " AS \"{$join['alias']}\"\n";
+                                $statement .= " AS {$join['alias']}\n";
                             }
                             
                             if ($join['condition'] instanceof \frameworks\adapt\sql){
@@ -706,7 +706,7 @@ namespace frameworks\adapt{
                 $type = mb_strtoupper($type);
                 if (count($params) == 1 && is_numeric($params[0])){
                     $type .= "({$params[0]})";
-                }elseif (count($params) == 1 && is_numeric($params[0]) && is_numeric($params[1])){
+                }elseif (count($params) == 2 && is_numeric($params[0]) && is_numeric($params[1])){
                     $type .= "({$params[0]},{$params[1]})";
                 }else{
                     //Throw error

@@ -189,7 +189,7 @@ namespace frameworks\adapt{
                 }
             }
             
-            if (!isset($output['table_name'])) $output = array();
+            //if (!isset($output['table_name'])) $output = array();
             
             return $output;
             

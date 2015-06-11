@@ -320,14 +320,14 @@ namespace frameworks\adapt{
         /*
          * Cookie functions
          */
-        public function cookie($key, $value = null, $expires = 0){
+        public function cookie($key, $value = null, $expires = 0, $path = '/'){
             if (is_null($value)){
                 if (isset($_COOKIE[$key])){
                     return $_COOKIE[$key];
                 }
             }else{
                 /* Set a cookie */
-                setcookie($key, $value, $expires, "/");
+                setcookie($key, $value, $expires, $path);
             }
         }
         

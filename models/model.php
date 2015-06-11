@@ -679,13 +679,14 @@ namespace frameworks\adapt{
             
             if ($this->is_valid){
                 $return = true;
+                $children = $this->get();
+                
                 /*
                  * We need to save any children that we
                  * depend up on
                  */
                 $fields = array_keys($this->_data);
                 $keys = $this->data_source->get_primary_keys($this->table_name);
-                $children = $this->get();
                 
                 foreach($fields as $field){
                     $references = $this->data_source->get_references($this->table_name, $field);
@@ -853,6 +854,7 @@ namespace frameworks\adapt{
                         /* Save dependent children */
                         foreach($fields as $field_name){
                             $references = $this->data_source->get_referenced_by($this->table_name, $field_name);
+                            
                             if (is_array($references) && count($references) > 0){
                                 foreach($references as $ref){
                                     foreach($children as $child){
@@ -890,6 +892,15 @@ namespace frameworks\adapt{
             return $return;
         }
         
+        
+        public function delete(){
+            if ($this->is_loaded){
+                $this->date_deleted = new sql('now()');
+                $this->save();
+                $this->initialise();
+            }
+        }
+        
         /*
          * Data export functions
          */
@@ -899,7 +910,8 @@ namespace frameworks\adapt{
             
             foreach($this->_data as $key => $value){
                 if ($value instanceof sql){
-                    if ($this->data_source->sql('null')->render() == $value->render()){
+                    $sql = new sql('null', $this->data_source);
+                    if ($sql->render() == $value->render()){
                         $hash[$key] = null;
                     }
                 }elseif(is_null($value)){
