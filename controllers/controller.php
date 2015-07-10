@@ -30,16 +30,16 @@ namespace frameworks\adapt{
             if (isset($this->_model) && is_object($this->_model) && $this->_model instanceof model){
                 if (!$this->_model->is_loaded){
                     //TODO: Test
-                    if (isset($this->request[$this->_model->tablename])){
+                    if (isset($this->request[$this->_model->table_name])){
                         /* Get the values */
-                        $values = $this->request[$this->_model->tablename];
+                        $values = $this->request[$this->_model->table_name];
                         
                         /* Get the primary keys */
-                        $keys = $this->_model->data_source->get_primary_keys($this->_model->tablename);
+                        $keys = $this->_model->data_source->get_primary_keys($this->_model->table_name);
                         $ids = array();
                         
                         foreach($keys as $key){
-                            if (isset($values[$key])){
+                            if (isset($values[$key]) && !is_null($values[$key]) && $values[$key] != ""){
                                 $ids[] = $values[$key];
                             }
                         }
@@ -159,7 +159,7 @@ namespace frameworks\adapt{
                     if (count($url_components) == 0){
                         $method = "action_{$method}";
                     }else{
-                        $method = null;
+                        $method = "view_{$method}";
                     }
                 }else{
                     $method = "view_{$method}";
@@ -171,7 +171,7 @@ namespace frameworks\adapt{
                     
                     //$this->$method();
                     if (method_exists($this, $method) || is_callable(array($this, $method))){
-                        if (!method_exists($this, $permission) || $this->$permission() == true){
+                        if (/*(!method_exists($this, $permission) && !is_callable(array($this, $permission)))*/ is_null($this->$permission()) || $this->$permission() == true){
                             $output =  $this->$method();
                             
                             if ($output instanceof controller){

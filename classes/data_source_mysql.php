@@ -496,7 +496,7 @@ namespace frameworks\adapt{
                             $statement .= $limit . "\n";
                         }
                     }
-                    $statement .= ";\n";
+                    $statement .= "\n";
                     return $statement;
                 }
                 
@@ -641,6 +641,42 @@ namespace frameworks\adapt{
                     if (isset($charset)) $statement .= " DEFAULT CHARSET = {$charset}";
                     //if (isset($charset)) $statement .= " CHARACTER SET={$charset}";
                     if (isset($collation)) $statement .= " COLLATE={$collation}";
+                    
+                    $statement .= ";\n";
+                    return $statement;
+                }
+                
+                /*
+                 * Alter table
+                 */
+                if (!is_null($sql->alter_table_name)){
+                    $statement = "ALTER TABLE {$sql->alter_table_name}\n";
+                    $fields = $sql->alter_table_fields;
+                    $first = true;
+                    
+                    foreach($fields as $field){
+                        if (!$first) $statement .= ",\n";
+                        
+                        switch($field['_type']){
+                        case "add":
+                            $statement .= "ADD " . $field['field_name'] . " " . $this->convert_data_type($field['data_type'], $field['signed']);
+                            if ($field['nullable'] === false) $statement .= " NOT NULL";
+                            if (!is_null($field['default_value'])) $statement .= " DEFAULT \"" . $this->escape($field['default_value']) . "\"";
+                            if (!is_null($field['_after'])) $statement .= " AFTER {$field['after']}";
+                            break;
+                        case "change":
+                            $statement .= "CHANGE {$field['old_field_name']}" . $field['field_name'] . " " . $this->convert_data_type($field['data_type'], $field['signed']);
+                            if ($field['nullable'] === false) $statement .= " NOT NULL";
+                            if (!is_null($field['default_value'])) $statement .= " DEFAULT \"" . $this->escape($field['default_value']) . "\"";
+                            if (!is_null($field['_after'])) $statement .= " AFTER {$field['after']}";
+                            break;
+                        case "drop":
+                            $statement .= "DROP " . $field['field_name'];
+                            break;
+                        }
+                        
+                        $first = false;
+                    }
                     
                     $statement .= ";\n";
                     return $statement;

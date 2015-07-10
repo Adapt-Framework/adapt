@@ -24,6 +24,8 @@ namespace frameworks\adapt{
             }
             
             $this->head->add(new html_meta(array('http-equiv' => 'content-type', 'content' => 'text/html;charset=utf-8')));
+            $this->head->add(new html_script(array('type' => 'text/javascript', 'src' => '/_adapt/sanitizers')));
+            $this->head->add(new html_script(array('type' => 'text/javascript', 'src' => '/adapt/frameworks/adapt/static/js/adapt.js')));
         }
         
         public function aget_head(){

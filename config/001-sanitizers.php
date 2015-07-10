@@ -42,7 +42,45 @@ namespace frameworks\adapt{
             list($year, $month, $day) = explode("-", $value);
             return \checkdate($month, $day, $year);
         },
-        "alert('Someone forgot to add the date validator in frameworks/adapt/config/002-sanitize.php');"
+        "function(value){
+            var day = 0;
+            var month = 0;
+            var year = 0;
+            var valid = false;
+            
+            if (/^[0-9]{8,8}\$/.test(value)){
+                day = parseInt(value.substring(6,8), 10);
+                month = parseInt(value.substring(4,6), 10);
+                year = parseInt(value.substring(0,4), 10);
+            }else{
+                if (/^[0-9]{6,6}\$/.test(value)){
+                    day = parseInt(value.substring(4,6), 10);
+                    month = parseInt(value.substring(2,4), 10);
+                    year = parseInt(value.substring(0,2), 10);
+                    if (year < 50){
+                        year = year + 2000;
+                    }else{
+                        year = year + 1900;
+                    }
+                }else{
+                    valid = false;
+                }
+            }
+                
+            var days = Array(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
+            if (new Date(year,1,29).getDate() == 29){
+                days[1] = 29;
+            }
+            
+            if ((month >= 1) && (month <= 12)){
+                if ((day >= 1) && (day <= days[month-1])){
+                    valid = true;
+                }
+            }
+            
+            return valid;
+        }
+        "
     );
     
     $adapt->sanitize->add_validator('time', "^([0-9]|1[0-9]|2[0-3])-([0-5][0-9])-([0-5][0-9])$");
@@ -54,7 +92,10 @@ namespace frameworks\adapt{
             list($date, $time) = explode(" ", $value);
             return $adapt->sanitize->validate('date', $date) && $adapt->sanitize->validate('time', $time) ? true : false;
         },
-        "alert('Someone forgot to add the time validator in frameworks/adapt/config/002-sanitize.php');"
+        "function(value){
+            var parts = value.split(' ');
+            return adapt.sanitize.validate('date', parts[0]) && adapt.sanitize.validate('time', parts[1]);
+        }"
     );
     
     $adapt->sanitize->add_validator(
@@ -63,7 +104,9 @@ namespace frameworks\adapt{
             $adapt = $GLOBALS['adapt'];
             return $adapt->sanitize->validate('datetime', $value);
         },
-        "alert('Someone forgot to add the time validator in frameworks/adapt/config/002-sanitize.php');"
+        "function(value){
+            return adapt.sanitize.validate('datetime', value);
+        }"
     );
     
     

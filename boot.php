@@ -18,6 +18,7 @@ if (is_dir(FRAMEWORK_PATH . "adapt/libraries")){
     }
 }
 
+
 /*
  * Create a gloabl adapt object
  * that can be accessed from
@@ -40,12 +41,14 @@ if (is_dir(FRAMEWORK_PATH . "adapt/config")){
     }
 }
 
+
 /*
  * Add handlers
  */
 $adapt->add_handler("\\frameworks\\adapt\\xml");
 $adapt->add_handler("\\frameworks\\adapt\\html");
 $adapt->add_handler("\\frameworks\\adapt\\model");
+
 
 /*
  * Load settings
@@ -56,7 +59,6 @@ $bundle_adapt = $bundles->get('adapt');
 if ($bundle_adapt && $bundle_adapt instanceof \frameworks\adapt\bundle){
     $bundle_adapt->apply_settings();
 }
-
 
 /*
  * Create the root view
@@ -83,6 +85,12 @@ if (isset($_SERVER['SHELL'])){
     
     /* Does the application have a root controller? */
     if (class_exists("\\application\\controller_root")){
+        
+         /* Add the adapt controller to the root */
+        \application\controller_root::extend('view__adapt', function($_this){
+            return $_this->load_controller("\\frameworks\\adapt\\controller_adapt");
+        });
+        
         $controller = new \application\controller_root();
         
         /* Add the controllers view to the dom */
@@ -90,15 +98,22 @@ if (isset($_SERVER['SHELL'])){
     }
     
     if (isset($controller) && $controller instanceof \frameworks\adapt\controller){
+        
+        /* Process actions */
         if (isset($adapt->request['actions'])){
             $actions = explode(",", $adapt->request['actions']);
+            
             foreach($actions as $action){
                 $controller->route($action, true);
             }
         }
         
         $output = $controller->route($adapt->request['url']);
-        header("content-type: {$controller->content_type}");
+        $content_type = $controller->content_type;
+        if ($content_type == "text/html" && $adapt->dom instanceof \frameworks\adapt\html && $adapt->dom->tag == 'html'){
+            $adapt->dom->body->add(new html_pre("Sana me"));
+        }
+        header("content-type: {$content_type}");
         
         if ($output){
             print $output;

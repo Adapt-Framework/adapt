@@ -65,6 +65,10 @@ namespace frameworks\adapt{
             return new sql(null, $this);
         }
         
+        public function sql($statement = null){
+            return new sql($statement, $this);
+        }
+        
         /*
          * Retrive number of rows
          */

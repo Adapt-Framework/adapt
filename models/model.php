@@ -200,7 +200,7 @@ namespace frameworks\adapt{
                     $this->trigger(self::EVENT_ON_ADD, array('added_item' => $data));
                     return true;
                 }else{
-                    $this->error('Unable to add item, item must be an instance of \\frameworks\\adapt');
+                    $this->error('Unable to add item, item must be an instance of \\frameworks\\adapt\\base');
                 }
             }
             
@@ -261,7 +261,7 @@ namespace frameworks\adapt{
             foreach($children as $child){
                 if ($child instanceof base){
                     /* The child may not be an instance of model but
-                     * we can still use it if its and instance of \adapt\base
+                     * we can still use it if its and instance of \frameworks\adapt\base
                      * because the error code is compatible.
                      */
                     $errors = array_merge($errors, $child->errors($clear));
@@ -930,7 +930,7 @@ namespace frameworks\adapt{
                 }
             }
             
-            $output[$this->table_name][] = $hash;
+            $output[$this->table_name] = $hash;
             
             $children = $this->get();
             foreach($children as $child){
@@ -1075,9 +1075,32 @@ namespace frameworks\adapt{
                 /* Lets process the hash */
                 $tables = array_keys($data);
                 $processed = false;
+                
                 foreach($tables as $table){
                     if ($table == $this->table_name && !$processed){
                         $records = $data[$table];
+                        $formatted_array = array();
+                        
+                        $record_keys = array_keys($records);
+                        
+                        if (is_array($records[$record_keys[0]])){
+                            for($i = 0; $i < count($records[$record_keys[0]]); $i++){
+                                $new_record = array();
+                                foreach($record_keys as $field_name){
+                                    $new_record[$field_name] = $records[$field_name][$i];
+                                }
+                                $formatted_array[] = $new_record;
+                            }
+                        }else{
+                            $new_record = array();
+                            foreach($record_keys as $field_name){
+                                $new_record[$field_name] = $records[$field_name];
+                            }
+                            $formatted_array[] = $new_record;
+                        }
+                        
+                        $records = $formatted_array;
+                        
                         for($i = 0; $i < count($records); $i++){
                             $record = $records[$i];
                             if ($this->is_loaded){
@@ -1107,7 +1130,7 @@ namespace frameworks\adapt{
                                 $primary_key_values = array();
                                 $has_keys = true;
                                 foreach($primary_keys as $key){
-                                    if (!isset($record[$key])){
+                                    if (!isset($record[$key]) || !is_null($record[$key])){
                                         $has_keys = false;
                                     }
                                     $primary_key_values[] = $record[$key];

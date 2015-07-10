@@ -291,6 +291,7 @@ namespace frameworks\adapt{
                 //Boots an application
                 if (count($this->_settings) == 0) $this->load_settings();
                 
+                
                 /* If we have a data_source lets connect it */
                 if (isset($this->_settings['datasource.driver']) && isset($this->_settings['datasource.host']) && isset($this->_settings['datasource.username'])){
                     
@@ -326,6 +327,8 @@ namespace frameworks\adapt{
                     }else{
                        $this->error('Unable to connect to the data base, the data source settings in settings.xml are not valid.');
                     }
+                    
+                    
                 }
                 
                 /* Find the application to boot */

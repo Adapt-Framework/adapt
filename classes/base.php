@@ -228,6 +228,15 @@ namespace frameworks\adapt{
             }
         }
         
+        public function remove_store($key){
+            if (!isset($GLOBALS['__adapt'])) $GLOBALS['__adapt'] = array();
+            if (!isset($GLOBALS['__adapt']['storage'])) $GLOBALS['__adapt']['storage'] = array();
+            
+            if (isset($GLOBALS['__adapt']['storage'][$key])){
+                unset($GLOBALS['__adapt']['storage'][$key]);
+            }
+        }
+        
         /*
          * Default settings
          */
@@ -243,6 +252,15 @@ namespace frameworks\adapt{
                 return null;
             }else{
                 $GLOBALS['__adapt']['settings'][$key] = $value;
+            }
+        }
+        
+        public function remove_setting($key){
+            if (!isset($GLOBALS['__adapt'])) $GLOBALS['__adapt'] = array();
+            if (!isset($GLOBALS['__adapt']['settings'])) $GLOBALS['__adapt']['settings'] = array();
+            
+            if (isset($GLOBALS['__adapt']['settings'][$key])){
+                unset($GLOBALS['__adapt']['settings'][$key]);
             }
         }
         

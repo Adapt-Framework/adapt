@@ -236,6 +236,7 @@ namespace frameworks\adapt{
         
         public function install(){
             if ($this->is_loaded){
+                
                 if (!isset($this->_descriptor['schema_installed']) || (strtolower($this->_descriptor['schema_installed']) != 'yes')){
                     $this->store('adapt.installing_bundle', $this->name);
                     

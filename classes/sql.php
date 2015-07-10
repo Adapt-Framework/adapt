@@ -71,6 +71,7 @@ namespace frameworks\adapt{
         protected $_values = array();
         protected $_update = array();
         protected $_set = array();
+        protected $_alter_table = null;
         
         protected $_functions = array();
         protected $_conditions = array();
@@ -165,6 +166,14 @@ namespace frameworks\adapt{
         }
         
         public function aget_create_table_fields(){
+            return $this->_fields;
+        }
+        
+        public function aget_alter_table_name(){
+            return $this->_alter_table;
+        }
+        
+        public function aget_alter_table_fields(){
             return $this->_fields;
         }
         
@@ -465,14 +474,16 @@ namespace frameworks\adapt{
             return $this;
         }
         
-        public function add($field_name, $data_type, $nullable = true, $default_value = null, $unique = false, $signed = true){
+        public function add($field_name, $data_type, $nullable = true, $default_value = null, $unique = false, $signed = true, $after = null){
             $this->_fields[] = array(
                 'field_name' => $field_name,
                 'data_type' => $data_type,
                 'nullable' => $nullable,
                 'default_value' => $default_value,
                 'unique' => $unique,
-                'signed' => $signed
+                'signed' => $signed,
+                '_type' => 'add',
+                '_after' => $after
             );
             return $this;
         }
@@ -502,6 +513,38 @@ namespace frameworks\adapt{
                 'on_delete' => $on_delete
             );
             
+            return $this;
+        }
+        
+        /*
+         * Alter table
+         */
+        public function alter_table($table_name){
+            $this->_is_write = true;
+            $this->_alter_table = $table_name;
+            return $this;
+        }
+        
+        public function change($old_field_name, $field_name, $data_type, $nullable = true, $default_value = null, $unique = false, $signed = true, $after = null){
+            $this->_fields[] = array(
+                'old_field_name' => $old_field_name,
+                'field_name' => $field_name,
+                'data_type' => $data_type,
+                'nullable' => $nullable,
+                'default_value' => $default_value,
+                'unique' => $unique,
+                'signed' => $signed,
+                '_type' => 'change',
+                '_after' => $after
+            );
+            return $this;
+        }
+        
+        public function drop($field_name){
+            $this->_fields[] = array(
+                'field_name' => $field_name,
+                '_type' => 'drop'
+            );
             return $this;
         }
         
@@ -639,9 +682,195 @@ namespace frameworks\adapt{
                                 $this->error('Unable to create table, unknown bundle');
                             }
                             
-                        }/*elseif(isset($this->_alter_table)){
-                            //TODO
-                        }*/else{
+                        }elseif(isset($this->_alter_table)){
+                            
+                            /******/
+                            
+                            
+                            /* We can only alter tables if we know the bundle */
+                            $bundle = $this->store('adapt.installing_bundle');
+                            
+                            if (!is_null($bundle) && $bundle != ''){
+                                
+                                /* We know the bundle, so lets write */
+                                $this->data_source->write($sql);
+                                
+                                /* Check for errors */
+                                $errors = $this->data_source->errors(true);
+                                if (is_array($errors) && count($errors) > 0){
+                                    /* The data source errored, we will take ownership */
+                                    foreach($errors as $error) $this->error($error);
+                                }else{
+                                    //if (!in_array($this->_alter_table, array('field', 'data_type'))){
+                                        
+                                        /* Lets update the schema with the new values */
+                                        $schema = $this->data_source->schema;
+                                        
+                                        foreach($this->_fields as $field){
+                                            
+                                            /* Parse the data type */
+                                            $data_type = null;
+                                            $data_type_params = null;
+                                            $matches = array();
+                                            if (preg_match_all("/^([_A-Za-z0-9]+)(\((.+)\))?$/", $field['data_type'], $matches)){
+                                                $data_type = $this->data_source->get_data_type($matches[1]);
+                                                if (isset($matches[3])){
+                                                    $data_type_params = $matches[3];
+                                                }
+                                            }
+                                            
+                                            switch($field['_type']){
+                                            case "add":
+                                                /* Lets add the field to the schema */
+                                                $new_field = array(
+                                                    'bundle_name' => $bundle,
+                                                    'table_name' => $this->_alter_table,
+                                                    'field_name' => $field['field_name'],
+                                                    //TODO: Foreign keys
+                                                    'data_type_id' => $data_type,
+                                                    //TODO: Primary keys
+                                                    'signed' => $field['signed'] ? 'Yes' : 'No',
+                                                    'nullable' => $field['nullable'] ? 'Yes' : 'No',
+                                                    //TODO: auto_increment
+                                                    'timestamp' => $data_type['name'] == 'timestamp' ? 'Yes' : 'No',
+                                                    'max_length' => !is_null($data_type_params) && !in_array(strtolower($data_type['name']), array('enum', 'set')) ? $data_type_params : null,
+                                                    'default_value' => $field['default_value'],
+                                                    'allowed_values' => in_array(strtolower($data_type['name']), array('enum', 'set')) ? "[{$data_type_params}]" : null,
+                                                    'lookup_table' => null,
+                                                    'depends_on_table_name' => null,
+                                                    'depends_on_field_name' => null,
+                                                    'depends_on_value' => null
+                                                );
+                                                
+                                                $schema[] = $new_field;
+                                                break;
+                                            case "change":
+                                                /* Lets update a field in the schema */
+                                                
+                                                foreach($schema as &$schema_field){
+                                                    if ($schema_field['table_name'] == $this->_alter_table && $schema_field['field_name'] == $field['old_field_name']){
+                                                        $schema_field['bundle_name'] = $bundle;
+                                                        $schema_field['field_name'] = $field['field_name'];
+                                                        //TODO: Foreign keys
+                                                        $schema_field['data_type_id'] = $data_type;
+                                                        //TODO: Primary keys
+                                                        $schema_field['signed'] = $field['signed'] ? 'Yes' : 'No';
+                                                        $schema_field['nullable'] = $field['nullable'] ? 'Yes' : 'No';
+                                                        $schema_field['timestamp'] = $data_type['name'] == 'timestamp' ? 'Yes' : 'No';
+                                                        $schema_field['max_length'] = !is_null($data_type_params) && !in_array(strtolower($data_type['name']), array('enum', 'set')) ? $data_type_params : null;
+                                                        $schema_field['default_value'] = $field['default_value'];
+                                                    }
+                                                }
+                                                
+                                                break;
+                                            case "drop":
+                                                /* Lets remove the field from the schema */
+                                            }
+                                        }
+                                        
+                                        
+                                        /* Creation succeed, yay! */
+                                        
+                                        /* Lets update the schema firstly */
+                                        
+                                        $schema = $this->data_source->schema;
+                                        
+                                        $new_fields = array();
+                                        //print new html_pre(print_r($this->_foreign_keys, true));
+                                        foreach($this->_fields as $field){
+                                            
+                                            /* Get any references */
+                                            $foreign_table = null;
+                                            $foreign_field = null;
+                                            
+                                            foreach($this->_foreign_keys as $key){
+                                                if ($key['field_name'] == $field['field_name']){
+                                                    $foreign_table = $key['reference_table_name'];
+                                                    $foreign_field = $key['reference_field_name'];
+                                                }
+                                            }
+                                            
+                                            /* Parse the data type */
+                                            $data_type = null;
+                                            $data_type_params = null;
+                                            $matches = array();
+                                            if (preg_match_all("/^([_A-Za-z0-9]+)(\((.+)\))?$/", $field['data_type'], $matches)){
+                                                $data_type = $this->data_source->get_data_type($matches[1]);
+                                                if (isset($matches[3])){
+                                                    $data_type_params = $matches[3];
+                                                }
+                                            }
+                                            
+                                            /* Get primary keys and auto_increment */
+                                            $primary_key = 'No';
+                                            $auto_increment = 'No';
+                                            foreach($this->_primary_keys as $key){
+                                                if ($key['field_name'] == $field['field_name']){
+                                                    $primary_key = 'Yes';
+                                                    if ($key['auto_increment'] == true) $auto_increment = 'Yes';
+                                                }
+                                            }
+                                            
+                                            
+                                            $new_fields[] = array(
+                                                'bundle_name' => $bundle,
+                                                'table_name' => $this->_create_table,
+                                                'field_name' => $field['field_name'],
+                                                'referenced_table_name' => $foreign_table,
+                                                'referenced_field_name' => $foreign_field,
+                                                'data_type_id' => $data_type['data_type_id'],
+                                                'primary_key' => $primary_key,
+                                                'signed' => $field['signed'] ? 'Yes' : 'No',
+                                                'nullable' => $field['nullable'] ? 'Yes' : 'No',
+                                                'auto_increment' => $auto_increment,
+                                                'timestamp' => $data_type['name'] == 'timestamp' ? 'Yes' : 'No',
+                                                'max_length' => !is_null($data_type_params) && !in_array(strtolower($data_type['name']), array('enum', 'set')) ? $data_type_params : null,
+                                                'default_value' => $field['default_value'],
+                                                'allowed_values' => in_array(strtolower($data_type['name']), array('enum', 'set')) ? "[{$data_type_params}]" : null,
+                                                'lookup_table' => null,
+                                                'depends_on_table_name' => null,
+                                                'depends_on_field_name' => null,
+                                                'depends_on_value' => null
+                                            );
+                                            
+                                        }
+                                        
+                                        //print new html_pre(print_r($new_fields, true));
+                                        
+                                        /* Merge the schema */
+                                        $this->data_source->schema = array_merge($schema, $new_fields);
+                                        //print new html_pre(print_r($this->data_source->schema, true));
+                                        //exit(1);
+                                        
+                                        /* Now insert the new fields into 'field' */
+                                        /* Add the date created field to the new fields */
+                                        foreach($new_fields as &$field){
+                                            $field['date_created'] = new sql('now()');
+                                        }
+                                        //print new html_pre(print_r($new_fields, true));
+                                        /* Insert the fields */
+                                        $sql = $this->data_source->sql;
+                                        $sql->insert_into('field', array_keys($new_fields[0]));
+                                        //foreach($new_fields as $field){
+                                        for($i = 0; $i < count($new_fields); $i++){
+                                            //print new html_pre(print_r($field, true));
+                                            $sql->values(array_values($new_fields[$i]));
+                                        }
+                                        //print new html_pre($sql);
+                                        $sql->execute();
+                                    //}
+                                }
+                                
+                                
+                            }else{
+                                $this->error('Unable to create table, unknown bundle');
+                            }
+                            
+                            
+                            /*******/
+                            
+                            
+                        }else{
                             /* Write to the data source */
                             $this->data_source->write($sql);
                             
