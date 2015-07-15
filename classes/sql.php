@@ -610,12 +610,14 @@ namespace frameworks\adapt{
                                             $data_type = null;
                                             $data_type_params = null;
                                             $matches = array();
-                                            if (preg_match_all("/^([_A-Za-z0-9]+)(\((.+)\))?$/", $field['data_type'], $matches)){
-                                                $data_type = $this->data_source->get_data_type($matches[1]);
-                                                if (isset($matches[3])){
-                                                    $data_type_params = $matches[3];
+                                            if (preg_match_all("/^([_A-Za-z0-9]+)(\((\d+)\))?$/", $field['data_type'], $matches)){
+                                                $data_type = $this->data_source->get_data_type($matches[1][0]);
+                                                if (isset($matches[3][0])){
+                                                    $data_type_params = $matches[3][0];
                                                 }
                                             }
+                                            
+                                            //print new html_pre("IN: " . print_r($field, true) . "\nOUT: " . print_r($data_type, true));
                                             
                                             /* Get primary keys and auto_increment */
                                             $primary_key = 'No';
@@ -672,7 +674,6 @@ namespace frameworks\adapt{
                                             //print new html_pre(print_r($field, true));
                                             $sql->values(array_values($new_fields[$i]));
                                         }
-                                        //print new html_pre($sql);
                                         $sql->execute();
                                     }
                                 }

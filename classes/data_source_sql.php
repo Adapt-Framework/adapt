@@ -229,6 +229,7 @@ namespace frameworks\adapt{
          * Data validation
          */
         public function validate($table_name, $field_name, $value){
+            //print new html_pre("IN: Validating {$table_name}.{$field_name} against '{$value}'");
             /*
              * This doesn't deal with dependencies or mandatory
              * groups.  This must be handled by the model
@@ -244,20 +245,30 @@ namespace frameworks\adapt{
                     $unformatter = $data_type['unformatter'];
                     $datetime_format = $data_type['datetime_format'];
                     $max_length = $data_type['max_length'];
+                    $nullable = strtolower($field['nullable']) == 'yes' ? true : false;
                     
-                     if (!is_null($unformatter)){
-                        $value = $this->sanitize->unformat($unformatter, $value);
-                    }
-                    
-                    if (!is_null($max_length) && is_integer($max_length) && strlen($value) > $max_length){
-                        $this->error("Maximum field size is {$max_size}");
-                        $valid = false;
-                    }
-                    
-                    if (!is_null($validator)){
-                        if (!$this->sanitize->validate($validator, $value)){
-                            $this->error("The value of '{$value}' for {$table_name}.{$field_name} is not valid");
-                            $valid = false;
+                    if (!is_object($value)){ //Prevents SQL objects from failing validation
+                        if (!is_null($value) && $value != ''){
+                            if (!is_null($unformatter)){
+                                $value = $this->sanitize->unformat($unformatter, $value);
+                            }
+                            
+                            if (!is_null($max_length) && is_integer($max_length) && strlen($value) > $max_length){
+                                $this->error("Maximum field size is {$max_size}");
+                                $valid = false;
+                            }
+                            
+                            if (!is_null($validator)){
+                                if (!$this->sanitize->validate($validator, $value)){
+                                    $this->error("The value of '{$value}' for {$table_name}.{$field_name} is not valid");
+                                    $valid = false;
+                                }
+                            }
+                        }else{
+                            if (!$nullable){
+                                $this->error("The value for {$table_name}.{$field_name} cannot be null");
+                                $valid = false;
+                            }
                         }
                     }
                     
@@ -267,6 +278,12 @@ namespace frameworks\adapt{
                 $this->error("Field {$table_name}.{$field_name} not found");
             }
             
+            //if ($valid){
+            //    print new html_pre("Validation passed");
+            //}else{
+            //    print new html_pre("Validation FAILED");
+            //    print new html_pre(print_r($this->errors(true)));
+            //}
             
             return $valid;
         }
@@ -304,8 +321,13 @@ namespace frameworks\adapt{
         }
         
         public function unformat($table_name, $field_name, $value){
+            if ($table_name == 'vacancy'){
+                //print new html_pre("IN: {$field_name} set to '{$value}'");
+            }
             $field = $this->get_field_structure($table_name, $field_name);
-            
+            if ($table_name == 'vacancy'){
+                //print new html_pre(print_r($field, true));
+            }
             if (is_array($field) && is_assoc($field)){
                 $data_type = $this->get_data_type($field['data_type_id']);
                 if (is_array($data_type)){

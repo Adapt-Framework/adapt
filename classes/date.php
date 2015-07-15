@@ -1,6 +1,6 @@
 <?php
 
-namespace adapt{
+namespace frameworks\adapt{
     
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;

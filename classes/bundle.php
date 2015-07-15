@@ -239,7 +239,7 @@ namespace frameworks\adapt{
                 
                 if (!isset($this->_descriptor['schema_installed']) || (strtolower($this->_descriptor['schema_installed']) != 'yes')){
                     $this->store('adapt.installing_bundle', $this->name);
-                    
+                    print "<pre>Installing: {$this->name}</pre>";
                     if (file_exists($this->bundle_path . "install.php")){
                         require_once($this->bundle_path . "install.php");
                     }

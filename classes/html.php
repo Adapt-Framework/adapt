@@ -171,6 +171,16 @@ namespace frameworks\adapt{
             return $item;
         }
         
+        /*
+         * Helper functions
+         */
+        public static function is_html($string){
+            $string = mb_trim($string);
+            $pattern = "/^<(.*\s*)*>$/";
+            
+            return preg_match($pattern, $string);
+        }
+        
     }
     
     

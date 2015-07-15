@@ -936,11 +936,42 @@ namespace frameworks\adapt{
             foreach($children as $child){
                 if ($child instanceof model){
                     $hash = $child->to_hash();
-                    foreach($hash as $key => $values){
-                        foreach($values as $value){
-                            $output[$key][] = $value;
+                    
+                    foreach($hash as $table_name => $fields){
+                        if (isset($output[$table_name])){
+                            foreach($fields as $key => $values){
+                                
+                                if (is_array($values)){
+                                    foreach($values as $value){
+                                        if (!is_array($output[$table_name][$key])) $output[$table_name][$key] = array($output[$table_name][$key]);
+                                        $output[$table_name][$key][] = $value;
+                                    }
+                                }else{
+                                    if (!is_array($output[$table_name][$key])) $output[$table_name][$key] = array($output[$table_name][$key]);
+                                    $output[$table_name][$key][] = $values;
+                                }
+                                
+                                
+                                //$output[$table_name][$key] = array_merge($output[$table_name][$key], $values);
+                            }
+                        }else{
+                            $output[$table_name] = $hash[$table_name];
                         }
                     }
+                    
+                    //$output = array_merge($output, $hash);
+                    //foreach($hash as $key => $value){
+                    //    
+                    //}
+                    
+                    //$output[$this->table_name][$child->table_name][] = $hash[$child->table_name];
+                    //$output[$child->table_name][] = $hash[$child->table_name];
+                    
+                    //foreach($hash as $key => $values){
+                    //    foreach($values as $value){
+                    //        $output[$key][] = $value;
+                    //    }
+                    //}
                 }
             }
             
@@ -951,6 +982,21 @@ namespace frameworks\adapt{
             $output = array();
             $hash = $this->to_hash();
             
+            foreach($hash as $table_name => $field){
+                foreach($field as $field_name => $values){
+                    if (is_array($values)){
+                        foreach($values as $value){
+                            $key = "{$table_name}[{$field_name}][]";
+                            $output[] = array('key' => $key, 'value' => $value);
+                        }
+                    }else{
+                        $key = "{$table_name}[{$field_name}]";
+                        $output[] = array('key' => $key, 'value' => $values);
+                        //$output["{$table_name}[{$field_name}]"] = $values;
+                    }
+                }
+            }
+            return $output;
             foreach($hash as $key => $values){
                 for($i = 0; $i < count($values); $i++){
                     foreach($values[$i] as $field => $value){
@@ -962,6 +1008,8 @@ namespace frameworks\adapt{
             
             return $output;
         }
+        
+        
         
         public function to_xml(){
             /* Create a new XML object */
@@ -1052,113 +1100,315 @@ namespace frameworks\adapt{
         public function push($data){
             if (is_array($data) && is_assoc($data) && count($data)){
                 /*
+                 * This should be a hash
+                 */
+                $table_names = array_keys($data);
+                $keys = $this->data_source->get_primary_keys($this->table_name);
+                
+                /* Lets fix the array so everything has multiple recrods */
+                for($i = 0; $i < count($table_names); $i++){
+                    $table_name = $table_names[$i];
+                    $fields = array_keys($data[$table_name]);
+                    if (is_array($fields)){
+                        for($j = 0; $j < count($fields); $j++){
+                            $field_name = $fields[$j];
+                            if (!is_array($data[$table_name][$field_name])){
+                                $data[$table_name][$field_name] = array($data[$table_name][$field_name]);
+                            }
+                        }
+                    }
+                }
+                
+                /* Do we have a record? */
+                if (isset($data[$this->table_name]) && is_array($data[$this->table_name])){
+                    
+                    /* How many records do we have? */
+                    $record_count = 0;
+                    $record_processed = null;
+                    $field_names = array_keys($data[$this->table_name]);
+                    $record_count = count($data[$this->table_name][$field_names[0]]);
+                    
+                    
+                    
+                    for($i = 0; $i < $record_count; $i++){
+                        if (is_null($record_processed)){
+                            if ($this->is_loaded){
+                                /* Only if the keys match */
+                                $keys_required = count($keys);
+                                foreach($keys as $key){
+                                    if ($data[$table_name][$key][$i] == $this->$key){
+                                        $keys_required--;
+                                    }
+                                }
+                                
+                                if ($keys_required == 0){
+                                    /* We can accept */
+                                    $record_processed = $i;
+                                    foreach($field_names as $field){
+                                        $this->$field = $data[$this->table_name][$field][$i];
+                                    }
+                                }
+                                
+                            }else{
+                                /* Only if there are no keys */
+                                $keys_required = count($keys);
+                                
+                                foreach($keys as $key){
+                                    if (!is_null($data[$table_name][$key][$i]) && $data[$table_name][$key][$i] != '' && $data[$table_name][$key][$i] == $this->$key){
+                                        $keys_required--;
+                                    }
+                                }
+                                
+                                
+                                if ($keys_required == count($keys)){
+                                    /* We can accept */
+                                    $record_processed = $i;
+                                    foreach($field_names as $field){
+                                        $this->$field = $data[$this->table_name][$field][$i];
+                                    }
+                                }else{
+                                    /* Load the record */
+                                    $ids = array();
+                                    foreach($keys as $key){
+                                        $ids = $data[$table_name][$key][$i];
+                                    }
+                                    
+                                    if ($this->load($ids)){
+                                        $record_processed = $i;
+                                        foreach($field_names as $field){
+                                            $this->$field = $data[$this->table_name][$field][$i];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (!is_null($record_processed)){
+                        /* We need to remove this record from the data array */
+                        $temp_array = array();
+                        foreach($field_names as $field){
+                            $temp_array[$field] = array();
+                            
+                            for($i = 0; $i < $record_count; $i++){
+                                if ($i != $record_processed){
+                                    $temp_array[$field][] = $data[$this->table_name][$field][$i];
+                                }
+                            }
+                        }
+                        
+                        $data[$this->table_name] = $temp_array;
+                    }
+                    
+                }
+                
+                /* Do we have anything for our chilren? */
+                foreach($table_names as $table_name){
+                    if ($this->table_name != $this->table_name){
+                        if (is_array($this->data_source->get_relationship($this->table_name, $table_name))){
+                            
+                            $field_names = array_keys($data[$table_name]);
+                            $record_count = count($data[$table_name][$field_names[0]]);
+                            $keys = $this->data_source->get_primary_keys($table_name);
+                            
+                            for($i = 0; $i < $record_count; $i++){
+                                
+                                $record = array($table_name => array());
+                                foreach($field_names as $field_name){
+                                    $record[$table_name][$field_name] = $data[$table_name][$field_name][$i];
+                                }
+                                
+                                $child_found = false;
+                                $children = $this->get();
+                                $record_processed  = false;
+                                
+                                foreach($children as $child){
+                                    if ($child instanceof model && $child->table_name == $table_name){
+                                        if ($child->is_loaded){
+                                            /* Only push if the keys match */
+                                            $keys_required = count($keys);
+                                            foreach($keys as $key){
+                                                if ($this->$key == $record[$table_name][$key]) $keys_required--;
+                                            }
+                                            
+                                            if ($keys_required == 0){
+                                                /* We can push */
+                                                $hash = $data;
+                                                
+                                                /* Remove all siblings from the push hash */
+                                                $hash[$table_name] = $record[$table_name];
+                                                
+                                                /* Push the data */
+                                                $child->push($hash);
+                                                
+                                                /* Mark the record as processed */
+                                                $record_processed = true;
+                                            }
+                                            
+                                            
+                                        }else{
+                                            /* Only push if there are no keys */
+                                            $keys_required = count($keys);
+                                            foreach($keys as $key){
+                                                if (isset($record[$table_name][$key]) && $record[$table_name][$key] != "") $keys_required--;
+                                            }
+                                            
+                                            if ($keys_required == count($keys)){
+                                                /* We can push */
+                                                $hash = $data;
+                                                
+                                                /* Remove all siblings from the push hash */
+                                                $hash[$table_name] = $record[$table_name];
+                                                
+                                                /* Push the data */
+                                                $child->push($hash);
+                                                
+                                                /* Mark the record as processed */
+                                                $record_processed = true;
+                                            }
+                                        }
+                                    }
+                                    
+                                    if (!$record_processed){
+                                        /* Add child */
+                                        $model_name = "model_" . $table_name;
+                                        $model = new $model_name();
+                                        
+                                        $hash = $data;
+                                                
+                                        /* Remove all siblings from the push hash */
+                                        $hash[$table_name] = $record[$table_name];
+                                        
+                                        /* Push the data */
+                                        $model->push($hash);
+                                        
+                                        /* Add the model */
+                                        $this->add($model);
+                                        
+                                        /* Mark the record as processed */
+                                        $record_processed = true;
+                                    }
+                                }
+                            }
+                            
+                        }
+                    }
+                }
+                
+                
+                
+                
+                /*****/
+                
+                
+                /*
                  * This could be a hash or a hash string,
                  * if it's a hash_string we are going to
                  * convert it to a hash first
                  */
-                $keys = array_keys($data);
-                
-                /* Is this a hash_string? */
-                if (preg_match("/^[-_a-zA-Z0-9]+\[[0-9]+\]\[[-_A-Za-z0-9]+\]$/", $keys[0])){
-                    $hash = array();
-                    
-                    foreach($keys as $key){
-                        $matches = array();
-                        if (preg_match_all("/^([-_a-zA-Z0-9]+)\[([0-9]+)\]\[([-_A-Za-z0-9]+)\]$/", $key, $matches)){
-                            $hash[$matches[1][0]][$matches[2][0]][$matches[3][0]] = $data[$key];
-                        }
-                    }
-                    
-                    $data = $hash;
-                }
-                
-                /* Lets process the hash */
-                $tables = array_keys($data);
-                $processed = false;
-                
-                foreach($tables as $table){
-                    if ($table == $this->table_name && !$processed){
-                        $records = $data[$table];
-                        $formatted_array = array();
-                        
-                        $record_keys = array_keys($records);
-                        
-                        if (is_array($records[$record_keys[0]])){
-                            for($i = 0; $i < count($records[$record_keys[0]]); $i++){
-                                $new_record = array();
-                                foreach($record_keys as $field_name){
-                                    $new_record[$field_name] = $records[$field_name][$i];
-                                }
-                                $formatted_array[] = $new_record;
-                            }
-                        }else{
-                            $new_record = array();
-                            foreach($record_keys as $field_name){
-                                $new_record[$field_name] = $records[$field_name];
-                            }
-                            $formatted_array[] = $new_record;
-                        }
-                        
-                        $records = $formatted_array;
-                        
-                        for($i = 0; $i < count($records); $i++){
-                            $record = $records[$i];
-                            if ($this->is_loaded){
-                                /* We need to make sure this record is ours */
-                                $primary_keys = $this->data_source->get_primary_keys($this->table_name);
-                                $valid = true;
-                                foreach($primary_keys as $key){
-                                    if (!isset($record[$key]) || $record[$key] != $this->$key){
-                                        $valid = false;
-                                    }
-                                }
-                                
-                                if ($valid){
-                                    /* Lets push this record */
-                                    foreach($record as $key => $value){
-                                        $this->$key = $value;
-                                    }
-                                    $processed = true;
-                                    $data[$table] = array_remove($data[$table], $i);
-                                }
-                            }else{
-                                /*
-                                 * We are not loaded so we will process the first available
-                                 * record that has no primary keys set
-                                 */
-                                $primary_keys = $this->data_source->get_primary_keys($this->table_name);
-                                $primary_key_values = array();
-                                $has_keys = true;
-                                foreach($primary_keys as $key){
-                                    if (!isset($record[$key]) || !is_null($record[$key])){
-                                        $has_keys = false;
-                                    }
-                                    $primary_key_values[] = $record[$key];
-                                }
-                                
-                                if ($has_keys){
-                                    /* We are going to load this record */
-                                    $this->load($primary_key_values);
-                                }
-                                
-                                /* Lets push the data in */
-                                foreach($record as $key => $value){
-                                    $this->$key = $value;
-                                }
-                                $processed = true;
-                                $data[$table] = array_remove($data[$table], $i);
-                            }
-                        }
-                    }
-                }
-                
-                /* Pass the data to any child objects we hold */
-                $children = $this->get();
-                foreach($children as $child){
-                    if ($child instanceof model){
-                        $child->push($data);
-                    }
-                }
+                //$keys = array_keys($data);
+                //
+                ///* Is this a hash_string? */
+                //if (preg_match("/^[-_a-zA-Z0-9]+\[[0-9]+\]\[[-_A-Za-z0-9]+\]$/", $keys[0])){
+                //    $hash = array();
+                //    
+                //    foreach($keys as $key){
+                //        $matches = array();
+                //        if (preg_match_all("/^([-_a-zA-Z0-9]+)\[([0-9]+)\]\[([-_A-Za-z0-9]+)\]$/", $key, $matches)){
+                //            $hash[$matches[1][0]][$matches[2][0]][$matches[3][0]] = $data[$key];
+                //        }
+                //    }
+                //    
+                //    $data = $hash;
+                //}
+                //
+                ///* Lets process the hash */
+                //$tables = array_keys($data);
+                //$processed = false;
+                //
+                //foreach($tables as $table){
+                //    if ($table == $this->table_name && !$processed){
+                //        $records = $data[$table];
+                //        $formatted_array = array();
+                //        
+                //        $record_keys = array_keys($records);
+                //        
+                //        if (is_array($records[$record_keys[0]])){
+                //            for($i = 0; $i < count($records[$record_keys[0]]); $i++){
+                //                $new_record = array();
+                //                foreach($record_keys as $field_name){
+                //                    $new_record[$field_name] = $records[$field_name][$i];
+                //                }
+                //                $formatted_array[] = $new_record;
+                //            }
+                //        }else{
+                //            $new_record = array();
+                //            foreach($record_keys as $field_name){
+                //                $new_record[$field_name] = $records[$field_name];
+                //            }
+                //            $formatted_array[] = $new_record;
+                //        }
+                //        
+                //        $records = $formatted_array;
+                //        
+                //        for($i = 0; $i < count($records); $i++){
+                //            $record = $records[$i];
+                //            if ($this->is_loaded){
+                //                /* We need to make sure this record is ours */
+                //                $primary_keys = $this->data_source->get_primary_keys($this->table_name);
+                //                $valid = true;
+                //                foreach($primary_keys as $key){
+                //                    if (!isset($record[$key]) || $record[$key] != $this->$key){
+                //                        $valid = false;
+                //                    }
+                //                }
+                //                
+                //                if ($valid){
+                //                    /* Lets push this record */
+                //                    foreach($record as $key => $value){
+                //                        $this->$key = $value;
+                //                    }
+                //                    $processed = true;
+                //                    $data[$table] = array_remove($data[$table], $i);
+                //                }
+                //            }else{
+                //                /*
+                //                 * We are not loaded so we will process the first available
+                //                 * record that has no primary keys set
+                //                 */
+                //                $primary_keys = $this->data_source->get_primary_keys($this->table_name);
+                //                $primary_key_values = array();
+                //                $has_keys = true;
+                //                foreach($primary_keys as $key){
+                //                    if (!isset($record[$key]) || !is_null($record[$key])){
+                //                        $has_keys = false;
+                //                    }
+                //                    $primary_key_values[] = $record[$key];
+                //                }
+                //                
+                //                if ($has_keys){
+                //                    /* We are going to load this record */
+                //                    $this->load($primary_key_values);
+                //                }
+                //                
+                //                /* Lets push the data in */
+                //                foreach($record as $key => $value){
+                //                    $this->$key = $value;
+                //                }
+                //                $processed = true;
+                //                $data[$table] = array_remove($data[$table], $i);
+                //            }
+                //        }
+                //    }
+                //}
+                //
+                ///* Pass the data to any child objects we hold */
+                //$children = $this->get();
+                //foreach($children as $child){
+                //    if ($child instanceof model){
+                //        $child->push($data);
+                //    }
+                //}
                 
             }elseif((is_object($data) && $data instanceof xml) || (is_string($data) && xml::is_xml($data))){
                 /*

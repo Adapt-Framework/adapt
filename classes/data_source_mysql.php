@@ -238,12 +238,16 @@ namespace frameworks\adapt{
                             $statement .= ")\n";
                         }
                         
+                        //print new html_pre($statement);
+                        
                         /* Are we inserting values or a select? */
                         if (is_array($sql->insert_into_values) && count($sql->insert_into_values)){
                             /* Insert the values */
                             $keys = array();
                             
                             $statement .= "VALUES\n";
+                            
+                            //print new html_pre($statement);
                             
                             if (is_array($insert_fields)){
                                 $keys = $insert_fields;
@@ -252,8 +256,12 @@ namespace frameworks\adapt{
                                 $keys = array_keys($schema);
                             }
                             
+                            //print new html_pre('Keys: ' . print_r($keys, true));
+                            
                             $rows = $sql->insert_into_values;
                             $first_row = true;
+                            
+                            //print new html_pre('Rows: ' . print_r($rows, true));
                             
                             for($j = 0; $j < count($rows); $j++){
                                 $row = $rows[$j];
@@ -286,6 +294,7 @@ namespace frameworks\adapt{
                                             /* Validate the value */
                                             if (!$this->validate($sql->insert_into_table_name, $keys[$i], $value)){
                                                 //TODO: Faild the insert
+                                                //print new html_pre("The data for {$keys[$i]} on row " . ($j + 1) . " is not valid");
                                                 $this->error("The data for {$keys[$i]} on row " . ($j + 1) . " is not valid");
                                                 return null;
                                             }
@@ -300,12 +309,14 @@ namespace frameworks\adapt{
                                     $statement .= ")";
                                 }else{
                                     //Fail the entire insert
+                                    //print new html_pre("Unable in insert data into '{$sql->insert_into_table_name}' row " . ($j + 1) . " column count is incorrect");
                                     $this->error("Unable in insert data into '{$sql->insert_into_table_name}' row " . ($j + 1) . " column count is incorrect");
                                     return null;
                                 }
                             }
-                            
+                            //print new html_pre($statement);
                             $statement .= ";\n";
+                            //print new html_pre($statement);
                             return $statement;
                         }
                     }else{
