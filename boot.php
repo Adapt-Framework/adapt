@@ -70,7 +70,6 @@ $adapt->dom = new \frameworks\adapt\page();
  */
 $bundles->boot();
 
-
 /*
  * Are we working via the
  * web or by CLI?
@@ -78,6 +77,9 @@ $bundles->boot();
 if (isset($_SERVER['SHELL'])){
     /* Command Line Interface */
     print "Adapt Framework CLI\n";
+    
+    /* Fire the ready event */
+    $adapt->trigger(\frameworks\adapt\base::EVENT_READY);
     
 }else{
     /* Web Session */
@@ -98,6 +100,8 @@ if (isset($_SERVER['SHELL'])){
     }
     
     if (isset($controller) && $controller instanceof \frameworks\adapt\controller){
+        
+        $adapt->trigger(\frameworks\adapt\base::EVENT_READY);
         
         /* Process actions */
         if (isset($adapt->request['actions'])){

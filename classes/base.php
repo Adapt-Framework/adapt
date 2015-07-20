@@ -9,6 +9,7 @@ namespace frameworks\adapt{
         
         /* Events */
         const EVENT_ERROR = 'adapt.error';
+        const EVENT_READY = 'adapt.ready';
         
         /* Private properties */
         protected $_instance_id;
@@ -253,6 +254,13 @@ namespace frameworks\adapt{
             }else{
                 $GLOBALS['__adapt']['settings'][$key] = $value;
             }
+        }
+        
+        public function get_settings(){
+            if (!isset($GLOBALS['__adapt'])) $GLOBALS['__adapt'] = array();
+            if (!isset($GLOBALS['__adapt']['settings'])) $GLOBALS['__adapt']['settings'] = array();
+            
+            return $GLOBALS['__adapt']['settings'];
         }
         
         public function remove_setting($key){

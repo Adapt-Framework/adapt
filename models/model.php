@@ -159,7 +159,7 @@ namespace frameworks\adapt{
                 if (in_array($key, $fields)){
                     
                     /* Unformat the value */
-                    $value = $this->data_source->unformat($this->_table_name, $key, $value);
+                    $value = $this->data_source->unformat($this->table_name, $key, $value);
                     
                     /* Has the value changed? */
                     if ($this->_data[$key] != $value){
@@ -186,6 +186,10 @@ namespace frameworks\adapt{
             }
             
             return $return;
+        }
+        
+        public function _get_data(){
+            return $this->_data;
         }
         
         /*

@@ -43,6 +43,8 @@ namespace frameworks\adapt{
             return \checkdate($month, $day, $year);
         },
         "function(value){
+            console.log('Validating (date): ' + value);
+            value = value.replace(/[^0-9]/g, '');
             var day = 0;
             var month = 0;
             var year = 0;
@@ -113,21 +115,31 @@ namespace frameworks\adapt{
     /*
      * Formatters
      */
-    $adapt->sanitize->add_format(
-        'date',
-        function($value){
-            $adapt = $GLOBALS['adapt'];
-            
-            /* We are going to format the data according to the setting format.date */
-            $date_format = $adapt->setting('format.date');
-            if (is_string($date_format) && $date_format != 'date'){
-                $value = $adapt->sanitize->format($date_format, $value);
-            }
-            
-            return $value;
-        },
-        "alert('TODO: date formatter')"
-    );
+    //$adapt->sanitize->add_format(
+    //    'date',
+    //    function($value){
+    //        $adapt = $GLOBALS['adapt'];
+    //        
+    //        /* We are going to format the data according to the setting locales.default_date_format */
+    //        $date_format = $adapt->setting('adapt.default_date_format');
+    //        if (is_string($date_format) && $date_format != 'Y-m-d'){
+    //            $value = $adapt->sanitize->format($date_format, $value);
+    //        }
+    //        
+    //        return $value;
+    //    },
+    //    "function(value){
+    //        value = adapt.sanitize.unformat('date', value);
+    //        console.log('IN: date.format with value: ' + value);
+    //        if (value.length == 8){
+    //            if (adapt.setting('adapt.default_date_format') != 'Y-m-d'){
+    //                value = adapt.date.convert_date('Ymd', adapt.setting('adapt.default_date_format'), value);
+    //            }
+    //        }
+    //        
+    //        return value;
+    //    }"
+    //);
     
     $adapt->sanitize->add_format(
         'time',
@@ -135,7 +147,7 @@ namespace frameworks\adapt{
             $adapt = $GLOBALS['adapt'];
             
             /* We are going to format the data according to the setting format.time */
-            $date_format = $adapt->setting('format.time');
+            $date_format = $adapt->setting('adapt.default_time_format');
             if (is_string($date_format) && $date_format != 'time'){
                 $value = $adapt->sanitize->format($date_format, $value);
             }
@@ -151,7 +163,7 @@ namespace frameworks\adapt{
             $adapt = $GLOBALS['adapt'];
             
             /* We are going to format the data according to the setting format.datetime */
-            $date_format = $adapt->setting('format.datetime');
+            $date_format = $adapt->setting('adapt.default_datetime_format');
             
             if (is_string($date_format) && $date_format != 'datetime'){
                 $value = $adapt->sanitize->format($date_format, $value);
@@ -168,7 +180,7 @@ namespace frameworks\adapt{
             $adapt = $GLOBALS['adapt'];
             
             /* We are going to format the data according to the setting format.datetime */
-            $date_format = $adapt->setting('format.datetime');
+            $date_format = $adapt->setting('adapt.default_datetime_format');
             if (is_string($date_format) && $date_format != 'datetime'){
                 $value = $adapt->sanitize->format($date_format, $value);
             }
@@ -182,21 +194,31 @@ namespace frameworks\adapt{
     /*
      * Unformatters
      */
-    $adapt->sanitize->add_unformat(
-        'date',
-        function($value){
-            $adapt = $GLOBALS['adapt'];
-            
-            /* We are going to unformat the data according to the setting format.date */
-            $date_format = $adapt->setting('format.date');
-            if (is_string($date_format) && $date_format != 'date'){
-                $value = $adapt->sanitize->unformat($date_format, $value);
-            }
-            
-            return $value;
-        },
-        "alert('TODO: date unformatter')"
-    );
+    //$adapt->sanitize->add_unformat(
+    //    'date',
+    //    function($value){
+    //        //return preg_replace("/[^0-9]/", '', $value);
+    //        $adapt = $GLOBALS['adapt'];
+    //        
+    //        /* We are going to unformat the data according to the setting format.date */
+    //        $date_format = $adapt->setting('adapt.default_date_format');
+    //        if (is_string($date_format) && $date_format != 'date'){
+    //            $value = $adapt->sanitize->unformat($date_format, $value);
+    //        }
+    //        
+    //        return $value;
+    //    }, "function(value){
+    //        value = value.replace(/[^0-9]/g, '');
+    //        if (adapt.setting('adapt.default_date_format') != 'Y-m-d'){
+    //            console.log(value);
+    //            var pattern = adapt.setting('adapt.default_date_format');
+    //            pattern = pattern.replace(/[^dDjlNSwzNFmMntLoYyaABghGHisu]/g, '');
+    //            value = adapt.date.convert_date(pattern, 'Ymd', value);
+    //            console.log(value);
+    //        }
+    //        return value;
+    //    }"
+    //);
     
     $adapt->sanitize->add_unformat(
         'time',
@@ -204,7 +226,7 @@ namespace frameworks\adapt{
             $adapt = $GLOBALS['adapt'];
             
             /* We are going to unformat the data according to the setting format.time */
-            $date_format = $adapt->setting('format.time');
+            $date_format = $adapt->setting('adapt.default_time_format');
             if (is_string($date_format) && $date_format != 'time'){
                 $value = $adapt->sanitize->unformat($date_format, $value);
             }
@@ -220,7 +242,7 @@ namespace frameworks\adapt{
             $adapt = $GLOBALS['adapt'];
             
             /* We are going to unformat the data according to the setting format.datetime */
-            $date_format = $adapt->setting('format.datetime');
+            $date_format = $adapt->setting('adapt.default_datetime_format');
             if (is_string($date_format) && $date_format != 'datetime'){
                 $value = $adapt->sanitize->unformat($date_format, $value);
             }
@@ -236,7 +258,7 @@ namespace frameworks\adapt{
             $adapt = $GLOBALS['adapt'];
             
             /* We are going to unformat the data according to the setting format.datetime */
-            $date_format = $adapt->setting('format.datetime');
+            $date_format = $adapt->setting('adapt.default_datetime_format');
             if (is_string($date_format) && $date_format != 'datetime'){
                 $value = $adapt->sanitize->unformat($date_format, $value);
             }

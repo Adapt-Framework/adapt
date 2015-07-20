@@ -568,7 +568,7 @@ namespace frameworks\adapt{
                 case "j":
                     if (preg_match("/^[0-9]{1,2}/", $value)){
                         $val = substr($value, 0, 1);
-                        $value = substr($value, 1, 1);
+                        $value = substr($value, 1);
                         
                         if ($val == "1" || $val == "2" || $val == "3"){
                             if (preg_match("/^[0-9]{1,1}/", $value)){

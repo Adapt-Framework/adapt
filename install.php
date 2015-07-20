@@ -387,8 +387,8 @@ if ($sql && $sql instanceof \frameworks\adapt\sql){
             'bundle_name' => 'adapt',
             'name' => 'date',
             'validator' => 'date',
-            'formatter' => 'date',
-            'unformatter' => 'date',
+            'formatter' => null,
+            'unformatter' => null,
             'datetime_format' => 'Y-m-d',
             'max_length' => null,
             'date_created' => null

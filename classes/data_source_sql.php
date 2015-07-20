@@ -249,9 +249,9 @@ namespace frameworks\adapt{
                     
                     if (!is_object($value)){ //Prevents SQL objects from failing validation
                         if (!is_null($value) && $value != ''){
-                            if (!is_null($unformatter)){
-                                $value = $this->sanitize->unformat($unformatter, $value);
-                            }
+                            //if (!is_null($unformatter)){
+                            //    $value = $this->sanitize->unformat($unformatter, $value);
+                            //}
                             
                             if (!is_null($max_length) && is_integer($max_length) && strlen($value) > $max_length){
                                 $this->error("Maximum field size is {$max_size}");
@@ -298,22 +298,39 @@ namespace frameworks\adapt{
                 $data_type = $this->get_data_type($field['data_type_id']);
                 if (is_array($data_type)){
                     $formatter = $data_type['formatter'];
-                    $date_format = $data_type['datetime_format'];
-                    
-                    if (!is_null($date_format)){
-                        $base = $this->get_data_type($data_type['based_on_data_type']);
-                        if (is_array($base)){
-                            $base_dateformat = $base['datetime_format'];
-                            if (!is_null($base_dateformat)){
-                                $date = new date();
-                                $date->set_date($value, $base_dateformat);
-                                $value = $date->date($date_format);
-                            }
-                        }
-                        
-                    }elseif (!is_null($formatter)){
+                    //$date_format = $data_type['datetime_format'];
+                    //
+                    //if (!is_null($date_format)){
+                    //    $base = $this->get_data_type($data_type['based_on_data_type']);
+                    //    if (is_array($base)  && $base['date_type_id'] != $data_type['data_type_id']){
+                    //        $base_dateformat = $base['datetime_format'];
+                    //        if (!is_null($base_dateformat)){
+                    //            $date = new date();
+                    //            $date->set_date($value, $base_dateformat);
+                    //            $value = $date->date($date_format);
+                    //        }
+                    //    }else{
+                    //         /* Lets format using adapt.default_xxx_format */
+                    //        $default_data_type = null;
+                    //        switch($data_type['name']){
+                    //        case 'date':
+                    //        case 'time':
+                    //        case 'datetime':
+                    //            $default_data_type = $this->setting("adapt.default_{$data_type['name']}_format");
+                    //            break;
+                    //        }
+                    //        
+                    //        if (!is_null($default_data_type)){
+                    //            $default_data_type = $this->get_data_type($default_data_type);
+                    //            $date = new date();
+                    //            $date->set_date($value, $data_type['datetime_format']);
+                    //            $value = $date->date($default_data_type['datetime_format']);
+                    //        }
+                    //    }
+                    //    
+                    //}elseif (!is_null($formatter)){
                         $value = $this->sanitize->format($formatter, $value);
-                    }
+                    //}
                 }
             }
             
@@ -321,32 +338,52 @@ namespace frameworks\adapt{
         }
         
         public function unformat($table_name, $field_name, $value){
-            if ($table_name == 'vacancy'){
-                //print new html_pre("IN: {$field_name} set to '{$value}'");
-            }
+            if (is_object($value) && $value instanceof sql) return $value;
+            //if ($table_name == 'vacancy'){
+            //    print new html_pre("data_source_sql.unformat: {$field_name} set to '{$value}'");
+            //}
             $field = $this->get_field_structure($table_name, $field_name);
-            if ($table_name == 'vacancy'){
-                //print new html_pre(print_r($field, true));
-            }
+            //if ($table_name == 'vacancy'){
+            //    print new html_pre(print_r($field, true));
+            //}
             if (is_array($field) && is_assoc($field)){
                 $data_type = $this->get_data_type($field['data_type_id']);
                 if (is_array($data_type)){
                     $unformatter = $data_type['unformatter'];
-                    $date_format = $data_type['datetime_format'];
                     
-                    if (!is_null($date_format)){
-                        $base = $this->get_data_type($data_type['based_on_data_type']);
-                        if (is_array($base)){
-                            $base_dateformat = $base['datetime_format'];
-                            if (!is_null($base_dateformat)){
-                                $date = new date();
-                                $date->set_date($value, $date_format);
-                                $value = $date->date($base_dateformat);
-                            }
-                        }
-                    }elseif (!is_null($unformatter)){
+                    
+                    //$date_format = $data_type['datetime_format'];
+                    //
+                    //if (!is_null($date_format)){
+                    //    $base = $this->get_data_type($data_type['based_on_data_type']);
+                    //    if (is_array($base) && $base['data_type_id'] != $data_type['data_type_id']){
+                    //        $base_dateformat = $base['datetime_format'];
+                    //        if (!is_null($base_dateformat)){
+                    //            $date = new date();
+                    //            $date->set_date($value, $date_format);
+                    //            $value = $date->date($base_dateformat);
+                    //        }
+                    //    }else{
+                    //        /* Lets unformat using adapt.default_xxx_format */
+                    //        $default_data_type = null;
+                    //        switch($data_type['name']){
+                    //        case 'date':
+                    //        case 'time':
+                    //        case 'datetime':
+                    //            $default_data_type = $this->setting("adapt.default_{$data_type['name']}_format");
+                    //            break;
+                    //        }
+                    //        
+                    //        if (!is_null($default_data_type)){
+                    //            $default_data_type = $this->get_data_type($default_data_type);
+                    //            $date = new date();
+                    //            $date->set_date($value, $default_data_type['datetime_format']);
+                    //            $value = $date->date($data_type['datetime_format']);
+                    //        }
+                    //    }
+                    //}elseif (!is_null($unformatter)){
                         $value = $this->sanitize->unformat($unformatter, $value);
-                    }
+                    //}
                 }
             }
             
