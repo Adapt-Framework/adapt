@@ -11,7 +11,6 @@ namespace frameworks\adapt{
          * SQL Execution
          */
         public function query($sql, $write = false){
-            //print new html_pre($sql);
             $host = $this->get_host($write);
             //print new html_pre(print_r($host, true));
             if (!is_null($host) && isset($host['handle'])){

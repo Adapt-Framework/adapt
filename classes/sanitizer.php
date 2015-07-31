@@ -29,6 +29,7 @@ namespace frameworks\adapt{
             if (isset($store) && isset($store['formatters']) && isset($store['formatters'][$key])){
                 if (is_callable($store['formatters'][$key]['php_function'])){
                     $func = $store['formatters'][$key]['php_function'];
+                    eval($func);
                     $value = $func($value);
                 }elseif(is_string($store['formatters'][$key]['pattern']) && $store['formatters'][$key]['pattern']){
                     $value = preg_replace("/{$store['formatters'][$key]['pattern']}/", "", $value);
@@ -44,6 +45,7 @@ namespace frameworks\adapt{
             if (isset($store) && isset($store['unformatters']) && isset($store['unformatters'][$key])){
                 if (is_callable($store['unformatters'][$key]['php_function'])){
                     $func = $store['unformatters'][$key]['php_function'];
+                    eval($func);
                     $value = $func($value);
                 }elseif(is_string($store['unformatters'][$key]['pattern']) && $store['unformatters'][$key]['pattern']){
                     $value = preg_replace("/{$store['unformatters'][$key]['pattern']}/", "", $value);
@@ -59,6 +61,7 @@ namespace frameworks\adapt{
             if (isset($store) && isset($store['validators']) && isset($store['validators'][$key])){
                 if (is_callable($store['validators'][$key]['php_function'])){
                     $func = $store['validators'][$key]['php_function'];
+                    eval($func);
                     return $func($value);
                 }elseif(is_string($store['validators'][$key]['pattern'])){
                     return preg_match("/{$store['validators'][$key]['pattern']}/", $value);
@@ -79,7 +82,28 @@ namespace frameworks\adapt{
             if (is_string($pattern_or_function)){
                 $formatter['pattern'] = $pattern_or_function;
             }elseif(is_callable($pattern_or_function)){
-                $formatter['php_function'] = $pattern_or_function;
+                
+                /*
+                 * TODO: If we are not caching the boot process
+                 * then revert this code back.
+                 */
+                
+                $reflection = new \ReflectionFunction($pattern_or_function);
+                $file = new \SplFileObject($reflection->getFileName());
+                $file->seek($reflection->getStartLine() - 1);
+                $end_line = $reflection->getEndLine();
+                $code = "";
+                while($file->key() < $end_line){
+                    $code .= $file->current();
+                    $file->next();
+                }
+                $starts = strpos($code, 'function');
+                $ends = strrpos($code, '}');
+                $code = substr($code, $starts, $ends - $starts + 1);
+                $code = "\$func = {$code}";
+                
+                $formatter['php_function'] = $code;
+                //$formatter['php_function'] = $pattern_or_function;
             }
             
             $formatter['js_function'] = $js_function;
@@ -99,7 +123,23 @@ namespace frameworks\adapt{
             if (is_string($format)){
                 $unformatter['pattern'] = $format;
             }elseif(is_callable($format)){
-                $unformatter['php_function'] = $format;
+                
+                $reflection = new \ReflectionFunction($format);
+                $file = new \SplFileObject($reflection->getFileName());
+                $file->seek($reflection->getStartLine() - 1);
+                $end_line = $reflection->getEndLine();
+                $code = "";
+                while($file->key() < $end_line){
+                    $code .= $file->current();
+                    $file->next();
+                }
+                $starts = strpos($code, 'function');
+                $ends = strrpos($code, '}');
+                $code = substr($code, $starts, $ends - $starts + 1);
+                $code = "\$func = {$code}";
+                
+                $unformatter['php_function'] = $code;
+                //$unformatter['php_function'] = $format;
             }
             
             $unformatter['js_function'] = $js_function;
@@ -119,7 +159,23 @@ namespace frameworks\adapt{
             if (is_string($pattern_or_function)){
                 $validator['pattern'] = $pattern_or_function;
             }elseif(is_callable($pattern_or_function)){
-                $validator['php_function'] = $pattern_or_function;
+                
+                $reflection = new \ReflectionFunction($pattern_or_function);
+                $file = new \SplFileObject($reflection->getFileName());
+                $file->seek($reflection->getStartLine() - 1);
+                $end_line = $reflection->getEndLine();
+                $code = "";
+                while($file->key() < $end_line){
+                    $code .= $file->current();
+                    $file->next();
+                }
+                $starts = strpos($code, 'function');
+                $ends = strrpos($code, '}');
+                $code = substr($code, $starts, $ends - $starts + 1);
+                $code = "\$func = {$code}";
+                
+                $validator['php_function'] = $code;
+                //$validator['php_function'] = $pattern_or_function;
             }
             
             $validator['js_function'] = $js_function;

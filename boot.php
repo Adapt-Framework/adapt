@@ -4,6 +4,8 @@
  * Prevent direct access
  */
 defined('ADAPT_STARTED') or die;
+//$time_offset = microtime(true);
+
 
 /*
  * Load libraries
@@ -18,6 +20,9 @@ if (is_dir(FRAMEWORK_PATH . "adapt/libraries")){
     }
 }
 
+//$time = microtime(true) - $time_offset;
+//print "<pre>Time to load libraries: " . $time . "</pre>";
+//$time_offset = microtime(true);
 
 /*
  * Create a gloabl adapt object
@@ -27,6 +32,9 @@ if (is_dir(FRAMEWORK_PATH . "adapt/libraries")){
 global $adapt;
 $adapt = new \frameworks\adapt\base();
 
+//$time = microtime(true) - $time_offset;
+//print "<pre>Time to initial base: " . $time . "</pre>";
+//$time_offset = microtime(true);
 
 /*
  * Load configuration
@@ -41,6 +49,9 @@ if (is_dir(FRAMEWORK_PATH . "adapt/config")){
     }
 }
 
+//$time = microtime(true) - $time_offset;
+//print "<pre>Time to load config: " . $time . "</pre>";
+//$time_offset = microtime(true);
 
 /*
  * Add handlers
@@ -49,6 +60,55 @@ $adapt->add_handler("\\frameworks\\adapt\\xml");
 $adapt->add_handler("\\frameworks\\adapt\\html");
 $adapt->add_handler("\\frameworks\\adapt\\model");
 
+//$time = microtime(true) - $time_offset;
+//print "<pre>Time to add handlers: " . $time . "</pre>";
+//$time_offset = microtime(true);
+
+/* Set the file path if it's not set */
+$path = $adapt->setting('adapt.file_store_path');
+
+if (is_null($path)){
+    $path = FRAMEWORK_PATH . 'adapt/store/';
+    $adapt->setting('adapt.file_store_path', $path);
+}
+
+/* Set the file store */
+$adapt->file_store = new \frameworks\adapt\storage_file_system();
+
+/* Set the cache */
+$adapt->cache = new \frameworks\adapt\cache();
+
+//$time = microtime(true) - $time_offset;
+//print "<pre>Time to initialise file_system &amp; cache: " . $time . "</pre>";
+//$time_offset = microtime(true);
+
+/*
+ * Can we find a pre-booted system in the cache?
+ */
+//$_cache_global_adapt = $adapt->cache->get('adapt.global_adapt');
+//$_cache_page = $adapt->cache->get('adapt.page');
+
+//if (is_array($_cache_global_adapt) && !is_null($_cache_page)){
+//    print "<pre>Found pre-booted system in cache</pre>";
+//}
+
+
+/*
+ * Is the current page cached?
+ */
+if (!isset($adapt->request['actions'])){
+    $key = $_SERVER['REQUEST_URI'];
+    $page = $adapt->cache->get($key);
+    if ($page){
+        $content_type = $adapt->cache->get_content_type($key);
+        
+        if ($content_type){
+            header("content-type: {$content_type}");
+            print $page;
+            exit(0);
+        }
+    }
+}
 
 /*
  * Load settings
@@ -60,16 +120,34 @@ if ($bundle_adapt && $bundle_adapt instanceof \frameworks\adapt\bundle){
     $bundle_adapt->apply_settings();
 }
 
+//$time = microtime(true) - $time_offset;
+//print "<pre>Time to load settings: " . $time . "</pre>";
+//$time_offset = microtime(true);
+
 /*
  * Create the root view
  */
 $adapt->dom = new \frameworks\adapt\page();
+
+//$time = microtime(true) - $time_offset;
+//print "<pre>Time to load the dom: " . $time . "</pre>";
+//$time_offset = microtime(true);
 
 /*
  * Boot the active application
  */
 $bundles->boot();
 
+/*
+ * Cache the system
+ */
+//$adapt->cache->serialize('adapt.global_adapt', $GLOBALS['__adapt']);
+//$adapt->cache->serialize('adapt.dom', $adapt->dom);
+
+
+//$time = microtime(true) - $time_offset;
+//print "<pre>Time to boot: " . $time . "</pre>";
+//$time_offset = microtime(true);
 /*
  * Are we working via the
  * web or by CLI?
@@ -114,14 +192,21 @@ if (isset($_SERVER['SHELL'])){
         
         $output = $controller->route($adapt->request['url']);
         $content_type = $controller->content_type;
-        if ($content_type == "text/html" && $adapt->dom instanceof \frameworks\adapt\html && $adapt->dom->tag == 'html'){
+        /*if ($content_type == "text/html" && $adapt->dom instanceof \frameworks\adapt\html && $adapt->dom->tag == 'html'){
             $adapt->dom->body->add(new html_pre("Sana me"));
-        }
+        }*/
         header("content-type: {$content_type}");
         
         if ($output){
             print $output;
         }else{
+            if ($adapt->dom instanceof \frameworks\adapt\page && $adapt->dom->cache_time > 0){
+                if (!isset($this->request['actions'])){
+                    /* We can cache the page */
+                    $key = $_SERVER['REQUEST_URI'];
+                    $adapt->cache->page($key, $output, $adapt->dom->cache_time, $content_type);
+                }
+            }
             print $adapt->dom;
         }
     }else{

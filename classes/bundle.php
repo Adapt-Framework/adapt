@@ -63,121 +63,136 @@ namespace frameworks\adapt{
         public function load($bundle_name){
             $this->_descriptor = array();
             
-            $paths = array(
-                FRAMEWORK_PATH,
-                EXTENSION_PATH,
-                APPLICATION_PATH,
-                TEMPLATE_PATH
-            );
+            $cached_descriptor = $this->cache->get('descriptor.bundle.' . $bundle_name);
+            $cached_path = $this->cache->get('path.bundle.' . $bundle_name);
+            if ($cached_descriptor && is_array($cached_descriptor) && is_string($cached_path)){
+                //print "<pre>" . print_r($cached_descriptor, true) . "</pre>";
+                $this->_descriptor = $cached_descriptor;
+                $this->_path = $cached_path;
+                return true;
             
-            foreach($paths as $path){
-                if (in_array($bundle_name, scandir($path))){
-                    if (file_exists($path . $bundle_name . "/bundle.xml")){
-                        /* Read the descriptor */
-                        $descriptor = file_get_contents($path . $bundle_name . "/bundle.xml");
-                        if (xml::is_xml($descriptor)){
-                            $this->_path = $path . $bundle_name . "/";
-                            
-                            $descriptor = xml::parse($descriptor);
-                            
-                            if ($descriptor instanceof xml){
-                                /* Process descriptor */
-                                $items = $descriptor->find('bundle')->get(0);
+            }else{
+                $paths = array(
+                    FRAMEWORK_PATH,
+                    EXTENSION_PATH,
+                    APPLICATION_PATH,
+                    TEMPLATE_PATH
+                );
+                
+                foreach($paths as $path){
+                    if (in_array($bundle_name, scandir($path))){
+                        if (file_exists($path . $bundle_name . "/bundle.xml")){
+                            /* Read the descriptor */
+                            $descriptor = file_get_contents($path . $bundle_name . "/bundle.xml");
+                            if (xml::is_xml($descriptor)){
+                                $this->_path = $path . $bundle_name . "/";
                                 
-                                for($i = 0; $i < $items->count(); $i++){
-                                    $child = $items->get($i);
+                                $descriptor = xml::parse($descriptor);
+                                
+                                if ($descriptor instanceof xml){
+                                    /* Process descriptor */
+                                    $items = $descriptor->find('bundle')->get(0);
                                     
-                                    if ($child instanceof xml){
-                                        $tag = strtolower($child->tag);
+                                    for($i = 0; $i < $items->count(); $i++){
+                                        $child = $items->get($i);
                                         
-                                        switch($tag){
-                                        case "label":
-                                        case "name":
-                                        case "version":
-                                        case "type":
-                                        case "namespace":
-                                        case "description":
-                                        case "copyright":
-                                        case "license":
-                                        case "schema_installed":
-                                            $this->_descriptor[$tag] = $child->get(0);
-                                            break;
-                                        case "settings":
-                                            $this->_descriptor[$tag] = array();
-                                            $categories = $child->get();
-                                            foreach($categories as $category){
-                                                if ($category instanceof xml){
-                                                    $name = $category->attr('name');
-                                                    
-                                                    $settings = array();
-                                                    
-                                                    if ($name && strlen($name) > 0){
+                                        if ($child instanceof xml){
+                                            $tag = strtolower($child->tag);
+                                            
+                                            switch($tag){
+                                            case "label":
+                                            case "name":
+                                            case "version":
+                                            case "type":
+                                            case "namespace":
+                                            case "description":
+                                            case "copyright":
+                                            case "license":
+                                            case "schema_installed":
+                                                $this->_descriptor[$tag] = $child->get(0);
+                                                break;
+                                            case "settings":
+                                                $this->_descriptor[$tag] = array();
+                                                $categories = $child->get();
+                                                foreach($categories as $category){
+                                                    if ($category instanceof xml){
+                                                        $name = $category->attr('name');
                                                         
-                                                        $sets = $category->get();
-                                                        foreach($sets as $set){
-                                                            if ($set instanceof xml){
-                                                                $parts = $set->get();
-                                                                
-                                                                $setting = array();
-                                                                
-                                                                foreach($parts as $part){
-                                                                    if ($part instanceof xml){
-                                                                        $set_tag = strtolower($part->tag);
-                                                                        
-                                                                        
-                                                                        switch ($set_tag){
-                                                                        case "name":
-                                                                        case "label":
-                                                                        case "default_value":
-                                                                            $setting[$set_tag] = $part->get(0);
-                                                                            break;
-                                                                        case "default_values":
-                                                                        case "allowed_values":
-                                                                            $va = array();
-                                                                            $values = $part->get();
-                                                                            foreach($values as $value){
-                                                                                if ($value instanceof xml && $value->tag == 'value'){
-                                                                                    $va[] = $value->get(0);
+                                                        $settings = array();
+                                                        
+                                                        if ($name && strlen($name) > 0){
+                                                            
+                                                            $sets = $category->get();
+                                                            foreach($sets as $set){
+                                                                if ($set instanceof xml){
+                                                                    $parts = $set->get();
+                                                                    
+                                                                    $setting = array();
+                                                                    
+                                                                    foreach($parts as $part){
+                                                                        if ($part instanceof xml){
+                                                                            $set_tag = strtolower($part->tag);
+                                                                            
+                                                                            
+                                                                            switch ($set_tag){
+                                                                            case "name":
+                                                                            case "label":
+                                                                            case "default_value":
+                                                                                $setting[$set_tag] = $part->get(0);
+                                                                                break;
+                                                                            case "default_values":
+                                                                            case "allowed_values":
+                                                                                $va = array();
+                                                                                $values = $part->get();
+                                                                                foreach($values as $value){
+                                                                                    if ($value instanceof xml && $value->tag == 'value'){
+                                                                                        $va[] = $value->get(0);
+                                                                                    }
                                                                                 }
+                                                                                $setting[$set_tag] = $va;
+                                                                                break;
                                                                             }
-                                                                            $setting[$set_tag] = $va;
-                                                                            break;
                                                                         }
                                                                     }
+                                                                    
+                                                                    $settings[] = $setting;
                                                                 }
-                                                                
-                                                                $settings[] = $setting;
                                                             }
+                                                            
+                                                            $this->_descriptor[$tag][$name] = $settings;
                                                         }
-                                                        
-                                                        $this->_descriptor[$tag][$name] = $settings;
                                                     }
                                                 }
-                                            }
-                                            break;
-                                        
-                                        case "depends_on":
-                                            $this->_descriptor[$tag] = array();
-                                            $nodes = $child->get();
-                                            foreach($nodes as $node){
-                                                if ($node instanceof xml && strtolower($node->tag) == 'bundle'){
-                                                    $this->_descriptor[$tag][] = $node->get(0);
+                                                break;
+                                            
+                                            case "depends_on":
+                                                $this->_descriptor[$tag] = array();
+                                                $nodes = $child->get();
+                                                foreach($nodes as $node){
+                                                    if ($node instanceof xml && strtolower($node->tag) == 'bundle'){
+                                                        $this->_descriptor[$tag][] = $node->get(0);
+                                                    }
                                                 }
+                                                break;
                                             }
-                                            break;
                                         }
                                     }
+                                    
+                                    /* Cache the descriptor */
+                                    $this->cache->serialize('descriptor.bundle.' . $bundle_name, $this->_descriptor, 600);
+                                    $this->cache->set('path.bundle.' . $bundle_name, $this->_path, 600, 'text/plain');
+                                    
+                                    return true;
                                 }
-                                return true;
-                            }
-                        }                        
+                            }                        
+                        }
                     }
                 }
+                
+                /* Load failed :/ */
+                $this->error("Failed to locate the bundle descriptor file (bundle.xml) for bundle '{$bundle_name}'.");
+                return false;
             }
-            
-            /* Load failed :/ */
-            $this->error("Failed to locate the bundle descriptor file (bundle.xml) for bundle '{$bundle_name}'.");
-            return false;
         }
         
         public function apply_settings(){
@@ -254,6 +269,11 @@ namespace frameworks\adapt{
         }
         
         public function save(){
+            
+            /* Clear the cached descriptor */
+            $this->cache->delete('descriptor.bundle.' . $this->name);
+            $this->cache->delete('path.bundle.' . $this->name);
+            
             $xml = new xml_bundle();
             foreach($this->_descriptor as $key => $value){
                 if ($key == 'settings'){

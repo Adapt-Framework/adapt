@@ -306,7 +306,7 @@ namespace frameworks\adapt{
         
         /* This function exists so that children can more easily override the default behaviour */
         public function _render($close_all_empty_tags = false, $add_slash_to_empty_tags = true, $depth = 0){
-            $readable = $this->setting('xml.readable');
+            $readable = strtolower($this->setting('xml.readable')) == 'yes' ? true : false;
             $tag = $this->_tag;
             
             if (mb_trim($tag) == "" || is_null($tag)) return "";

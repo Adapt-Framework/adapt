@@ -51,6 +51,10 @@ namespace frameworks\adapt{
             
             $output .= "var _adapt_unformatters = " . json_encode($unformatters) . ";\n";
             
+            if (!isset($this->request['actions'])){
+                $this->cache->javascript($_SERVER['REQUEST_URI'], $output);
+            }
+            
             return $output;
         }
         

@@ -318,6 +318,47 @@ namespace frameworks\adapt{
         }
         
         /*
+         * Platform file storage property
+         */
+        public function aget_file_store(){
+            return $this->store('adapt.file_store');
+        }
+        
+        public function aset_file_store($store){
+            $this->store('adapt.file_store', $store);
+        }
+        
+        /*
+         * Get the cache object
+         */
+        public function aget_cache(){
+            return $this->store('adapt.cache');
+        }
+        
+        public function aset_cache($cache){
+            $this->store('adapt.cache', $cache);
+        }
+        
+        
+        
+        /*
+         * Page redirection
+         */
+        public function redirect($url, $pass_on_response = true){
+            if ($pass_on_response){
+                $response = $this->store('adapt.response');
+                if (is_array($response)){
+                    $response['request'] = $this->request;
+                    $url = $url . '?adapt.response=' . urlencode(json_encode($response));
+                }
+            }
+            
+            header("location: {$url}");
+            
+            exit(0);
+        }
+        
+        /*
          * Request property
          */
         public function aget_request(){
@@ -328,6 +369,51 @@ namespace frameworks\adapt{
             }
             
             return $request;
+        }
+        
+        public function request($key, $value = null){
+            $request = $this->store('adapt.request');
+            if (is_null($request)){
+                $request = &$_REQUEST;
+                $this->store('adapt.request', $request);
+            }
+            
+            if (is_null($value)){
+                return $request[$key];
+            }else{
+                $request[$key] = $value;
+                $this->store('adapt.request', $request);
+            }
+        }
+        
+        /*
+         * Response
+         */
+        public function aget_response(){
+            $responses = $this->store('adapt.response');
+            if (is_array($responses)){
+                return $responses;
+            }elseif(isset($this->request['adapt_response'])){
+                $responses = json_decode($this->request['adapt_response'], true);
+                
+                $this->store('adapt.response', $responses);
+                return $responses;
+            }
+            
+            return array();
+        }
+        
+        public function respond($action, $response){
+            if ($action){
+                $responses = $this->store('adapt.response');
+                if (!is_array($responses)){
+                    $responses = array();
+                }
+                
+                $responses[$action] = $response;
+                
+                $this->store('adapt.response', $responses);
+            }
         }
         
         /*

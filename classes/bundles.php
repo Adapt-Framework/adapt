@@ -407,56 +407,65 @@ namespace frameworks\adapt{
              * before booting.
              */
             if (count($this->_settings) == 0){
-                /* Only load them if they are not already loaded */
-                if (file_exists(ADAPT_PATH . "settings.xml")){
-                    $settings = trim(file_get_contents(ADAPT_PATH . "settings.xml"));
-                    
-                    if ($settings && strlen($settings) > 0 && xml::is_xml($settings)){
+                /* Do we have a cached copy? */
+                $cached_settings = parent::aget_cache()->get('adapt.settings');
+                if ($cached_settings && is_array($cached_settings)){
+                    $this->_settings = $cached_settings;
+                }else{
+                    /* Only load them if they are not already loaded */
+                    if (file_exists(ADAPT_PATH . "settings.xml")){
+                        $settings = trim(file_get_contents(ADAPT_PATH . "settings.xml"));
                         
-                        $settings = xml::parse($settings);
-                        if ($settings instanceof xml){
-                            $settings = $settings->find('settings')->get(0);
+                        if ($settings && strlen($settings) > 0 && xml::is_xml($settings)){
                             
+                            $settings = xml::parse($settings);
                             if ($settings instanceof xml){
-                                $children = $settings->get();
-                                foreach($children as $child){
-                                    
-                                    if ($child instanceof xml && strtolower($child->tag) == 'setting'){
-                                        $items = $child->get();
-                                        $name = null;
-                                        $value = null;
+                                $settings = $settings->find('settings')->get(0);
+                                
+                                if ($settings instanceof xml){
+                                    $children = $settings->get();
+                                    foreach($children as $child){
                                         
-                                        foreach($items as $item){
-                                            if ($item instanceof xml){
-                                                $tag = strtolower($item->tag);
-                                                
-                                                switch($tag){
-                                                case "name":
-                                                    $name = $item->get(0);
-                                                    break;
-                                                case "value":
-                                                    $value = $item->get(0);
-                                                    break;
-                                                case "values":
-                                                    $value = array();
-                                                    $nodes = $item->get();
-                                                    foreach($nodes as $node){
-                                                        if ($node instanceof xml){
-                                                            if (strtolower($node->tag) == 'value'){
-                                                                $value[] = $node->get(0);
+                                        if ($child instanceof xml && strtolower($child->tag) == 'setting'){
+                                            $items = $child->get();
+                                            $name = null;
+                                            $value = null;
+                                            
+                                            foreach($items as $item){
+                                                if ($item instanceof xml){
+                                                    $tag = strtolower($item->tag);
+                                                    
+                                                    switch($tag){
+                                                    case "name":
+                                                        $name = $item->get(0);
+                                                        break;
+                                                    case "value":
+                                                        $value = $item->get(0);
+                                                        break;
+                                                    case "values":
+                                                        $value = array();
+                                                        $nodes = $item->get();
+                                                        foreach($nodes as $node){
+                                                            if ($node instanceof xml){
+                                                                if (strtolower($node->tag) == 'value'){
+                                                                    $value[] = $node->get(0);
+                                                                }
                                                             }
                                                         }
+                                                        break;
                                                     }
-                                                    break;
                                                 }
                                             }
-                                        }
-                                        
-                                        if (!is_null($name) && is_string($name) && strlen($name) > 0){
-                                            $this->_settings[$name] = $value;
+                                            
+                                            if (!is_null($name) && is_string($name) && strlen($name) > 0){
+                                                $this->_settings[$name] = $value;
+                                            }
                                         }
                                     }
                                 }
+                                
+                                /* Cache the settings */
+                                parent::aget_cache()->serialize('adapt.settings', $this->_settings, 120);
                             }
                         }
                     }

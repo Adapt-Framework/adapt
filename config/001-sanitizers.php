@@ -19,18 +19,18 @@ namespace frameworks\adapt{
     $adapt->sanitize->add_validator('float', "^((-)?[0-9]+|((-)?[0-9])*\.[0-9]+)$");
     $adapt->sanitize->add_validator('double', "^((-)?[0-9]+|((-)?[0-9])*\.[0-9]+)$");
     $adapt->sanitize->add_validator('decimal', "^((-)?[0-9]+|((-)?[0-9])*\.[0-9]+)$");
-    $adapt->sanitize->add_validator('char', function($value){ return true; }, "function(value){ return true; }");
-    $adapt->sanitize->add_validator('binary', function($value){ return true; }, "function(value){ return true; }");
-    $adapt->sanitize->add_validator('varchar', function($value){ return true; }, "function(value){ return true; }");
-    $adapt->sanitize->add_validator('varbinary', function($value){ return true; }, "function(value){ return true; }");
-    $adapt->sanitize->add_validator('tinyblob', function($value){ return true; }, "function(value){ return true; }");
-    $adapt->sanitize->add_validator('blob', function($value){ return true; }, "function(value){ return true; }");
-    $adapt->sanitize->add_validator('mediumblob', function($value){ return true; }, "function(value){ return true; }");
-    $adapt->sanitize->add_validator('longblob', function($value){ return true; }, "function(value){ return true; }");
-    $adapt->sanitize->add_validator('tinytext', function($value){ return true; }, "function(value){ return true; }");
-    $adapt->sanitize->add_validator('text', function($value){ return true; }, "function(value){ return true; }");
-    $adapt->sanitize->add_validator('mediumtext', function($value){ return true; }, "function(value){ return true; }");
-    $adapt->sanitize->add_validator('longtext', function($value){ return true; }, "function(value){ return true; }");
+    $adapt->sanitize->add_validator('char', ".*");
+    $adapt->sanitize->add_validator('binary', ".*");
+    $adapt->sanitize->add_validator('varchar', ".*");
+    $adapt->sanitize->add_validator('varbinary', ".*");
+    $adapt->sanitize->add_validator('tinyblob', ".*");
+    $adapt->sanitize->add_validator('blob', ".*");
+    $adapt->sanitize->add_validator('mediumblob', ".*");
+    $adapt->sanitize->add_validator('longblob', ".*");
+    $adapt->sanitize->add_validator('tinytext', ".*");
+    $adapt->sanitize->add_validator('text', ".*");
+    $adapt->sanitize->add_validator('mediumtext', ".*");
+    $adapt->sanitize->add_validator('longtext', ".*");
     
     /* Dates and times */
     $adapt->sanitize->add_validator('year', "^[0-9]{4,4}$");

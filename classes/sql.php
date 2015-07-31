@@ -560,7 +560,7 @@ namespace frameworks\adapt{
             return null;
         }
         
-        public function execute(){
+        public function execute($time_to_cache = null){
             $sql = $this->render();
             
             if (!is_null($sql) && $sql != ""){
@@ -973,9 +973,19 @@ namespace frameworks\adapt{
                         //    
                         //}
                     }else{
-                        if ($sth = $this->data_source->read($sql)){
-                            $this->_results = $this->data_source->fetch($sth, \frameworks\adapt\data_source_sql::FETCH_ALL_ASSOC);
+                        /* Are the results cached? */
+                        $results = $this->cache->get($sql);
+                        if (is_array($results)){
+                            $this->_results = $results;
+                        }else{
+                            //print new html_pre("Unable to pull from cache: {$sql}");
+                            if ($sth = $this->data_source->read($sql)){
+                                $results = $this->data_source->fetch($sth, \frameworks\adapt\data_source_sql::FETCH_ALL_ASSOC);
+                                $this->cache->sql($sql, $results, $time_to_cache);
+                                $this->_results = $results;
+                            }
                         }
+                        
                     }
                 }
             }
