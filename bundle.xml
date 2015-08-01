@@ -14,7 +14,7 @@
         <setting>
           <name>xml.readable</name>
           <label>Output readable XML/HTML?</label>
-          <default_value>Yes</default_value>
+          <default_value>No</default_value>
           <allowed_values>
             <value>Yes</value>
             <value>No</value>
@@ -123,7 +123,23 @@
           </default_values>
         </setting>
       </category>
+      <category name="Caching">
+        <setting>
+          <name>adapt.sql_cache_expires_after</name>
+          <label>How long should we hold results for SQL statements? (In seconds)</label>
+          <default_value>60</default_value>
+        </setting>
+        <setting>
+          <name>adapt.view_cache_expires_after</name>
+          <label>How long should we cache views for? (In seconds)</label>
+          <default_value>600</default_value>
+        </setting>
+        <setting>
+          <name>adapt.page_cache_expires_after</name>
+          <label>How long should we cache pages? (In seconds)</label>
+          <default_value>300</default_value>
+        </setting>
+      </category>
     </settings>
-    <schema_installed>Yes</schema_installed>
   </bundle>
 </adapt_framework>
