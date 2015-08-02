@@ -158,4 +158,4 @@ Provides the TinyMCE editor
 ##### users
 Provides user functionality.
 
-#### Writing our first controller
+## Writing our first controller
