@@ -209,3 +209,29 @@ In the function add the following:
 ```php
 $this->add_view(new html_p('Hello world!'));
 ```
+
+Giving us a controller like:
+
+```php
+<?php
+
+namespace applications\my_app{
+    
+    /* Prevent direct access */
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \frameworks\adapt\controller{
+        
+        public function view_default(){
+            $this->add_view(new html_p('Hello world!'));
+        }
+        
+    }
+
+}
+
+?>
+```
+
+If we view the page in a web browser we will see Hello World! If we view the source we will see that both jQuery and Bootstrap have been installed and included on the page automatically.
+
