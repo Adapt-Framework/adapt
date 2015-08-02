@@ -34,4 +34,42 @@ This file has two things to note, firstly the name **my_app** must match the dir
 
 Also note that all classes you create that access the framework must be declared in the above named namespace, failure to do so will render the class unavailable.  This may seem rigid, however it allows us to do the next bit...
 
+### Making life easy ;)
+So lets say your application needs jQuery, easy! Before the closing bundle tag in bundle.xml add the following
+```xml
+        <depends_on>
+            <bundle>jquery</bundle>
+        </depends_on>
+```
 
+So what if you wanted jQuery and Bootstrap? It's, a simple as
+```xml
+        <depends_on>
+            <bundle>jquery</bundle>
+            <bundle>bootstrap</bundle>
+        </depends_on>
+```
+
+Giving you a **bundle.xml** that looks like this:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<adapt_framework>
+    <bundle>
+        <label>My First Web App</label>
+        <name>my_app</name>
+        <version>1.0.0</version>
+        <type>application</type>
+        <namespace>/applications/my_app</namespace>
+        <description>Test application</description>
+        <depends_on>
+            <bundle>jquery</bundle>
+            <bundle>bootstrap</bundle>
+        </depends_on>
+    </bundle>
+</adapt_framework>
+```
+
+### So how does that work?
+When your application boots for the first time the dependecies will automatically be downloaded and installed from the adapt repository.
+
+#### So what else is available?
