@@ -73,3 +73,67 @@ Giving you a **bundle.xml** that looks like this:
 When your application boots for the first time the dependecies will automatically be downloaded and installed from the adapt repository.
 
 #### So what else is available?
+Ok  it's really really important to note at this stage that Adapt is in beta and most of the "Bundles" are still in development.
+
+##### administrator
+Provides an administration section for your web app, accessed via www.example.com/administrator
+
+##### advanced_data_types
+
+##### bootstrap_views
+Provides views for rapidly deploying bootstrap components
+
+##### contacts
+Provides base functionality for storing people data from any country
+
+##### email
+Provides SMTP, IMAP and MIME support for working with email with ease :)
+
+##### font_awesome
+Provides FontAwesome and it's awesome icon set
+
+##### font_awesome_views
+Provides views to easily add icons, stacked or even animated to the page.
+
+##### form_datetime_picker
+Extends the forms bundle and adds various date and time pickers and formats
+
+##### form_password_confirm
+Extends the forms bundle and add a password confirmation field with password strength indicator.
+
+##### forms
+Provides rich and complex forms that validate client and server side.  Forms can be multi-paged, with or without step indicators with sections that can repeat when you need to repeat the capture of data.  Not stopping there forms provides realtime feedback and fields, sections and pages can be dependent on other fields being certain values.
+
+Still more, forms can easily be extended and new fuctionality provided.
+
+##### form_text_editor
+Provides a WYSIWYG html editor for the forms bundle.
+
+##### locales
+Provides the foundation for locality information.
+
+##### locales_uk
+Extends the locales bundle to provide validators and formatters for UK date, times, phone numbers, address formats and post codes.
+
+##### locales_us
+Extends the locales bundle to provide validators and formatters for US date, times, phone numbers, address formats and zip codes.
+
+##### menus
+Allows the creation of complex menus such as navgation bars or tabs.  This bundle can easily be extended to provide new formats.
+
+##### minifier
+Minifies all the css and javascript, packs them into two files (css & js), caches the result and outputs two minified files saving http requests and lowering bandwidth.  Unless you have a lot of js & css file or you need to be quick for mobiles you shouldn't use this as it causes each request to be slightly slower.
+
+##### roles_and_permissions
+Adds complex roles and permissions to be defined and enforced.
+
+##### sessions
+Provides session management that is scalable and really easy to use!
+
+##### tinymce
+Provides the TinyMCE editor
+
+##### users
+Provides user functionality.
+
+
