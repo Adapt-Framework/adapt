@@ -178,3 +178,34 @@ namespace applications\my_app{
 
 ?>
 ```
+
+In Adapt view controllers are tied directly to URLS, this controller because its named **controller_root** is responisible for the root folder of the website.
+
+So inside our controller lets add a new function called **view_default**
+```php
+<?php
+
+namespace applications\my_app{
+    
+    /* Prevent direct access */
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \frameworks\adapt\controller{
+        
+        public function view_default(){
+        
+        }
+        
+    }
+
+}
+
+?>
+```
+
+This function will be called when anyone visits the root folder on the website so lets add something.
+
+In the function add the following:
+```php
+$this->add_view(new html_p('Hello world!'));
+```
