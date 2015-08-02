@@ -4,7 +4,7 @@ Adapt is a framework designed for rapid web application development and deployme
 ## Installing
 To install adapt simply put [install.php](https://github.com/mbruton/adapt_installer) in the root folder of your webserver, no other files should be present as they will be unavailable after install.  Then view it in a web browser, unless there are issues the installer will complete automatically.
 
-The installer will install the framework and a web app called [adapt_setup](https://github.com/mbruton/adapt_installer), adapt_setup will prompt you to create a database connection which you will need to build applications with.
+The installer will install the framework and a web app called [adapt_setup](https://github.com/mbruton/adapt_setup), adapt_setup will prompt you to create a database connection which you will need to build applications with.
 
 The next step of the setup doesn't work, this is still in development so it's manual from here on out.
 
