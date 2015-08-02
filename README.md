@@ -166,7 +166,13 @@ Create a new file named **controller_root.php** in this directory with the follo
 <?php
 
 namespace applications\my_app{
-
+    
+    /* Prevent direct access */
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \frameworks\adapt\controller{
+    
+    }
 
 }
 
