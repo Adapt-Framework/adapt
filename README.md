@@ -69,6 +69,28 @@ Giving you a **bundle.xml** that looks like this:
 </adapt_framework>
 ```
 
+Also go ahead and add **bootstrap_views** and **font_awesome_views** giving you a final bundle.xml that looks like this:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<adapt_framework>
+    <bundle>
+        <label>My First Web App</label>
+        <name>my_app</name>
+        <version>1.0.0</version>
+        <type>application</type>
+        <namespace>/applications/my_app</namespace>
+        <description>Test application</description>
+        <depends_on>
+            <bundle>jquery</bundle>
+            <bundle>bootstrap</bundle>
+            <bundle>bootstrap_views</bundle>
+            <bundle>font_awesome_views</bundle>
+        </depends_on>
+    </bundle>
+</adapt_framework>
+```
+
 ### So how does that work?
 When your application boots for the first time the dependecies will automatically be downloaded and installed from the adapt repository.
 
@@ -136,4 +158,4 @@ Provides the TinyMCE editor
 ##### users
 Provides user functionality.
 
-
+#### Writing our first controller
