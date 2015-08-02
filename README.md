@@ -158,4 +158,17 @@ Provides the TinyMCE editor
 ##### users
 Provides user functionality.
 
-## Writing our first controller
+### Writing our first controller
+Before we can output anything to the screen we must create a controller.  First create the directory **DOCUMENT_ROOT/adapt/applications/my_app/controllers**
+
+Create a new file named **controller_root.php** in this directory with the following:
+```php
+<?php
+
+namespace applications\my_app{
+
+
+}
+
+?>
+```
