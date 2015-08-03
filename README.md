@@ -235,3 +235,87 @@ namespace applications\my_app{
 
 If we view the page in a web browser we will see Hello World! If we view the source we will see that both jQuery and Bootstrap have been installed and included on the page automatically.
 
+Lets create a new function called view_foo:
+```php
+<?php
+
+namespace applications\my_app{
+    
+    /* Prevent direct access */
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \frameworks\adapt\controller{
+        
+        public function view_default(){
+            $this->add_view("Hello world!");
+        }
+        
+        public function view_foo(){
+            $this->add_view("Bar");
+        }
+        
+    }
+
+}
+
+?>
+```
+To access this new function we just need to point our browsers to ***somedomain***/foo and we will see the output as "Bar" as controllers control the flow of the website.
+
+To route to a second level such as ***somedomain***/hello/world we would first need to create a new controller and then call that new controller from our **controller_root**.
+
+So lets create a really simple controlle which we are going to call ***DOCUMENT_ROOT/adapt/applications/my_app/controllers/controller_world.php*** as:
+```php
+<?php
+
+namespace applications\my_app{
+    
+    /* Prevent direct access */
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_world extends \frameworks\adapt\controller{
+        
+        public function view_default(){
+            $this->add_view("How do you do?");
+        }
+        
+    }
+
+}
+
+?>
+```
+
+Our new controller has no views other than a default, to use it we must first link it to our ***controller_root***.  Because we want the first part of the url to be "hello" (**somedomain**/***hello***/world) we need to create a view called view_hello on the ***controller_root***.
+
+```php
+<?php
+
+namespace applications\my_app{
+    
+    /* Prevent direct access */
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \frameworks\adapt\controller{
+        
+        public function view_default(){
+            $this->add_view("Hello world!");
+        }
+        
+        public function view_foo(){
+            $this->add_view("Bar");
+        }
+        
+        public function view_hello(){
+            return $this->load_controller('controller_world');
+        }
+        
+    }
+
+}
+
+?>
+```
+
+You'll noitce this time we are returning something and the something is a controller.  You could load the controller your self, however this will cause with action routing that we will come on to later.  The method load_controller is the only supported method loading controllers.
+
