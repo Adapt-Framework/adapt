@@ -154,6 +154,60 @@ print $model->store('my_key');
 
 --
 
+#### remove_store(`$key`)
+Removes any data that was stored using `base::store(...)`.
+
+##### INPUT:
+- `$key` The key associcated with the data that you'd like to remove.
+
+##### RETURNS:
+- `null`
+
+--
+
+#### setting(`$key`, `[$value = null]`)
+Returns the value of a setting or sets a new value.  Settings are defined by each bundle in the **bundle.xml** file, on boot Adapt loads these settings and makes them available via this function. By providing only the `$key` the function will return the value, when both `$key` and `$value` are provided the function changes the setting to the value of `$value`.  This is only effective for the current request, to change a setting perminatly either set in your bundle ([Learn more about bundles](/docs/bundles.md)) or add it to the global settings file ([Learn more about gloabl settings](/docs/settings.md)).
+
+##### INPUT:
+- `$key` A unique key to identify the setting
+- `$value` (Optional) The value to be stored againist the key, this must be a string, a number or an array or strings/numbers.
+
+##### RETURNS:
+When both params is set it returns `null`.  When only `$key` is set it returns whatever the value of the setting is.
+
+--
+
+#### settings()
+Returns an array of all settings.
+
+##### RETURNS:
+`array( 'key' => 'value', ...)`
+
+--
+
+#### remove_setting(`$key`)
+Removes any setting that was set using `base::setting(...)` or set by a bundle.  This is only for the current request, on the next request the setting will be back to it's original value.  
+
+##### INPUT:
+- `$key` The key associcated with the data that you'd like to remove.
+
+##### RETURNS:
+- `null`
+
+--
+
+#### redirect(`$url`, `$pass_on_response = true`)
+Performs an HTTP redirect to the new `$url`.
+
+##### INPUT:
+- `$url` The URL to redirect too.
+- `$pass_on_response` (Optional) Should the response be passed on to the new URL?  **PLEASE NOTE:** When redirecting to an external site you should set this param to `false` else you may accidently pass on information that would otherwise be private.
+
+##### RETURNS:
+Never returns, the application exits upon redirecting.
+
+--
+
 
 
 ### Static functions
