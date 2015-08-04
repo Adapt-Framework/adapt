@@ -39,11 +39,11 @@ Equivilent to $_FILES
 Returns an instance of [sanitizer](/docs/classes/sanitizer.md)
 
 ### Events
-#### EVENT_READY
+#### EVENT_READY = `"adapt.ready"`
 Is fired when the framework and all bundles have been booted.
 
 --
-#### EVENT_ERROR
+#### EVENT_ERROR = `"adapt.error"`
 Is fired whenever an error occurs.
 
 ### Methods
@@ -78,7 +78,7 @@ Registers a new error and triggers the event `EVENT_ERROR`.
 - `$error` The error message.
 
 ##### RETURNS:
-`null`
+- `null`
 
 --
 
@@ -89,7 +89,70 @@ Returns a list of errors that have occured.
 - `$clear` (Optional) Should the list of errors be reset after returning?
 
 ##### RETURNS:
-`array(...)` of error messages.
+- `array(...)` of error messages.
+
+--
+
+#### on (`$event_type`, `$function`, `[$data = null]`)
+Adds an event handler to an event.
+
+##### INPUT:
+- `$event_type` The event that occured
+- `$function` The function to handle the event, this function should return false if you wish to prevent the event from bubbling.
+- `$data` (Optional) Any data you want passed the handler when it's called.
+
+##### RETURNS:
+- `null`
+
+##### Example:
+```php
+$adapt = new base();
+
+$adapt->on(
+    base::EVENT_READY,
+    function($event){
+        print "Event " . $event['event_type] . " was fired";
+    }
+);
+```
+
+--
+
+#### trigger(`$event_type`, `[$event_data = array()]`)
+Fires an event.
+
+##### INPUT:
+- `$event_type` The type of event to trigger
+- `$event_data` (Optional) An array of items to be passed to any event handlers for this event type.
+
+##### RETURNS:
+- `null`
+
+--
+
+#### store(`$key`, `[$value = null]`)
+Stores or retrieves data, all data stored is temporary and exists only for the current request.  Data stored with this function can be access via any other object, not just the object that initially set it.  When using only the `$key` param the function returns any values associated with the key, when both are specified the value is stored against the key.
+
+##### INPUT:
+- `$key` A unique key to identify the data
+- `$value` (Optional) The value to be stored againist the key.
+
+##### RETURNS:
+When both params is set it returns `null`.  When only `$key` is set it returns whatever data was stored.
+
+##### Example:
+```php
+$base = new base();
+$base->store('my_key', 'Hello world');
+
+$model = new model_field();
+print $model->store('my_key');
+```
+
+**Prints out:**
+`Hello world`
+
+--
 
 
 
