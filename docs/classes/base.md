@@ -38,7 +38,7 @@ Is fired when the framework and all bundles have been booted.
 Is fired whenever an error occurs.
 
 ### Methods
-#### add_handler(**$namespace_and_class_name**)
+#### add_handler(`$namespace_and_class_name`)
 Registers a new class handler, class handlers are classes that are used generate new classes on demand.
 
 The [html](/docs/classes/html) class is a good example.
@@ -52,13 +52,31 @@ $p = new html('p');
 ```php
 $p = new html_p();
 ```
-The class html_p never existed but using a handler we can still call it.  [Learn more about handlers here](/docs/handlers)
+The class `html_p` never existed but using a handler we can still call it.  [Learn more about handlers here](/docs/handlers)
 
 ##### INPUT:
-- **$namespace_and_class_name** The full namespace and class name of the class you wish to register as a handler.
+- `$namespace_and_class_name` The full namespace and class name of the class you wish to register as a handler.
 
 ##### RETURNS:
 - `true` or `false`
+
+#### error(`$error`)
+Registers a new error and triggers the event `EVENT_ERROR`.
+
+##### INPUT:
+- `$error` The error message.
+
+##### RETURNS:
+`null`
+
+#### errors(`[$clear = false]`)
+Returns a list of errors that have occured.
+
+##### INPUT:
+- `$clear` (Optional) Should the list of errors be reset after returning?
+
+##### RETURNS:
+`array(...)` of error messages.
 
 
 
