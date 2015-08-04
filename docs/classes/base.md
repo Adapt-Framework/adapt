@@ -31,8 +31,35 @@ Equivilent to $_FILES
 Returns an instance of [sanitizer](/docs/classes/sanitizer.md)
 
 ### Events
+#### EVENT_READY
+Is fired when the framework and all bundles have been booted.
+
+#### EVENT_ERROR
+Is fired whenever an error occurs.
 
 ### Methods
+#### add_handler(**$namespace_and_class_name**)
+Registers a new class handler, class handlers are classes that are used generate new classes on demand.
+
+The [html](/docs/classes/html) class is a good example.
+
+**Without a handler:**
+```php
+$p = new html('p');
+```
+
+**With a handler:**
+```php
+$p = new html_p();
+```
+The class html_p never existed but using a handler we can still call it.  [Learn more about handlers here](/docs/handlers)
+
+##### INPUT:
+- **$namespace_and_class_name** The full namespace and class name of the class you wish to register as a handler.
+
+##### RETURNS:
+- `true` or `false`
+
 
 
 ### Static functions
