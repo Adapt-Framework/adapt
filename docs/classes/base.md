@@ -3,9 +3,6 @@ Base is the foundation for the entire framework, all classes using the framework
 
 ### Properties
 
-### Events
-
-### Methods
 #### instance_id
 Provides a unqiue ID for this class, this property is read-only and is subject to change between each request.
 
@@ -33,6 +30,9 @@ Equivilent to $_FILES
 #### sanitize
 Returns an instance of [sanitizer](/docs/classes/sanitizer.md)
 
+### Events
+
+### Methods
 
 
 ### Static functions
