@@ -208,6 +208,92 @@ Never returns, the application exits upon redirecting.
 
 --
 
+#### request(`$key`, `$value = null`)
+Updates or returns a value in the request property.
+
+##### INPUT:
+- `$key` The key for the value you wish to retrieve or set.
+- `$value` (Optional) The value you would like to set.
+
+##### RETURNS:
+When `$value` is `null` the value for associated with the `$key` is returned, when `$value` is set `null` is returned.
+
+--
+
+#### respond(`$action`, `$response`)
+Sets a response to an action. [Learn more about actions](/docs/actions.md).
+
+##### INPUT:
+- `$action` The full path of the action you wish to respond to.
+- `$response` The response you wish to return to the client, this is usually an array but can be anything.
+
+##### RETURNS:
+- `null`
+
+--
+
+#### cookie(`$key`, `$value = null`, `$expires = 0`, `$path = '/'`)
+Sets or retrieves a cookie.  When `$value` is set the cookie is set, when `$value` is `null` the current cookie value is returned.
+
+##### INPUT:
+- `$key` The name of the cookie.
+- `$value` (Optional) The value to be set
+- `$expires` (Optional) The number of seconds this cookie should persist for, specifing `0` means the cookie is for the current session only.
+- `$path` (Optional) Should the cookie be restricted to a particular path?
+
+##### RETURNS:
+When `$value` is `null` the value for associated with the `$key` is returned, when `$value` is set `null` is returned.
+
+--
 
 
 ### Static functions
+#### create_object(`$class`)
+Create a new instance of a class from it's name.
+
+##### INPUT:
+- `$class` The name of the class you wish to create.
+
+##### RETURNS:
+- Returns a new instance of `$class`. If the class doesn't exist `null` is returned.
+
+**Example**
+```php
+$adapt = new base();
+$sql_object = $adapt->create_object('sql');
+
+```
+
+--
+
+#### extend(`$function_name`, `$function`)
+Allows new [properties](/docs/properties.md) or methods to be added to classes at runtime.  [Learn more about extending classes](/docs/extending.md)
+
+##### INPUT:
+- `$class_name` The name of the class you wish to extend.
+- `$function` The function to handle the method or property, the first param should be `$_this` which is a reference to the class being extended.  Please note that by using extend you are only able to access public properties and methods of the target class.
+
+##### RETURNS:
+- `null`
+
+**Example**
+Lets say you wanted to add a new method `count_statements` to the class `sql`, most of the time you can achieve this with inheritance but that means than any other bundle that would like to use the functionality must either inherit from your `sql` class or create thier own.  In this instance it would be more useful to just extend the original object and thus making the functionallity available to all instances of the class.  Heres how:
+
+```php
+sql::extend(
+    'count_statements',
+    function($_this){
+        /* $_this = the sql instance */
+        
+        /* Do something here and then return */
+        $count = 0;
+        return $count;
+    }
+);
+
+/* Calling the function */
+$sql = new sql();
+print $sql->count_statements();
+```
+Prints out `0`
+
