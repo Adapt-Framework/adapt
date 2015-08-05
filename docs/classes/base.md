@@ -270,14 +270,13 @@ $sql_object = $adapt->create_object('sql');
 Allows new [properties](/docs/properties.md) or methods to be added to classes at runtime.  [Learn more about extending classes](/docs/extending.md)
 
 ##### INPUT:
-- `$class_name` The name of the class you wish to extend.
+- `$function_name` The name of the function you wish to extend.
 - `$function` The function to handle the method or property, the first param should be `$_this` which is a reference to the class being extended.  Please note that by using extend you are only able to access public properties and methods of the target class.
 
 ##### RETURNS:
 - `null`
 
-**Example**
-Lets say you wanted to add a new method `count_statements` to the class `sql`, most of the time you can achieve this with inheritance but that means than any other bundle that would like to use the functionality must either inherit from your `sql` class or create thier own.  In this instance it would be more useful to just extend the original object and thus making the functionallity available to all instances of the class.  Heres how:
+**Example:** Lets say you wanted to add a new method `count_statements` to the class `sql`, most of the time you can achieve this with inheritance but that means than any other bundle that would like to use the functionality must either inherit from your `sql` class or create thier own.  In this instance it would be more useful to just extend the original object and thus making the functionallity available to all instances of the class.  Heres how:
 
 ```php
 sql::extend(
@@ -297,3 +296,4 @@ print $sql->count_statements();
 ```
 Prints out `0`
 
+**Real world example:** The [sessions](http://github.com/mbruton/sessions) bundle extends `\frameworks\adapt\base` (this class) and adds a `session` property.
