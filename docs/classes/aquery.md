@@ -342,8 +342,193 @@ Reduces the number of matched elements filtered by `$selector` and returns a new
 
 --
 
+### is(`$selector`)
+Checks if any of the matched elements matches `$selector`
+
+#### Input:
+- `$selector` A selector to filter the current set of matched elements.
+
+#### Returns:
+- `true` or `false`
+
+--
+
+### last()
+Filters the current matched list to just the last element.
+
+#### Returns:
+- `self` containing the last element of the previously matched list.
+
+--
+
+### not(`$selector`)
+Filters the current selection where the elements do not match `$selector` and returns a new `aquery` object containing the result.
+
+#### Input:
+- `$selector` A CSS selector to match the element that you **do not** want returned.
+
+#### Returns:
+- A new `aquery` object containing the elements that didn't match the selector.
+
+--
+
+### slice(`$start`, `$end = null`)
+Reduce the matched elements to the index range `$start` to `$end`.  When `$end` is `null` all elements from `$start` are returned.
+
+#### Input:
+- `$start` The element index to start with.  This must be an integer less than `$end` and less than the count of matched elements.
+- `$end` (Optional) The index of the last element to return.
+
+#### Returns:
+- A new `aquery` object containing the new selection.
+
+--
+
+### add(`$selector`)
+Adds more elements to the current matched list.  `$selector` is run against the root element and any matching elements are appended to the current matched elements.
+
+#### Input:
+- `$selector` A selector to find elements from the root element.
+
+#### Returns:
+- A new `aquery` object containing the new set of elements.
+
+--
+
+### and_self()
+Appends the current element to the list of matched element.
+
+#### Returns:
+- A new `aquery` object containing the new set of elements.
+
+--
+
+### end()
+Ends the current selection and reverts back to the previous selection.
+
+#### Returns:
+- `self`
+
+--
+
+### children(`$selector = null`)
+Returns the children of the current list of matched elements, optionally filtered by `$selector`.
+
+#### Input:
+- `$selector` A selector used to filter the children.
+
+#### Returns:
+- A new `aquery` object containing the matched children.
+
+--
+
+### closest(`$selector`)
+Find the closest `$selector` from our current position in the document.
+
+#### Input:
+- `$selector` A selector used to find the nearest match.
+
+#### Returns:
+- A new `aquery` object containing the matched elements.
+
+--
+
+### next(`$selector = null`)
+Returns the next element of the current matched elements.  Optionally filtered by `$selector`.
+
+#### Input:
+- `$selector` (Optional) A selector used to find the nearest match.
+
+#### Returns:
+- A new `aquery` object containing the matched elements.
+
+--
+
+### next_all(`$selector = null`)
+Get all the following siblings of each element in the set of matched elements, optionally filtered by `$selector`.
+
+#### Input:
+- `$selector` (Optional) A selector used to filter the siblings.
+
+#### Returns:
+- A new `aquery` object containing the matched elements.
+
+--
+
+### parent(`$selector = null`)
+Returns the parent element of the current matched elements, optionally filtered by `$selector`.
+
+#### Input:
+- `$selector` (Optional) The selector to match against the parent element.
+
+#### Returns:
+- A new `aquery` object contain the matched elements.
+
+--
+
+### parents(`$selector = null`)
+Find all the parent elements of the current matched elements, optionally filtered by `$selector`.
+
+#### Input:
+- `$selector` (Optional) The selector to match against the parent elements.
+
+#### Returns:
+- A new `aquery` object contain the matched elements.
+
+--
+
+### prev(`$selector = null`)
+Returns the previous element of the current matched elements.  Optionally filtered by `$selector`.
+
+#### Input:
+- `$selector` (Optional) A selector used to filter the previous siblings
+
+#### Returns:
+- A new `aquery` object containing the matched elements.
+
+--
+
+### prev_all(`$selector = null`)
+Get all the previous siblings of each element in the set of matched elements, optionally filtered by `$selector`.
+
+#### Input:
+- `$selector` (Optional) A selector used to filter the siblings.
+
+#### Returns:
+- A new `aquery` object containing the matched elements.
+
+--
+
+### siblings(`$selector = null`)
+Get all siblings of the current selection, optionally filter by `$selector`
+
+#### Input:
+- `$selector` (Optional) A selector used to filter the siblings.
+
+#### Returns:
+- A new `aquery` object containing the matched elements.
+
+--
 
 
+### each(`$function`)
+Loop over all the matched elements and execute `$function` for each one.
 
+#### Input:
+- `$function` A function to be run against the matched list of elements, the function can have params, the first will be the index of the current element, the second will be the element itself.
 
+#### Example:
+```php
+
+/* Create a new aQuery object */
+$aquery = new aquery();
+
+/* Find all p elements an print out the index */
+$aquery->find('p')->each(
+    function($index, $element){
+        print $index;
+    }
+);
+
+```
 
