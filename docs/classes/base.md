@@ -1,5 +1,9 @@
 ## base
-Base is the foundation for the entire framework, all classes using the framework ultimately inherit from this one.  Base has no dependecies.
+`base` is the foundation class for the entire framework, all classes using the framework ultimately inherit from this one.
+
+
+### Table of content
+- [Properties](#Properties)
 
 ### Properties
 
