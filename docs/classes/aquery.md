@@ -6,6 +6,57 @@
 
 
 ## Table of Contents
+[Differences between jQuery and aQuery](#differences-between-jquery-and-aquery)
+[Contructing](#constructing)
+[Properties](#properties)
+    - [elements](#elements)
+[Methods](#methods)
+    - [add_class](#add_classclass_name)
+    - [css](#cssproperty-value--null)
+    - [remove_class](#remove_classclass_name)
+    - [has_class](#has_classclass_name)
+    - [toggle_class](#toggle_classclass_name-switch--null)
+    - [text](#text--null)
+    - [html](#string--null)
+    - [val](#valvalue--null)
+    - [attr](#attrattribute-value--null)
+    - [remove_attr](#remove_attrattribute)
+    - [after](#aftercontent)
+    - [append](#appendcontent)
+    - [before](#beforecontent)
+    - [detach](#detachselector--null)
+    - [clear](#clear)
+    - [prepend](#prependcontent)
+    - [remove](#removeselector--null)
+    - [replace_with](#replace_withcontent)
+    - [unwrap](#unwrap)
+    - [wrap](#wrap)
+    - [wrap_inner](#wrap_inner)
+    - [get](#getindex--null)
+    - [to_array](#to_array)
+    - [size](#size)
+    - [eq](#eq-index)
+    - [filter](#filterselector)
+    - [find](#findselector)
+    - [first](#first)
+    - [has](#hasselector)
+    - [is](#isselector)
+    - [last](#last)
+    - [not](#notselector)
+    - [slice](#slicestart-end--null)
+    - [add](#addselector)
+    - [and_self](#and_self)
+    - [end](#end)
+    - [children](#childrenselector--null)
+    - [closest](#closestselector)
+    - [next](#nextselector--null)
+    - [next_all](#next_allselector--null)
+    - [parent](#parentselector--null)
+    - [parents](#parentsselector--null)
+    - [prev](#prevselector--null)
+    - [prev_all](#prev_allselector--null)
+    - [siblinigs](#siblingsselector--null)
+    - [each](#eachfunction)
 
 ## Differences between jQuery and aQuery
 The jQuery documentation is much more detailed than this, you can use the jQuery documentation as a reference but you should be aware of:
@@ -20,7 +71,7 @@ The jQuery documentation is much more detailed than this, you can use the jQuery
     - `parentsUntil()`
     - `prevUntil()`
 
-## Contstructing
+## Constructing
 ### __construct(`$document = null`, `$selector = null`, `$parent = null`, `$root = null`)
 Contructs a new `aquery` object.
 
