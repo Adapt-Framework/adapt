@@ -6,11 +6,11 @@
 
 
 ## Table of Contents
-[Differences between jQuery and aQuery](#differences-between-jquery-and-aquery)
-[Contructing](#constructing)
-[Properties](#properties)
+- [Differences between jQuery and aQuery](#differences-between-jquery-and-aquery)
+- [Contructing](#constructing)
+- [Properties](#properties)
     - [elements](#elements)
-[Methods](#methods)
+- [Methods](#methods)
     - [add_class](#add_classclass_name)
     - [css](#cssproperty-value--null)
     - [remove_class](#remove_classclass_name)
