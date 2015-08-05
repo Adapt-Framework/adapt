@@ -3,7 +3,75 @@
 
 
 ### Table of content
-- [Properties](#Properties)
+- [Properties](#properties)
+    - [instance_id](#instance-id)
+
+### Functionality
+#### Dynamic property functions
+In adapt properties can be functions as well as being able to make them read only.
+
+Typically in PHP if you wanted to add a property called `foobar` you would do something like this:
+```php
+class my_class_name extends \frameworks\adapt\base{
+    
+    public $foobar;
+    
+}
+```
+
+Thats works well unless you want to do something when a property is set or if you'd like to make it read only.
+
+Adapt provides two prefix functions to achieve this, the first `aget_` is used as a getter and `aset_` is used as a setter.  To add a read only property all you need to do is this:
+
+```php
+class my_class_name extends \frameworks\adapt\base{
+    
+    /* Make the property private */
+    private $_foobar;
+    
+    /* Add the getter */
+    public function aget_foobar(){
+        return $this->_private;
+    }
+}
+
+/* Lets create a new instance */
+$class = new my_class_name();
+
+/* Get the property */
+print $class->foobar;
+```
+
+What if you wanted to do something everytime `foobar` is set?
+```php
+class my_class_name extends \frameworks\adapt\base{
+    
+    /* Make the property private */
+    private $_foobar;
+    
+    /* Add the getter */
+    public function aget_foobar(){
+        return $this->_private;
+    }
+    
+    /* Add the setter */
+    public function aset_foobar($value){
+        /*
+         * Do something here
+         */
+        
+        $this->_foobar = $value;
+    }
+}
+
+/* Lets create a new instance */
+$class = new my_class_name();
+
+/* Lets set the property */
+$class->foobar = 'Hello world';
+```
+
+
 
 ### Properties
 
