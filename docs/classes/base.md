@@ -3,11 +3,42 @@
 
 
 ### Table of content
+- [Functionality](#functionality)
+    - [Dynamic properties](#dynamic-properties)
 - [Properties](#properties)
-    - [instance_id](#instance-id)
+    - [instance_id](#instance_id)
+    - [dom](#dom)
+    - [data_source](#data_source)
+    - [file_store](#file_store)
+    - [cache](#cache)
+    - [request](#request)
+    - [response](#response)
+    - [files](#files)
+    - [sanitize](#sanitize)
+- [Events](#events)
+    - [Ready](#event_ready--adaptready)
+    - [Error](#event_error--adapterror)
+- [Methods](#methods)
+    - [add_hander](#add_handlernamespace_and_class_name)
+    - [error](#errorerror)
+    - [errors](#errorsclear--false)
+    - [on](#onevent_type-function-data--null)
+    - [trigger](#triggerevent_type-event_data--array)
+    - [store](#storekey-value--null)
+    - [remove_store](#remove_storekey)
+    - [setting](#settingkey-value--null)
+    - [settings](#settings)
+    - [remove_setting](#remove_settingkey)
+    - [redirect](#redirecturl-pass_on_response--true)
+    - [request](#requestkey-value--null)
+    - [response](#respondaction-response)
+    - [cookie](#cookiekey-value--null-expires--0-path--)
+- [Static functions]
+    - [create_object](#create_object-class)
+    - [extend](#extendfunction_name-function)
 
 ### Functionality
-#### Dynamic property functions
+#### Dynamic properties
 In adapt properties can be functions as well as being able to make them read only.
 
 Typically in PHP if you wanted to add a property called `foobar` you would do something like this:
