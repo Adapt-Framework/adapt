@@ -1,4 +1,4 @@
-# data_source (Abstract)
+# Abstract class `data_source`
 **Inherits from:** [base](/docs/classes/base.md)
 **Implements:** [data_source](/docs/interfaces/data_source.md)
 

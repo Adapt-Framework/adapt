@@ -1,4 +1,4 @@
-# aquery
+# Class `aquery`
 **Inherits from:** [base](/docs/classes/base.md)
 
 `aquery` is jQuery for PHP allowing rapid manipulation of the DOM before it's sent to the client.

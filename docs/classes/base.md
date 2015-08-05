@@ -1,4 +1,4 @@
-# base
+# Class `base`
 `base` is the foundation class for the entire framework, all classes using the framework ultimately inherit from this one.
 
 
