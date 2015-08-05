@@ -1,5 +1,6 @@
 # Abstract class `data_source`
 **Inherits from:** [base](/docs/classes/base.md)
+
 **Implements:** [data_source](/docs/interfaces/data_source.md)
 
 `data_source` is a foundation class for building data sources. When building a new data source you can either inherit from this class (or one of it's children) or you can implement the interface [data_source](/docs/interfaces/data_source.md).
