@@ -5,6 +5,7 @@
 ## Table of contents
 [Functionality](#functionality)
 - [Dynamic properties](#dynamic-properties)
+
 [Properties](#properties)
 - [instance_id](#instance_id)
 - [dom](#dom)
@@ -15,9 +16,11 @@
 - [response](#response)
 - [files](#files)
 - [sanitize](#sanitize)
+
 [Events](#events)
 - [Ready](#event_ready--adaptready)
 - [Error](#event_error--adapterror)
+
 [Methods](#methods)
 - [add_hander](#add_handlernamespace_and_class_name)
 - [error](#errorerror)
@@ -33,6 +36,7 @@
 - [request](#requestkey-value--null)
 - [response](#respondaction-response)
 - [cookie](#cookiekey-value--null-expires--0-path--)
+
 [Static functions](#static-functions)
 - [create_object](#create_object-class)
 - [extend](#extendfunction_name-function)
