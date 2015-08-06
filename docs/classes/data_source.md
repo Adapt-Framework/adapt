@@ -6,6 +6,23 @@
 `data_source` is a foundation class for building data sources. When building a new data source you can either inherit from this class (or one of it's children) or you can implement the interface [data_source](/docs/interfaces/data_source.md).
 
 ## Table of contents
+- [Properties](#properties)
+    - [schema](#schema)
+    - [data_types](#data_types)
+- [Methods](#methods)
+    - [get_number_of_datasets](#get_number_of_datasets)
+    - [get_dataset_list](#get_dataset_list)
+    - [get_number_of_rows](#get_number_of_rowsdataset_index)
+    - [get_row_structure](#get_row_structuredataset_index)
+    - [get_field_structure](#get_field_structuredataset_index-field_name)
+    - [get_reference](#get_referencetable_name-field_name)
+    - [get_referenced_by](#get_referenced_bytable_name-field_name)
+    - [get_relationship](#get_relationshiptable1-table2)
+    - [get_data_type](#get_data_typedata_type)
+    - [get_data_type_id](#get_data_typedata_type)
+    - [get_base_data_type](#get_base_data_typedata_type)
+    - [get](#getdataset_index-row_offset-number_of_rows)
+    
 
 ## Properties
 ### schema (R/W)
@@ -90,8 +107,9 @@ Returns the relationships that exist between two tables.
 
 --
 
-## get_data_type(`$data_type`)
+### get_data_type(`$data_type`)
 Returns an array of information about a particular data type.
+[Learn more about working with data_types](/docs/data_types.md)
 
 #### Input:
 - `$data_type` The name or ID of a data type.
@@ -103,6 +121,7 @@ Returns an array of information about a particular data type.
 
 ### get_data_type_id(`$data_type`)
 Returns the ID for a particular data_type.
+[Learn more about working with data_types](/docs/data_types.md)
 
 #### Input:
 - `$data_type` The name of a data type
@@ -111,4 +130,27 @@ Returns the ID for a particular data_type.
 - Integer
 
 --
+
+### get_base_data_type(`$data_type`)
+Returns the base data type if the `$data_type` provided is based upon another.
+[Learn more about working with data_types](/docs/data_types.md)
+
+#### Input:
+- `$data_type` The data type name or ID that you'd like find the base type of.
+
+#### Returns:
+- `array()` Containing the root data type.
+
+--
+
+### Get(`$dataset_index`, `$row_offset`, `$number_of_rows = 1`)
+Retrieves a record(s) from the data source.
+
+#### Input:
+- `$dataset_index` The name or index of the dataset.
+- `$row_offset` The index of the record in the dataset.
+- `$number_of_rows` (Optional) How many record would you like to retrieve? The default is 1.
+
+#### Returns:
+- `array()` of records.
 

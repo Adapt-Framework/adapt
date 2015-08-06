@@ -1,4 +1,4 @@
-# Abstract class `sql_data_source`
+# Abstract class `data_source_sql`
 **Inherits from:** [data_source](/docs/classes/data_source.md) > [base](/docs/classes/base.md)
 
 **Implements:** [data_source_sql](/docs/interfaces/data_source_sql.md)
@@ -8,6 +8,16 @@
 ## Table of contents
 
 ## Contructing
+### __construct(`$host = null`, `$username = null`, `$password = null`, `$schema = null`, `$read_only = false`)
+Constructs a new `data_source_sql` and optionally adds a host.
+
+#### Input:
+- `$host` (Optional) The SQL host to connect to.
+- `$username` (Optional) The username for the SQL host
+- `$password` (Optional) The password for the SQL host
+- `$schema` (Optional) The default schema to use.
+- `$read_only` (Optional) Boolean indicating if the SQL host should be treated as read only.
+
 
 ## Constants
 ### Event constants
@@ -30,111 +40,281 @@ const FETCH_ALL_OBJECT = 6;
 [Learn more about event handling in Adapt](/docs/events.md)
 
 ### EVENT_HOST_CONNECT
+Occurs whenever a connection is made to a SQL host.
+
 ### EVENT_HOST_DISCONNECT
+Occurs whenever a SQL host is disconnected.
+
 ### EVENT_QUERY
+Occurs whenever a query is execute.
 
 ## Properties
-### schema (R/W)
-`array()` containing the schema.
+### sql
+Shorthand property for getting a new `sql` object.
 
-### data_types (R/W)
-`array()` of data types
+You can construct a `sql` object against a particular data source by specifying the data source in the constructor:
+```php
+/* Create a data_source */
+$data_source = new data_source_mysql(/* Connection Params */);
 
+/* Create a sql object */
+$sql = new sql(null, $data_source);
+
+/* Execute a statement */
+$results = $sql->select('*')->from('foo')->execute()->results();
+```
+
+Or you could use the shorthand property:
+```php
+/* Create a data_source */
+$data_source = new data_source_mysql(/* Connection Params */);
+
+/* Execute a query */
+$results = $data_source->sql->select('*')->from('foo')->execute()->results();
+
+```
 
 ## Methods
-### get_number_of_datasets()
-Returns a count of all the data sets available to this data source.
+### sql(`$statement = null`)
+Shortcut function for quick execution of SQL statement.
+
+#### Input:
+- `$statement` (Optional) A SQL string or an instanceof [sql](/docs/classes/sql.md).
+
+#### Returns:
+- New instance of [sql](/docs/classes/sql.md)
+
+#### Examples:
+Getting a new sql instance:
+```php
+$sql = $data_source->sql();
+```
+
+Executing a query directly:
+```php
+$results = $data_source->sql('select * from foo')->execute()->results();
+```
+
+Execute a query using the sql functions:
+```php
+$results = $data_source->sql()->select('*')->from('foo')->execute()->results();
+```
+
+--
+
+### get_primary_keys(`$table_name`)
+Returns an array of primary keys (if any) for a particular table.
+
+#### Input:
+- `$table_name` The name of the table you'd like to find the primary keys for.
+
+#### Returns:
+- `array('key1', 'key2', 'etc...')`
+
+--
+
+### write(`$sql`)
+Executes a write statement against the SQL source.  A write statement is anything that causes the data or the structure of a database to change.
+
+#### Input:
+- `$sql` The statement to execute, this must be a string and a valid SQL statement for the RDMS.
+
+--
+
+### read(`$sql`)
+Executes a read-only SQL statement such as a select.
+
+#### Input:
+- `$sql` The statement to execute against the SQL source.  This must be a string and a valid SQL statement.
+
+#### Returns:
+- A statement handle that is needed to retrieve the data.
+
+--
+
+### query(`$sql`, `$write = false`)
+Executes a SQL statement against the data source.  Please use `read` or `write` instead of this function.
+
+#### Input:
+- `$sql` The statement to execute, this must be a string and a valid SQL statement.
+- `$write` (Optional) Is this statement going to change any data?
+
+#### Returns:
+- When `$write = false` a statement handle is returned.
+
+--
+
+### fetch(`$statement_handle`, `$fetch_type = self::FETCH_ASSOC`)
+Fetches data from a statement handle.
+
+#### Input:
+- `$statement_handle` The statement handle returned from `read()` or `query()`.
+- `$fetch_type` (Optional) How would you like the data returned? [See fetch constants for available options](#fetch-constants)
+
+#### Returns:
+- Returns an array of data formated according to `$fetch_type`.
+
+--
+
+### last_insert_id()
+Returns the last insert ID from an insert statement.
 
 #### Returns:
 - Integer
 
 --
 
-### get_dataset_list()
-Returns a list of the all the dataset available to this data source.
+### add_host(`$host`, `$username`, `$password`, `$schema`, `$read_only = false`)
+Adds additional hosts for the data source.  This is useful in Master/slave setups or for clustered RDMS.  When using in a Master / slave setup ensure that the slaves are set to read only and the Master set to write.
+When multiple hosts are in use the work is load balanced automatically between the hosts.
 
-#### Returns
-- `array()`
+#### Inputs:
+- `$host` (Optional) The SQL host to connect to.
+- `$username` (Optional) The username for the SQL host
+- `$password` (Optional) The password for the SQL host
+- `$schema` (Optional) The default schema to use.
+- `$read_only` (Optional) Boolean indicating if the SQL host should be treated as read only.
 
 --
 
-### get_number_of_rows(`$dataset_index`)
-Returns the number of rows in the given `$dataset_index`.
+### connect(`$host`)
+Opens a connection to a host. There is no need to call this directly as it is automatically called when a host is added and queried for the first time.
 
-#### Input:
-- `$dataset_index` The index or name of the dataset.
+#### Inputs:
+- `$host` An associative array with the following keys:
+    - `host` The host name or IP address.
+    - `username` The username to connect to the data source.
+    - `password` The password for the data source.
+    - `schema` The schema to use.
 
 #### Returns:
-- Integer
+- Either:
+    - `false` When a connection could not be made.
+    - A PHP database object such as `mysqli`
 
 --
 
-### get_row_structure(`$dataset_index`)
-Returns an array containin the row structure of `$dataset_index`.
+### disconnect(`$host`)
+Closes a connection to a host.  There is no need to call this function directly as it will be automatically called when the data source is destroyed.
+
+#### Inputs:
+- `$host` An associative array with the following keys:
+    - `host` The host name or IP address.
+    - `username` The username to connect to the data source.
+    - `password` The password for the data source.
+    - `schema` The schema to use.
+
+--
+
+### get_host(`$writable = false`)
+Gets a random host from the list of hosts, optionally filtered by `$writable`.
 
 #### Input:
-- `$dataset_index` The index or name of the dataset.
+- `$writable` (Optional) Should the host be capable of writing?
 
 #### Returns:
-- `array()`
+- Either:
+    - `null` if no host is available
+    - `array()` with the following keys:
+        - `host` The name of the host.
+        - `username` The username of the data source
+        - `password` The password of the data source
+        - `schema` The schema to connect to.
+        - `read_only` Boolean indicating if the host is read only or not
+        - `handle` A PHP object that represents the acctual connection.  For MySQL this could be a `mysqli` instance.
 
 --
 
-### get_reference(`$table_name`, `$field_name`)
-If `$table_name`.`$field_name` is a foreign key and array is returned containing the table name and field name that `$table_name` and `$field_name` relate too.
+### render_sql(`$sql`)
+Converts an instance of `sql` to a SQL string for the current RDMS.
 
 #### Input:
-- `$table_name` The table or dataset you wish to find a relationship for.
-- `$field_name` The field name you wish to find a relationship for.
+- `$sql` The `sql` object to be converted.  This must be an instance of [sql](/docs/classes/sql.md) or an exception is thrown.
 
 #### Returns:
-- If successful `array('table_name' => 'THE NAME OF THE TABLE', 'field_name' => 'THE NAME OF THE FIELD')` is returned, else `array()` is returned.
+- A string containing the acctual SQL statement.
+
+#### Example:
+```php
+/* Connect to a data source */
+$data_source = new data_source_mysql(/* Connection params */);
+
+/* Build a sql object */
+$sql = $data_source->sql->select('*')->from('foo');
+
+/* Convert the object to a SQL statement */
+$statement = $data_source->render_sql($sql);
+
+/* Print out the statement */
+print $statement;
+```
+Prints out ***SELECT * FROM foo;***
 
 --
 
-### get_referenced_by(`$table_name`, `$field_name`)
-If `$table_name`.`$field_name` is a primary key, this function returns a list of all tables and fields that reference `$table_name`.`$field_name`.
+### escape(`$string`)
+Escapes a string and makes it SQL injection safe.
 
 #### Input:
-- `$table_name` The table or dataset you wish to find a relationship for.
-- `$field_name` The field name you wish to find a relationship for.
+- `$string` A string.
 
 #### Returns:
-- If successful `array(array('table_name' => 'THE NAME OF THE TABLE', 'field_name' => 'THE NAME OF THE FIELD'), ...)` is returned, else `array()` is returned.
+- A string
 
 --
 
-### get_relationship(`$table1`, `$table2`)
-Returns the relationships that exist between two tables.
+### validate(`$table_name`, `$field_name`, `$value`)
+Validate a value against the defined data type for the field.  This only checks if the value is valid, it does not check for dependencies or mandatory groups.
+[Learn more about data types](/docs/data_types.md)
 
 #### Input:
-- `$table1` The first table.
-- `$table2` The second table.
+- `$table_name` The name of the table where the value is to be stored.
+- `$field_name` The field name where the value is to be stored.
+- `$value` The value that you would like to validate.
 
 #### Returns:
-- `array()` containing a list of relationships, if any.
+- `true` or `false`
 
 --
 
-## get_data_type(`$data_type`)
-Returns an array of information about a particular data type.
+### format(`$table_name`, `$field_name`, `$value`)
+Formats a value based on it's data type.
+[Learn more about data types](/docs/data_types.md)
 
 #### Input:
-- `$data_type` The name or ID of a data type.
+- `$table_name` The name of the table where the value is to be stored.
+- `$field_name` The field name where the value is to be stored.
+- `$value` The value that you would like to format.
 
 #### Returns:
-- `array()` containing the data type information.
+- The formatted value
 
 --
 
-### get_data_type_id(`$data_type`)
-Returns the ID for a particular data_type.
+### unformat(`$table_name`, `$field_name`, `$value`)
+Unformats a value based on it's data type.
+[Learn more about data types](/docs/data_types.md)
 
 #### Input:
-- `$data_type` The name of a data type
+- `$table_name` The name of the table where the value is to be stored.
+- `$field_name` The field name where the value is to be stored.
+- `$value` The value that you would like to unformat.
 
 #### Returns:
-- Integer
+- The unformatted value.
 
 --
+
+## convert_data_type(`$type`, `$signed = true`, `$zero_fill = false`)
+Converts an adapt data type to a data type the RDBMS understands.
+[Learn more about data types](/docs/data_types.md)
+
+#### Input:
+- `$type` The adapt data type to be converted
+- `$signed` (Optional) If the value is numeric should it be signed?
+- `$zero_fill` (Optional) Should the data type be zero filled?
+
+#### Returns:
+- A string representing the RDBMS data type.
+
 
