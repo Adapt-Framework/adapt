@@ -6,7 +6,32 @@
 `data_source_sql` is a foundation class for building SQL data sources. When building a new SQL data source you can either inherit from this class (or one of it's children) or you can implement the interface [data_source_sql](/docs/interfaces/data_source_sql.md).
 
 ## Table of contents
-
+- [Constructing](#constructing)
+- [Constants](#constants)
+    - [Event constants](#event-constants)
+    - [Fetch constants](#fetch-constants)
+- [Events](#events)
+- [Properties](#properties)
+    - [sql](#sql)
+- [Methods](#methods)
+    - [sql](#sqlstatement--null)
+    - [get_primary_keys](#get_primary_keystable_name)
+    - [write](#writesql)
+    - [read](#readsql)
+    - [query](#querysql-write--false)
+    - [fetch](#fetchstatement_handle-fetch_type--selffetch_assoc)
+    - [last_insert_id](#last_insert_id)
+    - [add_host](#add_hosthost-username-password-schema-read_only--false)
+    - [connect](#connecthost)
+    - [disconnect](#disconnecthost)
+    - [get_host](#get_host-writable--false)
+    - [render_sql](#render_sqlsql)
+    - [escape](#escapestring)
+    - [validate](#validatetable_name-field_name-value)
+    - [format](#formattable_name-field_name-value)
+    - [unformat](#unformattable_name-field_name-value)
+    - [convert_data_type](#convert_data_typetype-signed--true-zero_fill--false)
+    
 ## Contructing
 ### __construct(`$host = null`, `$username = null`, `$password = null`, `$schema = null`, `$read_only = false`)
 Constructs a new `data_source_sql` and optionally adds a host.
