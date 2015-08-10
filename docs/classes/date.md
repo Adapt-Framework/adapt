@@ -2,7 +2,7 @@
 
 **Inherits from:** [`base`](/docs/classes/base.md)
 
-Provides easy to use date and time manipulations.  When constructing set the date that you would like to manipulate or leave out to use todats date.
+Provides easy to use date and time manipulations.  When constructing set the date that you would like to manipulate or leave out to use todays date.
 
 ## Table of contents
 
@@ -81,6 +81,8 @@ $date->set_date('2015-08-10');
 $date->set_date('08/10/2015', 'm/d/Y');
 
 ```
+
+--
 
 ### date(`$pattern = null`)
 Returns the date this object is currently set to.  When `$pattern` is `null` the number of seconds since the UNIX epoch is returned.
@@ -295,4 +297,228 @@ $date->goto_next_day(date::MONDAY);
 --
 
 ### goto_second_day(`$day_of_week`)
+Moves the date pointer to the second `$day_of_week` in the month.
 
+#### Input:
+- `$day_of_week` The day of the week to move the date to.
+
+#### Example:
+```php
+/* Create new day object */
+$date = new date('2015-08-01');
+
+/* Move to the second Thursday in the month */
+$date->goto_second_day(date::THURSDAY);
+```
+
+--
+
+### goto_third_day(`$day_of_week`)
+Moves the date pointer to the third `$day_of_week` in the month.
+
+#### Input:
+- `$day_of_week` The day of the week to move the date to.
+
+#### Example:
+```php
+/* Create new day object */
+$date = new date('2015-08-01');
+
+/* Move to the second Thursday in the month */
+$date->goto_third_day(date::THURSDAY);
+```
+
+--
+
+### goto_second_working_day(`$day_of_week`)
+Moves the date pointer to the second working `$day_of_week` in the month.
+
+#### Input:
+- `$day_of_week` The day of the week to move the date to.
+
+#### Example:
+```php
+/* Create new day object */
+$date = new date('2015-08-01');
+
+/* Move to the second working Thrusday in the month */
+$date->goto_second_working_day(date::THURSDAY);
+```
+
+--
+
+### goto_third_working_day(`$day_of_week`)
+Moves the date pointer to the third working `$day_of_week` in the month.
+
+#### Input:
+- `$day_of_week` The day of the week to move the date to.
+
+#### Example:
+```php
+/* Create new day object */
+$date = new date('2015-08-01');
+
+/* Move to the third working Thrusday in the month */
+$date->goto_third_working_day(date::THURSDAY);
+```
+
+--
+
+### goto_days($days)
+Moves the date forward or backwards by the number of `$days` provided.
+
+#### Input:
+- `$days` An integer representing the number of days to move forward, or when the value is negative the number of days to move back.
+
+#### Example:
+```php
+/* Cretae a new date with todays date */
+$date = date();
+
+/* Go back 5 days */
+$date->goto_days(-5);
+
+/* Go forward 28 days */
+$date->goto_days(28);
+```
+
+--
+
+### goto_working_days($days)
+Moves the date forward or backwards by the number of working `$days` provided.
+
+#### Input:
+- `$days` An integer representing the number of working days to move forward, or when the value is negative the number of working days to move back.
+
+#### Example:
+```php
+/* Cretae a new date with todays date */
+$date = date();
+
+/* Go forward 5 working days */
+$date->goto_working_days(5);
+
+/* Because weekends will be skipped the new date will be seven days from now */
+print $date->date('Y-m-d');
+
+```
+
+--
+
+### goto_months($months)
+Moves the date forward or backwards by the number of `$months` provided.
+
+#### Input:
+- `$months` An integer representing the number of months to move forward, or when the value is negative the number of months to move back.
+
+#### Example:
+```php
+/* Cretae a new date with todays date */
+$date = date();
+
+/* Go back 3 months */
+$date->goto_months(-3);
+```
+
+--
+
+### goto_years($years)
+Moves the date forward or backwards by the number of `$years` provided.
+
+#### Input:
+- `$years` An integer representing the number of years to move forward, or when the value is negative the number of years to move back.
+
+#### Example:
+```php
+/* Cretae a new date with todays date */
+$date = date();
+
+/* Go forward 2 years */
+$date->goto_years(2);
+```
+
+--
+
+### goto_tomorrow()
+Moves the date forward 1 day.
+
+#### Example:
+```php
+/* Cretae a new date  */
+$date = date('2015-08-10');
+
+/* Go to tomorrow */
+$date->goto_tomorrow();
+
+/* Print out the new date */
+print $date->date('Y-m-d');
+
+/*
+ * Prints "2015-08-11"
+ */
+```
+
+--
+
+### goto_yesterday()
+Moves the date backwards 1 day.
+
+#### Example:
+```php
+/* Cretae a new date  */
+$date = date('2015-08-10');
+
+/* Go to yesterday */
+$date->goto_yesterday();
+
+/* Print out the new date */
+print $date->date('Y-m-d');
+
+/*
+ * Prints "2015-08-09"
+ */
+```
+
+--
+
+### goto_next_month()
+Moves the date forward by 1 month.
+
+#### Example:
+```php
+/* Cretae a new date  */
+$date = date('2015-08-10');
+
+/* Go to next month */
+$date->goto_next_month();
+
+/* Print out the new date */
+print $date->date('Y-m-d');
+
+/*
+ * Prints "2015-09-10"
+ */
+```
+
+--
+
+### goto_last_month()
+Moves the date forward by 1 month.
+
+#### Example:
+```php
+/* Cretae a new date  */
+$date = date('2015-08-10');
+
+/* Go to next month */
+$date->goto_next_month();
+
+/* Print out the new date */
+print $date->date('Y-m-d');
+
+/*
+ * Prints "2015-09-10"
+ */
+```
+
+--
