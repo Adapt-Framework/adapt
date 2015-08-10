@@ -5,6 +5,17 @@
 Caches views, SQL statements, pages, javascript, css or any other type of data.  For a more indepth understanding of caching please read [understaning caching in adapt](/docs/caching.md)
 
 ## Table of contents
+- [Methods](#methods)
+    - [get](#getkey)
+    - [get_content_type](#get_content_typekey)
+    - [set](#setkey-data-expires--300-content_type--null-public--false)
+    - [delete](#deletekey)
+    - [sql](#sqlkey-sql_results--array-expires--null)
+    - [view](#viewkey-view-expires--null)
+    - [page](#pagekey-html-expires--null)
+    - [serialize](#serializekey-object-expires--300)
+    - [javascript](#javascriptkey-javascript-expires--600-public--false)
+    - [css](#csskey-css-expires--600-public--false)
 
 ## Methods
 
