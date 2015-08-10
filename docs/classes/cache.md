@@ -41,7 +41,7 @@ Returns the content type of the data held agaisnt a particular key.
 
 --
 
-### set(`$key`, `$data`, `$expires = 300`, `$content_type = null`. `$public = false`)
+### set(`$key`, `$data`, `$expires = 300`, `$content_type = null`, `$public = false`)
 Caches data using a unqiue key for a set period of time.
 
 #### Inputs:
