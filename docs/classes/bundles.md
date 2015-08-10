@@ -108,7 +108,9 @@ Boots a bundle and it's dependencies.  Calling this method without any params wi
 --
 
 ### apply_global_settings()
+Applies the global settings found in **settings.xml**.
 
 --
 
 ### load_settings()
+Loads the global settings from **settings.xml**.
