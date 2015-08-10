@@ -503,7 +503,7 @@ print $date->date('Y-m-d');
 --
 
 ### goto_last_month()
-Moves the date forward by 1 month.
+Moves the date back by 1 month.
 
 #### Example:
 ```php
@@ -520,5 +520,71 @@ print $date->date('Y-m-d');
  * Prints "2015-09-10"
  */
 ```
+
+--
+
+### goto_next_year()
+Moves the date forward 1 year.
+
+#### Example:
+```php
+/* Cretae a new date  */
+$date = date('2015-09-05');
+
+/* Go to next year */
+$date->goto_next_year();
+
+/* Print out the new date */
+print $date->date('Y-m-d');
+
+/*
+ * Prints "2016-09-05"
+ */
+```
+
+--
+
+### goto_last_year()
+Moves the date back 1 year.
+
+#### Example:
+```php
+/* Cretae a new date  */
+$date = date('2015-09-05');
+
+/* Go to next year */
+$date->goto_last_year();
+
+/* Print out the new date */
+print $date->date('Y-m-d');
+
+/*
+ * Prints "2014-09-05"
+ */
+```
+
+--
+
+### goto_hours(`$hours`)
+Moves the date forward or back by the number of `$hours`.
+
+#### Input:
+- `$hours` An integer with the number of hours to move forward or back.
+
+--
+
+### goto_minutes(`$minutes`)
+Moves the date forward or back by the number of `$minutes`.
+
+#### Input:
+- `$minutes` An integer with the number of minutes to move forward or back.
+
+--
+
+### goto_seconds(`$seconds`)
+Moves the date forward or back by the number of `$seconds`.
+
+#### Input:
+- `$seconds` An integer with the number of seconds to move forward or back.
 
 --
