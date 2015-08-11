@@ -71,6 +71,7 @@ namespace frameworks\adapt{
         }
         
         public function delete($key){
+            $key = md5($key);
             $this->file_store->delete($key);
         }
         
