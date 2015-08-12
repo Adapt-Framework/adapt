@@ -119,6 +119,159 @@ EVENT_RENDERED      | 'adapt.rendered'
 EVENT_CHILD_ADDED   | 'adapt.child_added'
 EVENT_CHILD_REMOVED | 'adapt.child_removed'
 
+## Events
+### EVENT_RENDERED
+Is fired when the node is rendered to text.
+
+#### Example:
+```php
+/* Create a node */
+$xml = new xml_node();
+
+/* Add a new event listener */
+$xml->on(
+    xml::EVENT_RENDERED,
+    function($event){
+        /* $event is an array containing the event data */
+    }
+);
+
+/* Trigger the event */
+print $xml_node;
+```
+
+### EVENT_CHILD_ADDED
+Is fired when a child is added to this node.  The child could be text, a number or another instance of `xml`.
+
+### EVENT_CHILD_REMOVED
+Is fired when a child is removed from this node.
+
+## Properties
+### tag (R/W)
+### namesapce (R/W)
+### parent (R/W)
+### text (RO)
+### attributes (RO)
+
+## Magic methods
+### __toString()
+`xml` uses the __toString() magic method to render the node.  This allows you to print or echo any instance of `xml` as if it were a string.
+
+## Methods
+### find(`$selector = null`)
+Returns a new [`aquery`](/docs/classes/aquery.md) object which starts at this node and is optionally filtered by a selector.
+
+#### Input:
+- `$selector` (Optional) A CSS selector used to filter the results
+
+#### Returns:
+- [`aquery`](/docs/classes/aquery.md)
+
+#### Example:
+```php
+/* Create a simple XML structure */
+$raw_xml = "<items><item>1</item><item>2</item><item>3</item></items>";
+
+/* Convert to an instance of xml */
+$xml = xml::parse($raw_xml);
+
+/* Using aquery, find and remove the first item */
+$xml->find('item')->first()->detach();
+
+/* Printout the new XML */
+print $xml;
+```
+
+--
+
+### add(`$item1`, `$item2`, ...)
+Add one or more items to this node.
+
+#### Input:
+This method doesn't have a fixed number of params, you can can add multiple items by suppling them as seperate params or adding a single param containing an array of items.
+
+#### Example:
+This example shows three ways to add items
+```php
+/* Create a node */
+$xml = new xml_node();
+
+/* Add a new child */
+$xml->add(new xml_child_node());
+
+/* Add multiple children without an array */
+$xml->add('item1', new xml_item_2(), new xml_item_3());
+
+/* Add multiple children using an array */
+$items = array(new xml_item_1(), 'Item 2');
+$xml->add($items);
+```
+
+--
+
+### _add(`$child`, `$parse = true`)
+This method is final and cannot be overridden.  This method is used internally by adapt, it can be useful if you wish to add items without them being parsed.
+
+#### Input:
+- `$child` Instance of `xml` or a string.
+- `$parse` (Optional) A boolean indicating if text nodes should be parsed, the default is true.
+
+--
+
+### get(`$index = null`)
+Returns the child at index `$index` or when `$index` is `null` an array containing all children.
+
+#### Input:
+- `$index` (Optional) An integer representing the child node you would like to get.
+
+#### Returns:
+- Either
+    - `array` Containing all children
+    - A single item, could be a string, a number or an instance of `xml`
+
+--
+
+### set(`$index`, `$item`)
+Set a child at the index specified.
+
+#### Input:
+- `$index` The index of the child to be replaced.
+- `$item` The item to store at the specified index.
+
+--
+
+### remove(`$index_or_child = null`)
+Removes a child from this node.  When `$index_or_child` is `null` all children are removed.
+
+#### Input:
+- `$index_or_child` (Optional) The index of the child to remove, or the child itself.
+
+#### Returns:
+- `true` if the child was successfully removed.
+- `false` if the child could not be removed, or the child didn't exist.
+
+--
+
+### clear()
+Removes all child objects from this node.
+
+--
+
+### count()
+Returns a count of the children this node has.
+
+--
+
+### value(`$value = null`)
+Sets or returns the text value of this node.
+
+#### Input:
+- `$value` (Optional) Set the value of the node.
+
+#### Returns:
+- The value of the node
+
+--
 
 
 
