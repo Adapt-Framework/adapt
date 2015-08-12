@@ -8,14 +8,14 @@ This class is used for reading or writing XML, this class represents a single no
 ## Table of contents
 
 ## Examples of usage
-### Wrting XML
+### Writing XML
 
 In this example we will create the following XML structure:
 ```xml
 <adapt_framework>
     <bundle>
         <name>adapt</name>
-    </bundle
+    </bundle>
 </adapt_framework>
 ```
 
@@ -101,3 +101,24 @@ $xml->add($raw_xml);
 $raw_xml = "<bundle><name>adapt</name></bundle>";
 $xml->_add($raw_xml, false);
 ```
+
+## Constructing
+### __construct(`$tag = null`, `$data = null`, `$attributes = null`, `$closing_tag = false`)
+Construct a new XML node.
+
+#### Input:
+- `$tag` The XML node name
+- `$data` (Optional) Any data or child nodes you would like to add.
+- `$attributes` (Optional) As associative array of attribute / value pairs
+- `$closing_tag` (Optional) Should empty tags include the closing tag like `<tag_name></tag_name>` or should it be omitted such as `<tag_name />`.
+
+## Constants
+Name                | Value
+--------------------|-----------------------
+EVENT_RENDERED      | 'adapt.rendered'
+EVENT_CHILD_ADDED   | 'adapt.child_added'
+EVENT_CHILD_REMOVED | 'adapt.child_removed'
+
+
+
+
