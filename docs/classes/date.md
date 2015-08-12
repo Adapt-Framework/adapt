@@ -5,6 +5,50 @@
 Provides easy to use date and time manipulations.  When constructing set the date that you would like to manipulate or leave out to use todays date.
 
 ## Table of contents
+- [Constructing](#contructing)
+- [Constants](#constants)
+- [Properties](#properties)
+    - [year](#year)
+    - [month](#month)
+    - [day](#day)
+    - [hour](#hour)
+    - [minute](#minute)
+    - [second](#second)
+- [Methods](#methods)
+    - [set_date](#set_datedate--null-pattern--null)
+    - [date](#datepattern--null)
+    - [is_past](#is_pastinclude_time--false)
+    - [is_future](#is_futureinclude_time--false)
+    - [is_today](#is_today)
+    - [is_working_day](#is_working_day)
+    - [is_weekend](#is_weekend)
+    - [is_weekday](#is_weekday)
+    - [is_leap_year](#is_leap_year)
+    - [days_in_month](#days_in_month)
+    - [working_days_in_month](#working_days_in_month)
+    - [goto_first_day](#goto_first_dayday--null)
+    - [goto_last_day](#goto_last_dayday--null)
+    - [goto_first_working_day](#goto_first_working_dayday--null)
+    - [goto_last_working_day](#goto_last_working_dayday--null)
+    - [goto_next_day](#goto_next_dayday_of_week)
+    - [goto_second_day](#goto_second_dayday_of_week)
+    - [goto_third_day](#goto_third_dayday_of_week)
+    - [goto_second_working_day](#goto_second_working_dayday_of_week)
+    - [goto_third_working_day](#goto_third_working_dayday_of_week)
+    - [goto_days](#goto_daysdays)
+    - [goto_working_days](#goto_working_daysdays)
+    - [goto_months](#goto_monthsmonths)
+    - [goto_years](#goto_years)
+    - [goto_tomorrow](#goto_tomorrow)
+    - [goto_yesterday](#goto_yesterday)
+    - [goto_next_month](#goto_next_month)
+    - [goto_last_month](#goto_last_month)
+    - [goto_next_year](#goto_next_year)
+    - [goto_last_year](#goto_last_year)
+    - [goto_hours](#goto_hourshours)
+    - [goto_minutes](#goto_minutesminutes)
+    - [goto_seconds](#goto_secondsseconds)
+    
 
 ## Constructing
 ### __construct(`$date = null`)
@@ -132,7 +176,7 @@ if ($date->is_past()){
 
 --
 
-### is_future(`$include_time = fasle`)
+### is_future(`$include_time = false`)
 Checks if a date is in the future, optionally taking into account the time of day.
 
 #### Input:
