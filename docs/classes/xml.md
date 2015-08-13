@@ -273,5 +273,123 @@ Sets or returns the text value of this node.
 
 --
 
+### attr(`$key`, `$value = null`)
+Set or get an attribute for this node.
 
+#### Inputs:
+- `$key` The attribute name to get or set
+- `$value` (Optional) When provided the method acts as a setter, when `null` this method becomes a getter.
+
+
+#### Returns:
+- Either:
+    - A string or number when acting as a getter
+    - `null` when acting as a getter
+
+--
+
+### attribute(`$key`, `$value = null`)
+Alias of [`attr()`](#attrkey-value--null).
+
+--
+
+### remove_attr(`$key`)
+Removes the attribute named `$key` from this node if it exists.
+
+#### Input:
+- `$key` The name of the attribute to be removed.
+
+--
+
+### remove_attribute(`$key`)
+Alias of [`remove_attr`](#remove_attrkey).
+
+--
+
+### has_attr(`$key`)
+Checks if this node has the attribute named `$key`.
+
+#### Input:
+- `$key` The name of the attribute to check.
+
+#### Returns:
+- `true` if the attribute exists.
+- `false` if it doesn't.
+
+--
+
+### has_attribute(`$key`)
+Alias of [`has_attr`](#has_attrkey).
+
+--
+
+### render_attribute(`$key`, `$value`)
+Returns a string containing a single HTML attribute and assocated value.
+
+#### Input:
+- `$key` The attribute name.
+- `$value` The attribute value.
+
+#### Returns:
+- `KEY="VALUE"`
+
+--
+
+### render(`$close_all_empty_tags = false`, `$add_slash_to_empty_tags = true`, `$depth = 0`)
+Renders this node and returns an XML string representation of the node.
+For the most part you can use this method without providing any of the parameters `render()`.  The first two params are used to change the style of XML, the last is used internal by Adapt and can be missed.
+
+When the setting `xml.readable` is set to `Yes` this method will output XML in a human readable form.  By default this setting is set to `No`.
+
+#### Input:
+- `$close_all_empty_tags` (Optional) Should all empty nodes have a `</node_name>` added.  This is only applicable when constructed with `$closing_tag = false`.
+- `$add_slash_to_empty_tags` (Optional) Should empty nodes be expressed as `<node_name />`. This is only applicable when constructed with `$closing_tag = false`.
+- `$depth` (Optional) When outputing XML in human readable form, `$depth` would be the number of spaces to be inserted before the opening tag.  Adapt will handle this automatically.
+
+#### Returns:
+- A XML string representation of this node.
+
+
+## Static Methods
+### escape(`$string`)
+Returns an XML escaped string.
+
+#### Input:
+- `$string` The string to be escaped.
+
+#### Returns:
+- An XML escaped string.
+
+--
+
+### Unescape(`$string`)
+Take an XML escaped string and unescapes it.
+
+#### Inputs:
+- `$string` An XML escaped string
+
+#### Returns:
+- A string
+
+--
+
+### parse(`$data`, `$return_as_document = false`, `$alternative_first_node_object = null`)
+Takes an XML string as `$data` and returns an `xml` object.
+
+#### Input:
+- `$data` An XML string.
+- `$return_as_document` (Optional) When `true` the method returns a [`xml_document`](/docs/classes/xml_document.md) object instead of an `xml` object.
+- `$alternative_first_node_object` (Optional) When provided the method return this object instead of an `xml` object.  `$alternative_first_node_object` must be an instance of `xml` (via inheritance) and when provided overrides `$return_as_document`.
+
+--
+
+### is_xml(`$string`)
+Determins if a string is likely XML or not.  This method **does not** validate the XML.
+
+#### Input:
+- `$string` The string to be checked.
+
+#### Returns:
+- `true` if it *looks* like XML
+- `false` if it isn't XML
 

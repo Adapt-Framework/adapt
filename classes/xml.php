@@ -439,9 +439,8 @@ namespace frameworks\adapt{
                             $node = $alternative_first_node_object;
                     }else{
                         if ($return_as_document){
-                            $node = new \application\xml_document(); //ISSUE: Application namespace?
+                            $node = new xml_document();
                         }else{
-                            //$node = new \application\xml(); //ISSUE: Application namespace?
                             $node = new xml();
                         }
                     }
