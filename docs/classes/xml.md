@@ -381,6 +381,12 @@ Takes an XML string as `$data` and returns an `xml` object.
 - `$return_as_document` (Optional) When `true` the method returns a [`xml_document`](/docs/classes/xml_document.md) object instead of an `xml` object.
 - `$alternative_first_node_object` (Optional) When provided the method return this object instead of an `xml` object.  `$alternative_first_node_object` must be an instance of `xml` (via inheritance) and when provided overrides `$return_as_document`.
 
+#### Returns:
+- Either:
+    - `xml`
+    - [`xml_document`](/docs/classes/xml_document.md)
+    - `$alternative_first_node_object`
+
 --
 
 ### is_xml(`$string`)

@@ -71,7 +71,11 @@ namespace frameworks\adapt{
             $this->initialise();
             
             if (isset($id)){
-                $this->load($id);
+                if (is_numeric($id)){
+                    $this->load($id);
+                }elseif(is_string($id)){
+                    $this->load_by_name($id);
+                }
             }
         }
         
