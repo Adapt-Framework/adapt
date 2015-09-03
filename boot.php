@@ -123,15 +123,17 @@ $adapt->cache = new \frameworks\adapt\cache();
  * Is the current page cached?
  */
 if (!isset($adapt->request['actions'])){
-    $key = $_SERVER['REQUEST_URI'];
-    $page = $adapt->cache->get($key);
-    if ($page){
-        $content_type = $adapt->cache->get_content_type($key);
-        
-        if ($content_type){
-            header("content-type: {$content_type}");
-            print $page;
-            exit(0);
+    if ($_SERVER && is_array($_SERVER) && isset($_SERVER['REQUEST_URI'])){
+        $key = $_SERVER['REQUEST_URI'];
+        $page = $adapt->cache->get($key);
+        if ($page){
+            $content_type = $adapt->cache->get_content_type($key);
+            
+            if ($content_type){
+                header("content-type: {$content_type}");
+                print $page;
+                exit(0);
+            }
         }
     }
 }
@@ -153,7 +155,10 @@ if ($bundle_adapt && $bundle_adapt instanceof \frameworks\adapt\bundle){
 /*
  * Create the root view
  */
-$adapt->dom = new \frameworks\adapt\page();
+//if ($_SERVER && is_array($_SERVER)){
+    $adapt->dom = new \frameworks\adapt\page();
+//}
+
 
 //$time = microtime(true) - $time_offset;
 //print "<pre>Time to load the dom: " . $time . "</pre>";
@@ -211,9 +216,27 @@ if (isset($_SERVER['SHELL'])){
         if (isset($adapt->request['actions'])){
             $actions = explode(",", $adapt->request['actions']);
             
-            foreach($actions as $action){
-                $controller->route($action, true);
+            for($i = 0; $i < count($actions); $i++){
+                $adapt->store('adapt.current_action', $actions[$i]);
+                if ($i < count($actions)){
+                    $adapt->store('adapt.next_action', $actions[$i + 1]);
+                }else{
+                    $adapt->remove_store('adapt.next_action');
+                }
+                $controller->route($actions[$i], true);
             }
+            $adapt->remove_store('adapt.current_action');
+            $adapt->remove_store('adapt.next_action');
+            
+            /* Are we redirecting? */
+            if (!is_null($adapt->store('adapt.redirect'))){
+                header('location:' . $adapt->store('adapt.redirect'));
+                exit(0);
+            }
+            
+            //foreach($actions as $action){
+            //    $controller->route($action, true);
+            //}
         }
         
         $output = $controller->route($adapt->request['url']);

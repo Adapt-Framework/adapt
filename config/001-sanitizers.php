@@ -111,7 +111,7 @@ namespace frameworks\adapt{
         "
     );
     
-    $adapt->sanitize->add_validator('time', "^([0-9]|1[0-9]|2[0-3])-([0-5][0-9])-([0-5][0-9])$");
+    $adapt->sanitize->add_validator('time', "^([0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$");
     
     $adapt->sanitize->add_validator(
         'datetime',

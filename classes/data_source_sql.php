@@ -285,6 +285,7 @@ namespace frameworks\adapt{
                             }
                             
                             if (!is_null($validator)){
+                                
                                 if (!$this->sanitize->validate($validator, $value)){
                                     $this->error("The value of '{$value}' for {$table_name}.{$field_name} is not valid");
                                     $valid = false;

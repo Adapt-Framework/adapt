@@ -196,7 +196,6 @@ namespace frameworks\adapt{
                         
                         /* Is the new value valid? */
                         if ($this->data_source->validate($this->_table_name, $key, $value)){
-                            
                             $this->_has_changed = true;
                             $this->_changed_fields[$key] = array(
                                 'old_value' => $this->_data[$key],
@@ -724,15 +723,17 @@ namespace frameworks\adapt{
                 
                 foreach($fields as $field){
                     $references = $this->data_source->get_references($this->table_name, $field);
-                    foreach($references as $ref){
-                        foreach($children as $child){
-                            if ($child instanceof model && $child->table_name == $ref['table_name']){
-                                if ($child->save()){
-                                    $child_field_name = $ref['field_name'];
-                                    $this->$field = $child->$child_field_name;
-                                }else{
-                                    $this->error("Failed to save child '{$child->table_name}'");
-                                    $return = false;
+                    if ($references && is_array($references)){
+                        foreach($references as $ref){
+                            foreach($children as $child){
+                                if ($child instanceof model && $child->table_name == $ref['table_name']){
+                                    if ($child->save()){
+                                        $child_field_name = $ref['field_name'];
+                                        $this->$field = $child->$child_field_name;
+                                    }else{
+                                        $this->error("Failed to save child '{$child->table_name}'");
+                                        $return = false;
+                                    }
                                 }
                             }
                         }
@@ -1165,6 +1166,7 @@ namespace frameworks\adapt{
                     
                     
                     for($i = 0; $i < $record_count; $i++){
+                        
                         if (is_null($record_processed)){
                             if ($this->is_loaded){
                                 /* Only if the keys match */
@@ -1174,7 +1176,6 @@ namespace frameworks\adapt{
                                         $keys_required--;
                                     }
                                 }
-                                
                                 if ($keys_required == 0){
                                     /* We can accept */
                                     $record_processed = $i;
@@ -1192,7 +1193,6 @@ namespace frameworks\adapt{
                                         $keys_required--;
                                     }
                                 }
-                                
                                 
                                 if ($keys_required == count($keys)){
                                     /* We can accept */

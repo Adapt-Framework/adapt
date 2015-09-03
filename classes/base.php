@@ -370,7 +370,7 @@ namespace frameworks\adapt{
         /*
          * Page redirection
          */
-        public function redirect($url, $pass_on_response = true){
+        public function redirect($url, $pass_on_response = true, $no_wait = false){
             if ($pass_on_response){
                 $response = $this->store('adapt.response');
                 if (is_array($response)){
@@ -379,9 +379,21 @@ namespace frameworks\adapt{
                 }
             }
             
-            header("location: {$url}");
+            /* Do we have any actions pending?
+             * If we do then we are going to store
+             * the url against adapt.redirect and
+             * the boot process will then handle
+             * on our behalf once the remaining
+             * actions are processed.
+             */
             
-            exit(0);
+            if (is_null($this->store('adapt.next_action')) || $no_wait){
+                /* Redirect now */
+                header("location: {$url}");
+                exit(0);
+            }else{
+                $this->store('adapt.redirect', $url);
+            }
         }
         
         /*
