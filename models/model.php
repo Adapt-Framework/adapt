@@ -305,6 +305,34 @@ namespace frameworks\adapt{
         }
         
         /*
+         * Cloning functions
+         */
+        public function copy(){
+            $class = get_class($this);
+            $copy = new $class;
+            
+            /* Clone the data */
+            $fields = array_keys($this->_data);
+            $keys = $this->data_source->get_primary_keys($this->_table_name);
+            
+            foreach($fields as $field){
+                if (!in_array($field, array_merge($keys, array('date_created', 'date_deleted', 'date_modified')))){
+                    $copy->$field = $this->$field;
+                }
+            }
+            
+            /* Clone the children */
+            $children = $this->get();
+            foreach($children as $child){
+                if ($child instanceof model){
+                    $copy->add($child->copy());
+                }
+            }
+            
+            return $copy;
+        }
+        
+        /*
          * Loading functions
          */
         public function load($id){
