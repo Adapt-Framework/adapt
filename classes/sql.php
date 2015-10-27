@@ -531,7 +531,7 @@ namespace frameworks\adapt{
             return $this;
         }
         
-        public function foreign_key($field_name, $reference_table_name, $reference_field_name, $on_delete = self::ON_DELETE_CASCADE){
+        public function foreign_key($field_name, $reference_table_name, $reference_field_name, $on_delete = self::ON_DELETE_SET_NULL){
             $this->_foreign_keys[] = array(
                 'field_name' => $field_name,
                 'reference_table_name' => $reference_table_name,
@@ -1000,14 +1000,20 @@ namespace frameworks\adapt{
                         //}
                     }else{
                         /* Are the results cached? */
-                        $results = $this->cache->get($sql);
+                        $results = null;
+                        if ($time_to_cache !== 0){
+                            $results = $this->cache->get($sql);
+                        }
+                        
                         if (is_array($results)){
                             $this->_results = $results;
                         }else{
                             //print new html_pre("Unable to pull from cache: {$sql}");
                             if ($sth = $this->data_source->read($sql)){
                                 $results = $this->data_source->fetch($sth, \frameworks\adapt\data_source_sql::FETCH_ALL_ASSOC);
-                                $this->cache->sql($sql, $results, $time_to_cache);
+                                if ($time_to_cache !== 0){
+                                    $this->cache->sql($sql, $results, $time_to_cache);
+                                }
                                 $this->_results = $results;
                             }
                         }

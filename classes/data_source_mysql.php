@@ -872,6 +872,7 @@ namespace frameworks\adapt{
                  */
                 foreach($this->_data_types as $data_type){
                     if ($data_type['name'] == $type && isset($data_type['based_on_data_type'])){
+                        //print "<pre>Converting: {$data_type['name']} to {$data_type['based_on_data_type']}</pre>";
                         return $this->convert_data_type($data_type['based_on_data_type']);
                     }
                 }

@@ -441,19 +441,19 @@ namespace frameworks\adapt{
         /*
          * Schema loading
          */
-        protected function load_schema(){
+        public function load_schema(){
             $this->schema = $this->sql
                 ->select(new sql('*'))
                 ->from('field')
                 ->where(new sql_condition(new sql('date_deleted'), 'is', new sql('null')))
-                ->execute()
+                ->execute(0)
                 ->results();
             
             $this->data_types = $this->sql
                 ->select(new sql('*'))
                 ->from('data_type')
                 ->where(new sql_condition(new sql('date_deleted'), 'is', new sql('null')))
-                ->execute()
+                ->execute(0)
                 ->results();
             
             

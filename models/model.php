@@ -164,54 +164,53 @@ namespace frameworks\adapt{
          * Dynamic functions
          */
         public function __get($key){
-            $return = parent::__get($key);
+            $return = null;
             
-            if (is_null($return)){
-                /* Is this a real field? */
-                $fields = array_keys($this->_data);
+            $fields = array_keys($this->_data);
                 
-                if (in_array($key, $fields)){
-                    
-                    /* Format and return the value */
-                    return $this->data_source->format($this->_table_name, $key, $this->_data[$key]);
-                }
+            if (in_array($key, $fields)){
+                
+                /* Format and return the value */
+                return $this->data_source->format($this->_table_name, $key, $this->_data[$key]);
+            }else{
+                $return = parent::__get($key);
             }
             
             return $return;
         }
         
         public function __set($key, $value){
-            $return = parent::__set($key, $value);
+            $return = null;
             
-            if ($return === false){
-                $fields = array_keys($this->_data);
+            $fields = array_keys($this->_data);
                 
-                if (in_array($key, $fields)){
+            if (in_array($key, $fields)){
+                
+                /* Unformat the value */
+                $value = $this->data_source->unformat($this->table_name, $key, $value);
+                
+                /* Has the value changed? */
+                if ($this->_data[$key] != $value){
                     
-                    /* Unformat the value */
-                    $value = $this->data_source->unformat($this->table_name, $key, $value);
-                    
-                    /* Has the value changed? */
-                    if ($this->_data[$key] != $value){
+                    /* Is the new value valid? */
+                    if ($this->data_source->validate($this->_table_name, $key, $value)){
+                        $this->_has_changed = true;
+                        $this->_changed_fields[$key] = array(
+                            'old_value' => $this->_data[$key],
+                            'new_value' => $value
+                        );
                         
-                        /* Is the new value valid? */
-                        if ($this->data_source->validate($this->_table_name, $key, $value)){
-                            $this->_has_changed = true;
-                            $this->_changed_fields[$key] = array(
-                                'old_value' => $this->_data[$key],
-                                'new_value' => $value
-                            );
-                            
-                            $this->_data[$key] = $value;
-                            
-                        }else{
-                            $errors = $this->data_source->errors(true);
-                            foreach($errors as $error) $this->error($error);
-                        }
+                        $this->_data[$key] = $value;
                         
+                    }else{
+                        $errors = $this->data_source->errors(true);
+                        foreach($errors as $error) $this->error($error);
                     }
                     
                 }
+                
+            }else{
+                $return = parent::__set($key, $value);
             }
             
             return $return;
