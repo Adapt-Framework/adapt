@@ -164,6 +164,20 @@ namespace frameworks\adapt{
          * Dynamic functions
          */
         public function __get($key){
+            $return = parent::__get($key);
+            
+            if (is_null($return)){
+                $fields = array_keys($this->_data);
+                    
+                if (in_array($key, $fields)){
+                    /* Format and return the value */
+                    return $this->data_source->format($this->_table_name, $key, $this->_data[$key]);
+                }
+                
+            }
+            
+            return $return;
+            
             $return = null;
             
             $fields = array_keys($this->_data);
@@ -180,6 +194,41 @@ namespace frameworks\adapt{
         }
         
         public function __set($key, $value){
+            $return = parent::__set($key, $value);
+            
+            if ($return === false){
+                $fields = array_keys($this->_data);
+                
+                if (in_array($key, $fields)){
+                    
+                    /* Unformat the value */
+                    $value = $this->data_source->unformat($this->table_name, $key, $value);
+                    
+                    /* Has the value changed? */
+                    if ($this->_data[$key] != $value){
+                        
+                        /* Is the new value valid? */
+                        if ($this->data_source->validate($this->_table_name, $key, $value)){
+                            $this->_has_changed = true;
+                            $this->_changed_fields[$key] = array(
+                                'old_value' => $this->_data[$key],
+                                'new_value' => $value
+                            );
+                            
+                            $this->_data[$key] = $value;
+                            
+                        }else{
+                            $errors = $this->data_source->errors(true);
+                            foreach($errors as $error) $this->error($error);
+                        }
+                        
+                    }
+                    
+                }
+            }
+            
+            return $return;
+            
             $return = null;
             
             $fields = array_keys($this->_data);
