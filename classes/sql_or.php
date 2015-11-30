@@ -31,7 +31,7 @@ namespace frameworks\adapt{
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
     
-    class sql_and extends sql{
+    class sql_or extends sql{
         
         protected $_conditions = array();
         

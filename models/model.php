@@ -200,6 +200,7 @@ namespace frameworks\adapt{
                 $fields = array_keys($this->_data);
                 
                 if (in_array($key, $fields)){
+                    $return = true;
                     
                     /* Unformat the value */
                     $value = $this->data_source->unformat($this->table_name, $key, $value);
@@ -556,42 +557,23 @@ namespace frameworks\adapt{
                 /* Load children */
                 if ($this->_auto_load_children == true){
                     /* Get a copy of the full schema */
-                    $schema = $this->data_source->schema;
+                    //$schema = $this->data_source->schema;
                     
-                    /* Find all the references to this table */
-                    $tables = array();
-                    foreach($schema as $field){
+                    //print new html_pre("Dataset list:" . print_r($this->data_source->get_dataset_list(), true));
+                    //$tables = $this->data_source->get_dataset_list();
+                    $tables = $this->_auto_load_only_tables;
+                    //$relationships = array();
+                    
+                    foreach($tables as $table){
+                        //$relationships[] = array_merge(
+                        //    array('table1' => $this->table_name, 'table2' => $table),
+                        //    $this->data_source->get_relationship($this->table_name, $table)
+                        //);
+                        $relationship = $this->data_source->get_relationship($this->table_name, $table);
                         
-                        if ($field['referenced_table_name'] == $this->_table_name){
-                            foreach($keys as $key){
-                                if ($key == $field['referenced_field_name']){
-                                    $tables[$field['table_name']] = $field['field_name'];
-                                }
-                            }
-                        }
-                    }
-                    
-                    /* Shoud we limit the tables we load? */
-                    if (count($this->_auto_load_only_tables) > 0){
-                        $final_tables = array();
-                        foreach($tables as $table_name => $field){
-                            if (in_array($table_name, $this->_auto_load_only_tables)){
-                                $final_tables[$table_name] = $field;
-                            }
-                        }
-                        $tables = $final_tables;
-                    }
-                    //print new html_pre(print_r($tables, true));
-                    /* Load the children */
-                    foreach($tables as $table_name => $field_name){
                         $sql = $this->data_source->sql;
                         $sql->select('*');
-                        $sql->from($table_name);
-                        
-                        /*
-                         * Whats the relationship between the tables?
-                         */
-                        $relationship = $this->data_source->get_relationship($this->table_name, $table_name);
+                        $sql->from($table);
                         
                         if (is_array($relationship)){
                             $field_key = $relationship['field1'];
@@ -601,10 +583,8 @@ namespace frameworks\adapt{
                             $where_sql = new sql_condition(new sql($key), ' = ', $this->$key);
                         }
                         
-                        
-                        
                         /* Do we have a date_deleted field? */
-                        $date_deleted = $this->data_source->get_field_structure($table_name, 'date_deleted');
+                        $date_deleted = $this->data_source->get_field_structure($table, 'date_deleted');
                         
                         if (is_array($date_deleted) && count($date_deleted) > 0){
                             
@@ -615,12 +595,14 @@ namespace frameworks\adapt{
                         $sql->where($where_sql);
                         
                         /* Do we have a priority field? */
-                        $priority = $this->data_source->get_field_structure($table_name, 'priority');
+                        $priority = $this->data_source->get_field_structure($table, 'priority');
                         
                         if (is_array($priority) && count($priority) > 0){
                             
                             $sql->order_by(new sql('priority'));
                         }
+                        
+                        
                         //print new html_pre($sql);
                         /* Execute the statement */
                         if ($sql->execute()){
@@ -628,7 +610,7 @@ namespace frameworks\adapt{
                             
                             /* Load the models */
                             foreach($results as $result){
-                                $model = "model_" . $table_name;
+                                $model = "model_" . $table;
                                 if (class_exists($model)){
                                     $model = new $model();
                                     if ($model instanceof \frameworks\adapt\model){
@@ -640,8 +622,96 @@ namespace frameworks\adapt{
                                 }
                             }
                         }
-                        
                     }
+                    
+                    //print new html_pre(print_r($relationships, true));
+                    
+                    /* Find all the references to this table */
+                    //$tables = array();
+                    //foreach($schema as $field){
+                    //    
+                    //    if ($field['referenced_table_name'] == $this->_table_name){
+                    //        foreach($keys as $key){
+                    //            if ($key == $field['referenced_field_name']){
+                    //                $tables[$field['table_name']] = $field['field_name'];
+                    //            }
+                    //        }
+                    //    }
+                    //}
+                    
+                    //print new html_pre("References for {$this->table_name}" . print_r($tables, true));
+                    
+                    /* Shoud we limit the tables we load? */
+                    //if (count($this->_auto_load_only_tables) > 0){
+                    //    $final_tables = array();
+                    //    foreach($tables as $table_name => $field){
+                    //        if (in_array($table_name, $this->_auto_load_only_tables)){
+                    //            $final_tables[$table_name] = $field;
+                    //        }
+                    //    }
+                    //    $tables = $final_tables;
+                    //}
+                    //print new html_pre(print_r($tables, true));
+                    /* Load the children */
+                    //foreach($tables as $table_name => $field_name){
+                    //    $sql = $this->data_source->sql;
+                    //    $sql->select('*');
+                    //    $sql->from($table_name);
+                    //    
+                    //    /*
+                    //     * Whats the relationship between the tables?
+                    //     */
+                    //    $relationship = $this->data_source->get_relationship($this->table_name, $table_name);
+                    //    
+                    //    if (is_array($relationship)){
+                    //        $field_key = $relationship['field1'];
+                    //        $where_sql = new sql_condition(new sql("{$relationship['field2']}"), ' = ', $this->$field_key);
+                    //    }else{
+                    //        $key = $keys[0];
+                    //        $where_sql = new sql_condition(new sql($key), ' = ', $this->$key);
+                    //    }
+                    //    
+                    //    
+                    //    
+                    //    /* Do we have a date_deleted field? */
+                    //    $date_deleted = $this->data_source->get_field_structure($table_name, 'date_deleted');
+                    //    
+                    //    if (is_array($date_deleted) && count($date_deleted) > 0){
+                    //        
+                    //        /* We need to add the date deleted field */
+                    //        $where_sql = new sql_and($where_sql, new sql_condition(new sql('date_deleted'), 'is', new sql('null')));
+                    //    }
+                    //    
+                    //    $sql->where($where_sql);
+                    //    
+                    //    /* Do we have a priority field? */
+                    //    $priority = $this->data_source->get_field_structure($table_name, 'priority');
+                    //    
+                    //    if (is_array($priority) && count($priority) > 0){
+                    //        
+                    //        $sql->order_by(new sql('priority'));
+                    //    }
+                    //    //print new html_pre($sql);
+                    //    /* Execute the statement */
+                    //    if ($sql->execute()){
+                    //        $results = $sql->results();
+                    //        
+                    //        /* Load the models */
+                    //        foreach($results as $result){
+                    //            $model = "model_" . $table_name;
+                    //            if (class_exists($model)){
+                    //                $model = new $model();
+                    //                if ($model instanceof \frameworks\adapt\model){
+                    //                    if ($model->load_by_data($result)){
+                    //                        /* Add the child */
+                    //                        $this->add($model);
+                    //                    }
+                    //                }
+                    //            }
+                    //        }
+                    //    }
+                    //    
+                    //}
                     
                 }
                 

@@ -459,21 +459,24 @@ namespace frameworks\adapt{
         }
         
         public function wrap($wrapper){
-            if ($wrapper instanceof xml) $wrapper = strval($wrapper->render());
+            if ($wrapper instanceof xml){
+                $wrapper = strval($wrapper->render());
+            }
             
             foreach($this->elements as $e){
                 $node = xml::parse($wrapper);
                 
                 if ($e->parent instanceof xml){
                     $children = $e->parent->get();
-                    $e->parent->clear();
                     $parent = $e->parent;
+                    $e->parent->clear();
+                    
                     foreach($children as $c){
                         if ($c === $e){
                             $node->add($e);
-                            $parent->add($node);
+                            $parent->_add($node);
                         }else{
-                            $parent->add($c);
+                            $parent->_add($c);
                         }
                     }
                 }

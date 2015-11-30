@@ -176,6 +176,8 @@ namespace frameworks\adapt{
                 
                 $matches = array();
                 if (preg_match_all("/\.(-|\w)+/", $pre_data, $matches)){
+                //if (preg_match_all("/\.(\w)+/", $pre_data, $matches)){
+                    //print new html_pre("{$pre_data} -> " . print_r($matches[0], true));
                     foreach($matches[0] as $class){
                         if (strlen($class) > 1){
                             $class = substr($class, 1);
