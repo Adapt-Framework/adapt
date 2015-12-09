@@ -38,20 +38,22 @@ namespace frameworks\adapt{
         }
         
         public function get($key){
-            $key = md5($key);
-            $data = $this->file_store->get($key);
-            if (!is_null($data)){
-                $expires = $this->file_store->get_meta_data($key, 'expires');
-                if (!is_null($expires)){
-                    $date = new date($expires);
-                    if ($date->is_past(true)){
-                        $this->file_store->delete($key);
-                        return null;
-                    }else if ($this->file_store->get_content_type($key) == 'application/octet-stream'){
-                        $data = unserialize($data);
+            if (strtolower($this->setting('adapt.disable_caching')) != 'yes'){
+                $key = md5($key);
+                $data = $this->file_store->get($key);
+                if (!is_null($data)){
+                    $expires = $this->file_store->get_meta_data($key, 'expires');
+                    if (!is_null($expires)){
+                        $date = new date($expires);
+                        if ($date->is_past(true)){
+                            $this->file_store->delete($key);
+                            return null;
+                        }else if ($this->file_store->get_content_type($key) == 'application/octet-stream'){
+                            $data = unserialize($data);
+                        }
+                        
+                        return $data;
                     }
-                    
-                    return $data;
                 }
             }
             return null;
@@ -63,11 +65,13 @@ namespace frameworks\adapt{
         }
         
         public function set($key, $data, $expires = 300, $content_type = null, $public = false){
-            $key = md5($key);
-            $this->file_store->set($key, $data, $content_type, $public);
-            $date = new date();
-            $date->goto_seconds($expires);
-            $this->file_store->set_meta_data($key, 'expires', $date->date('Y-m-d H:i:s'));
+            if (strtolower($this->setting('adapt.disable_caching')) != 'yes'){
+                $key = md5($key);
+                $this->file_store->set($key, $data, $content_type, $public);
+                $date = new date();
+                $date->goto_seconds($expires);
+                $this->file_store->set_meta_data($key, 'expires', $date->date('Y-m-d H:i:s'));
+            }
         }
         
         public function delete($key){

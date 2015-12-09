@@ -66,6 +66,14 @@ namespace frameworks\adapt{
             return null;
         }
         
+        public function pget_label(){
+            if ($this->is_loaded && isset($this->_descriptor['label'])){
+                return $this->_descriptor['label'];
+            }
+            
+            return null;
+        }
+        
         public function pget_booted(){
             return $this->_booted;
         }
@@ -80,6 +88,30 @@ namespace frameworks\adapt{
         
         public function pget_bundle_path(){
             return $this->_path;
+        }
+        
+        public function pget_schema_installed(){
+            if ($this->is_loaded && isset($this->_descriptor['schema_installed'])){
+                return $this->_descriptor['schema_installed'];
+            }
+            
+            return null;
+        }
+        
+        public function pget_is_installed(){
+            if ($this->is_loaded){
+                if (file_exists($this->bundle_path . "install.php")){
+                    if ($this->schema_installed == "Yes"){
+                        return true;
+                    }else{
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            return false;
         }
         
         /*
@@ -280,8 +312,8 @@ namespace frameworks\adapt{
                 
                 if (!isset($this->_descriptor['schema_installed']) || (strtolower($this->_descriptor['schema_installed']) != 'yes')){
                     $this->store('adapt.installing_bundle', $this->name);
-                    print "<pre>Installing: {$this->name}</pre>";
                     if (file_exists($this->bundle_path . "install.php")){
+                        //print "<pre>Installing: {$this->name}</pre>";
                         require_once($this->bundle_path . "install.php");
                     }
                     

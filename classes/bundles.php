@@ -283,7 +283,7 @@ namespace frameworks\adapt{
                                 }
                                 
                                 fclose($fp);
-                                return true;
+                                return $name;
                             }
                         }
                         

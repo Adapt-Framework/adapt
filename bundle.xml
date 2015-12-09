@@ -139,8 +139,228 @@
           <label>How long should we cache pages? (In seconds)</label>
           <default_value>300</default_value>
         </setting>
+        <setting>
+          <name>adapt.disable_caching</name>
+          <label>Disable all caching</label>
+          <default_value>No</default_value>
+          <allowed_values>
+            <value>Yes</value>
+            <value>No</value>
+          </allowed_values>
+        </setting>
       </category>
     </settings>
-    <schema_installed>Yes</schema_installed>
+    <schema>
+      <add>
+        <table name="data_type">
+          <field name="data_type_id" key="primary" auto-increment="Yes">
+            <label>Data type #</label>
+            <description>A unique ID for this data type</description>
+            <data_type>bigint</data_type>
+          </field>
+          <field name="bundle_name">
+            <label>Bundle name</label>
+            <description>The bundle that created this data type</description>
+            <data_type>varchar</data_type>
+            <max_length>128</max_length>
+            <nullable>No</nullable>
+          </field>
+          <field name="name" index="Yes" index-size="32">
+            <label>Name</label>
+            <description>The data type name</description>
+            <data_type>varchar</data_type>
+            <max_length>128</max_length>
+            <nullable>No</nullable>
+          </field>
+          <field name="based_on_data_type">
+            <label>Based on</label>
+            <description>The name of the data type this one is based on</description>
+            <data_type>text</data_type>
+            <nullable>Yes</nullable>
+          </field>
+          <field name="validator">
+            <label>Validator</label>
+            <description>The name of the validator used to validate this data type</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+          </field>
+          <field name="formatter">
+            <label>Formatter</label>
+            <description>The name of the formatter used to formatter this data type</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+          </field>
+          <field name="unformatter">
+            <label>Unformatter</label>
+            <description>The name of the unformatter used to unformat this data type</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+          </field>
+          <field name="datetime_format">
+            <label>Datetime format</label>
+            <description>If this is a datatime field then this is the default display format</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+          </field>
+          <field name="max_length">
+            <label>Max length</label>
+            <description>The max length of this data type</description>
+            <data_type>int</data_type>
+          </field>
+          <record>
+            <name>tinyint</name>
+            <validator>tinyint</validator>
+          </record>
+          <record>
+            <name>smallint</name>
+            <validator>smallint</validator>
+          </record>
+        </table>
+        <table name="field">
+          <field name="field_id" key="primary" auto-increment="Yes">
+            <label>Field #</label>
+            <data_type>bigint</data_type>
+          </field>
+          <field name="bundle_name">
+            <label>Bundle name</label>
+            <description>The bundle that created this field</description>
+            <data_type>varchar</data_type>
+            <max_length>128</max_length>
+            <nullable>No</nullable>
+          </field>
+          <field name="table_name">
+            <label>Table name</label>
+            <description>The table to which this field belongs</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+            <nullable>No</nullable>
+          </field>
+          <field name="field_name" index="Yes" index-size="32">
+            <label>Field name</label>
+            <description>The name of this field</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+            <nullable>No</nullable>
+          </field>
+          <field name="referenced_table_name">
+            <label>Referenced table name</label>
+            <description>The name of the table being referenced</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+          </field>
+          <field name="referenced_field_name">
+            <label>Referenced field name</label>
+            <description>The name of the field being referenced</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+          </field>
+          <field name="label">
+            <label>The label for this field</label>
+            <description>A descriptive label to be displayed next to the field.</description>
+            <data_type>varchar</data_type>
+            <max_length>128</max_length>
+          </field>
+          <field name="placeholder_label">
+            <label>A placeholder label for this field</label>
+            <description>Appears in the background of the field while it is empty.</description>
+            <data_type>varchar</data_type>
+            <max_length>128</max_length>
+          </field>
+          <field name="description">
+            <label>A description of the field</label>
+            <description>A descriptive description of the field</description>
+            <data_type>text</data_type>
+          </field>
+          <field name="data_type_id" key="foreign" referenced-table-name="data_type" referenced-field-name="data_type_id">
+            <label>Data type</label>
+            <description>The data type used to capture and store data for this field</description>
+            <data_type>bigint</data_type>
+            <max_length>128</max_length>
+          </field>
+          <field name="primary_key">
+            <label>Primary key?</label>
+            <description>Is this field a primary key?</description>
+            <data_type>enum('Yes', 'No')</data_type>
+            <default_value>Yes</default_value>
+            <nullable>No</nullable>
+          </field>
+          <field name="signed">
+            <label>Signed?</label>
+            <description>Should the numeric value be signed?</description>
+            <data_type>enum('Yes', 'No')</data_type>
+            <default_value>Yes</default_value>
+            <nullable>No</nullable>
+          </field>
+          <field name="nullable">
+            <label>Nullable?</label>
+            <description>Can this field be null?</description>
+            <data_type>enum('Yes', 'No')</data_type>
+            <default_value>Yes</default_value>
+            <nullable>No</nullable>
+          </field>
+          <field name="auto_increment">
+            <label>Auto increment?</label>
+            <description>Should this field auto-increment?</description>
+            <data_type>enum('Yes', 'No')</data_type>
+            <default_value>No</default_value>
+            <nullable>No</nullable>
+          </field>
+          <field name="timestamp">
+            <label>Primary key?</label>
+            <description>Is this field a primary key?</description>
+            <data_type>enum('Yes', 'No')</data_type>
+            <default_value>Yes</default_value>
+            <nullable>No</nullable>
+          </field>
+          <field name="max_length">
+            <label>Max length?</label>
+            <description>What is the maximum length of this field?</description>
+            <data_type>int</data_type>
+            <nullable>Yes</nullable>
+          </field>
+          <field name="default_value">
+            <label>Default value</label>
+            <description>The default value for this field.</description>
+            <data_type>varchar</data_type>
+            <max_length>128</max_length>
+            <nullable>Yes</nullable>
+          </field>
+          <field name="allowed_values">
+            <label>Allowed values</label>
+            <description>A JSON encoded array containing values, or keys and values.</description>
+            <data_type>text</data_type>
+            <nullable>Yes</nullable>
+          </field>
+          <field name="lookup_table">
+            <label>Lookup table</label>
+            <description>Which table should be used for the values of this field?</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+            <nullable>Yes</nullable>
+          </field>
+          <field name="depends_on_table_name">
+            <label>Dependent table</label>
+            <description>Which table is this field dependent on?</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+            <nullable>Yes</nullable>
+          </field>
+          <field name="depends_on_field_name">
+            <label>Dependent field</label>
+            <description>Which field is this field dependent on?</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+            <nullable>Yes</nullable>
+          </field>
+          <field name="depends_on_value">
+            <label>Dependent value</label>
+            <description>What value should the dependent field be?</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+            <nullable>Yes</nullable>
+          </field>
+        </table>
+      </add>
+    </schema>
   </bundle>
 </adapt_framework>
