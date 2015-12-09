@@ -1,134 +1,175 @@
 <?php
 
-/*
- * The MIT License (MIT)
- *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
- *   
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *   
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *   
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *  
- */
-
 namespace frameworks\adapt{
     
-    /*
-     * Prevent direct access
-     */
+    /* Prevent Direct Access */
     defined('ADAPT_STARTED') or die;
     
-    class bundle extends base{
+    /*abstract*/ class bundle extends base{
         
-        protected $_descriptor;
-        protected $_booted;
         protected $_path;
+        protected $_data;
+        protected $_has_changed;
+        protected $_is_loaded;
         
-        
-        public function __construct($bundle_name = null){
+        public function __construct($bundle_name){
             parent::__construct();
-            
-            $this->_descriptor = array();
-            $this->_booted = false;
-            
-            if (!is_null($bundle_name)){
-                $this->load($bundle_name);
+            $this->load($bundle_name);
+        }
+        
+        /*
+         * Magic methods
+         */
+        public function __get($key){
+            if ($this->_is_loaded && $this->_data instanceof xml){
+                $children = $this->_data->find('bundle')->get(0);
+                
+                for($i = 0; $i < $children->count(); $i++){
+                    $child = $children->get($i);
+                    
+                    if ($child instanceof xml){
+                        if ($child->tag == $key){
+                            return $child->get(0);
+                        }
+                    }
+                }
             }
+            return parent::__get($key);
+        }
+        
+        public function __set($key, $value){
+            if ($this->_is_loaded && $this->_data instanceof xml){
+                $children = $this->_data->find('bundle')->get(0);
+                
+                for($i = 0; $i < $children->count(); $i++){
+                    $child = $children->get($i);
+                    
+                    if ($child instanceof xml){
+                        if ($child->tag == $key){
+                            $current_value =  $child->get(0);
+                            if ($value != $current_value){
+                                $child->clear();
+                                $child->add($value);
+                                $this->_has_changed = true;
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return parent::__set($key, $value);
         }
         
         /*
          * Properties
          */
         public function pget_is_loaded(){
-            return count($this->_descriptor) ? true : false;
+            return $this->_is_loaded;
         }
         
-        public function pget_name(){
-            if ($this->is_loaded && isset($this->_descriptor['name'])){
-                return $this->_descriptor['name'];
-            }
-            
-            return null;
+        public function pget_has_changed(){
+            return $this->_has_changed;
         }
         
-        public function pget_label(){
-            if ($this->is_loaded && isset($this->_descriptor['label'])){
-                return $this->_descriptor['label'];
-            }
-            
-            return null;
-        }
-        
-        public function pget_booted(){
-            return $this->_booted;
-        }
-        
-        public function pget_depends_on(){
-            if ($this->is_loaded && isset($this->_descriptor['depends_on'])){
-                return $this->_descriptor['depends_on'];
-            }
-            
-            return array();
-        }
-        
-        public function pget_bundle_path(){
+        public function pget_path(){
             return $this->_path;
         }
         
-        public function pget_schema_installed(){
-            if ($this->is_loaded && isset($this->_descriptor['schema_installed'])){
-                return $this->_descriptor['schema_installed'];
-            }
+        public function pget_version_major(){
+            $version = $this->version;
+            list($major, $minor, $revision) = explode(".", $version);
             
-            return null;
+            return $major;
         }
         
-        public function pget_is_installed(){
-            if ($this->is_loaded){
-                if (file_exists($this->bundle_path . "install.php")){
-                    if ($this->schema_installed == "Yes"){
-                        return true;
-                    }else{
-                        return false;
-                    }
-                }
-                
-                return true;
+        public function pset_version_major($value){
+            $version = $this->version;
+            list($major, $minor, $revision) = explode(".", $version);
+            if ($value != $major){
+                $this->version = "{$value}.{$minor}.{$revision}";
+                $this->_has_changed = true;
             }
+        }
+        
+        public function pget_version_minor(){
+            $version = $this->version;
+            list($major, $minor, $revision) = explode(".", $version);
             
-            return false;
+            return $minor;
+        }
+        
+        public function pset_version_minor($value){
+            $version = $this->version;
+            list($major, $minor, $revision) = explode(".", $version);
+            if ($value != $minor){
+                $this->version = "{$major}.{$value}.{$revision}";
+                $this->_has_changed = true;
+            }
+        }
+        
+        public function pget_version_revision(){
+            $version = $this->version;
+            list($major, $minor, $revision) = explode(".", $version);
+            
+            return $revision;
+        }
+        
+        public function pset_version_revision($value){
+            $version = $this->version;
+            list($major, $minor, $revision) = explode(".", $version);
+            if ($value != $revision){
+                $this->version = "{$major}.{$minor}.{$value}";
+                $this->_has_changed = true;
+            }
         }
         
         /*
-         * Functions
+         * bundle.xml control
          */
+        public function get_dependencies(){
+            $out = array();
+            
+            if ($this->_is_loaded){
+                $dependencies = $this->_data->find('depends_on > bundle')->get();
+                foreach($dependencies as $dependant){
+                    print $dependant;
+                    if ($dependant instanceof xml && $dependant->tag == 'bundle'){
+                        $children = $dependant->get();
+                        $name = null;
+                        
+                        foreach($children as $child){
+                            if ($child instanceof xml){
+                                switch($child->tag){
+                                case "name":
+                                    $name = strval($child->get(0));
+                                    $out[$name] = array();
+                                    break;
+                                case "version":
+                                    $value = strval($child->get(0));
+                                    $out[$name][] = $value;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return $out;
+        }
+
         
         public function load($bundle_name){
-            $this->_descriptor = array();
-            
-            $cached_descriptor = $this->cache->get('descriptor.bundle.' . $bundle_name);
+            $this->_is_loaded = false;
+            $this->_has_changed = false;
+            $this->_data = null;
+            //print_r($this->cache);
+            $cached_data = $this->cache->get('descriptor.bundle.' . $bundle_name);
             $cached_path = $this->cache->get('path.bundle.' . $bundle_name);
-            if ($cached_descriptor && is_array($cached_descriptor) && is_string($cached_path)){
-                //print "<pre>" . print_r($cached_descriptor, true) . "</pre>";
-                $this->_descriptor = $cached_descriptor;
+            if ($cached_data && $cached_data instanceof xml && is_string($cached_path)){
+                $this->_data = $cached_data;
                 $this->_path = $cached_path;
                 return true;
-            
             }else{
                 $paths = array(
                     FRAMEWORK_PATH,
@@ -140,129 +181,88 @@ namespace frameworks\adapt{
                 foreach($paths as $path){
                     if (in_array($bundle_name, scandir($path))){
                         if (file_exists($path . $bundle_name . "/bundle.xml")){
-                            /* Read the descriptor */
-                            $descriptor = file_get_contents($path . $bundle_name . "/bundle.xml");
-                            if (xml::is_xml($descriptor)){
+                            /* Read the bundle.xml */
+                            $bundle_data = file_get_contents($path . $bundle_name . "/bundle.xml");
+                            
+                            if (xml::is_xml($bundle_data)){
+                                
+                                /* Store the path */
                                 $this->_path = $path . $bundle_name . "/";
                                 
-                                $descriptor = xml::parse($descriptor);
+                                /* Parse the data */
+                                $bundle_data = xml::parse($bundle_data);
                                 
-                                if ($descriptor instanceof xml){
-                                    /* Process descriptor */
-                                    $items = $descriptor->find('bundle')->get(0);
+                                if ($bundle_data instanceof xml){
+                                    $this->_data = $bundle_data;
                                     
-                                    for($i = 0; $i < $items->count(); $i++){
-                                        $child = $items->get($i);
-                                        
-                                        if ($child instanceof xml){
-                                            $tag = strtolower($child->tag);
-                                            
-                                            switch($tag){
-                                            case "label":
-                                            case "name":
-                                            case "version":
-                                            case "type":
-                                            case "namespace":
-                                            case "description":
-                                            case "copyright":
-                                            case "license":
-                                            case "schema_installed":
-                                                $this->_descriptor[$tag] = $child->get(0);
-                                                break;
-                                            case "settings":
-                                                $this->_descriptor[$tag] = array();
-                                                $categories = $child->get();
-                                                foreach($categories as $category){
-                                                    if ($category instanceof xml){
-                                                        $name = $category->attr('name');
-                                                        
-                                                        $settings = array();
-                                                        
-                                                        if ($name && strlen($name) > 0){
-                                                            
-                                                            $sets = $category->get();
-                                                            foreach($sets as $set){
-                                                                if ($set instanceof xml){
-                                                                    $parts = $set->get();
-                                                                    
-                                                                    $setting = array();
-                                                                    
-                                                                    foreach($parts as $part){
-                                                                        if ($part instanceof xml){
-                                                                            $set_tag = strtolower($part->tag);
-                                                                            
-                                                                            
-                                                                            switch ($set_tag){
-                                                                            case "name":
-                                                                            case "label":
-                                                                            case "default_value":
-                                                                                $setting[$set_tag] = $part->get(0);
-                                                                                break;
-                                                                            case "default_values":
-                                                                            case "allowed_values":
-                                                                                $va = array();
-                                                                                $values = $part->get();
-                                                                                foreach($values as $value){
-                                                                                    if ($value instanceof xml && $value->tag == 'value'){
-                                                                                        $va[] = $value->get(0);
-                                                                                    }
-                                                                                }
-                                                                                $setting[$set_tag] = $va;
-                                                                                break;
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                    
-                                                                    $settings[] = $setting;
-                                                                }
-                                                            }
-                                                            
-                                                            $this->_descriptor[$tag][$name] = $settings;
-                                                        }
-                                                    }
-                                                }
-                                                break;
-                                            
-                                            case "depends_on":
-                                                $this->_descriptor[$tag] = array();
-                                                $nodes = $child->get();
-                                                foreach($nodes as $node){
-                                                    if ($node instanceof xml && strtolower($node->tag) == 'bundle'){
-                                                        $this->_descriptor[$tag][] = $node->get(0);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    
-                                    /* Cache the descriptor */
-                                    $this->cache->serialize('descriptor.bundle.' . $bundle_name, $this->_descriptor, 600);
+                                    /* Cache the data */
+                                    $this->cache->serialize('descriptor.bundle.' . $bundle_name, $this->_data, 600);
                                     $this->cache->set('path.bundle.' . $bundle_name, $this->_path, 600, 'text/plain');
                                     
+                                    /* Mark as loaded */
+                                    $this->_is_loaded = true;
+                                    
                                     return true;
+                                }else{
+                                    $this->error("Unable to parse '{$path}{$bundle_name}/bundle.xml'");
+                                    return false;
                                 }
-                            }                        
+                                
+                            }else{
+                                $this->error("Unable to read '{$path}{$bundle_name}/bundle.xml' it doesn't appear to be valid XML.");
+                                return false;
+                            }
                         }
                     }
                 }
+            }
+            
+            /* Load failed :/ */
+            $this->error("Failed to locate the bundle.xml for bundle '{$bundle_name}'.");
+            return false;
+        }
+        
+        public function save(){
+            if ($this->is_loaded){
+                if ($this->_has_changed){
+                    $fp = fopen($this->_path . "bundle.xml", "w");
+                    if ($fp){
+                        fwrite($fp, $this->data);
+                        fclose($fp);
+                        
+                        $this->_is_loaded = true;
+                        $this->_has_changed = true;
+                        
+                        $this->cache->serialize('descriptor.bundle.' . $this->name, $this->_data, 600);
+                        $this->cache->set('path.bundle.' . $this->name, $this->_path, 600, 'text/plain');
+                    }else{
+                        $this->error('Unable to write {$this->_path}bundle.xml');
+                        return false;
+                    }
+                }
                 
-                /* Load failed :/ */
-                $this->error("Failed to locate the bundle descriptor file (bundle.xml) for bundle '{$bundle_name}'.");
+                return true;
+            }else{
+                $this->error("Unable to create bundle.xml because it's just not allowed. You have to write it yourself, just because :p");
                 return false;
             }
         }
         
-        public function apply_settings(){
-            if (isset($this->_descriptor['settings'])){
-                $settings = $this->_descriptor['settings'];
-                foreach($settings as $cat_name => $cat_settings){
-                    foreach($cat_settings as $cat_setting){
-                        if (isset($cat_setting['name'])){
-                            if (isset($cat_setting['default_value'])){
-                                $this->setting($cat_setting['name'], $cat_setting['default_value']);
-                            }elseif(isset($cat_setting['default_values'])){
-                                $this->setting($cat_setting['name'], $cat_setting['default_values']);
+        public function install(){
+            if ($this->_is_loaded){
+                /* Process config handlers */
+                $handlers = $this->store('adapt.install_config_handlers');
+                if ($handlers && is_array($handlers)){
+                    
+                    foreach($handlers as $key => $func){
+                        $items = $this->_data->find($key);
+                        
+                        if ($items->size()){
+                            $items = $items->get();
+                            foreach($items as $item){
+                                if ($item instanceof xml && $item->parent instanceof xml && $item->parent->tag == 'bundle'){
+                                    $func($this, $item);
+                                }
                             }
                         }
                     }
@@ -271,123 +271,57 @@ namespace frameworks\adapt{
         }
         
         public function boot(){
-            if (!$this->booted){
-                /*
-                 * We need to always return true if the bundle is adapt
-                 * because we are already within the bootstrap process
-                 * for adapt.
-                */
-                if ($this->name == 'adapt'){
-                    /* We need if we have a data_source and if adapt's schema has been created */
-                    if ($this->data_source instanceof data_source){
-                        if (!isset($this->_descriptor['schema_installed']) || (strtolower($this->_descriptor['schema_installed']) != 'yes')){
-                            /* The schema hasn't yet been installed so we can do that now */
-                            $this->install();
-                        }
-                    }
-                    return true;
-                }else{
-                    /* We need if we have a data_source and if adapt's schema has been created */
-                    if ($this->data_source instanceof data_source){
-                        if (!isset($this->_descriptor['schema_installed']) || (strtolower($this->_descriptor['schema_installed']) != 'yes')){
-                            /* The schema hasn't yet been installed so we can do that now */
-                            $this->install();
-                        }
-                    }
-                    /*
-                     * If this bundle has a boot file, call it
-                     */
-                    if (file_exists($this->bundle_path . "boot.php")){
-                        require_once($this->bundle_path . "boot.php");
-                    }
-                }
-            }
-            $this->_booted = true;
-            return true;
-        }
-        
-        
-        public function install(){
-            if ($this->is_loaded){
-                
-                if (!isset($this->_descriptor['schema_installed']) || (strtolower($this->_descriptor['schema_installed']) != 'yes')){
-                    $this->store('adapt.installing_bundle', $this->name);
-                    if (file_exists($this->bundle_path . "install.php")){
-                        //print "<pre>Installing: {$this->name}</pre>";
-                        require_once($this->bundle_path . "install.php");
-                    }
+            /* Process boot handlers */
+            if ($this->_is_loaded){
+                $handlers = $this->store('adapt.boot_config_handlers');
+                if ($handlers && is_array($handlers)){
                     
-                    $this->store('adapt.installing_bundle', '');
-                    $this->_descriptor['schema_installed'] = 'Yes';
-                    
-                    /* Save the bundle */
-                    $this->save();
-                }
-            }
-        }
-        
-        public function save(){
-            
-            /* Clear the cached descriptor */
-            $this->cache->delete('descriptor.bundle.' . $this->name);
-            $this->cache->delete('path.bundle.' . $this->name);
-            
-            $xml = new xml_bundle();
-            foreach($this->_descriptor as $key => $value){
-                if ($key == 'settings'){
-                    $node = new xml_settings();
-                    foreach($value as $cat => $sets){
-                        $cat_node = new xml_category(array('name' => $cat));
-                        $node->add($cat_node);
-                        foreach($sets as $set){
-                            $set_node = new xml_setting();
-                            if (isset($set['name'])){
-                                $set_node->add(new xml_name($set['name']));
-                            }
-                            if (isset($set['label'])){
-                                $set_node->add(new xml_label($set['label']));
-                            }
-                            if (isset($set['default_value'])){
-                                $set_node->add(new xml_default_value($set['default_value']));
-                            }
-                            if (isset($set['default_values']) && is_array($set['default_values'])){
-                                $default_values = new xml_default_values();
-                                foreach($set['default_values'] as $df){
-                                    $default_values->add(new xml_value($df));
+                    foreach($handlers as $key => $func){
+                        $items = $this->_data->find($key);
+                        
+                        if ($items->size()){
+                            $items = $items->get();
+                            foreach($items as $item){
+                                if ($item instanceof xml && $item->parent instanceof xml && $item->parent->tag == 'bundle'){
+                                    $func($this, $item);
                                 }
-                                $set_node->add($default_values);
                             }
-                            if (isset($set['allowed_values']) && is_array($set['allowed_values'])){
-                                $allowed_values = new xml_allowed_values();
-                                foreach($set['allowed_values'] as $af){
-                                    $allowed_values->add(new xml_value($af));
-                                }
-                                $set_node->add($allowed_values);
-                            }
-                            $cat_node->add($set_node);
                         }
                     }
-                    $xml->add($node);
-                }elseif($key == 'depends_on'){
-                    $node = new xml_depends_on();
-                    foreach($value as $bundle){
-                        $node->add(new xml_bundle($bundle));
-                    }
-                    $xml->add($node);
-                }else{
-                    $xml->add(new xml($key, $value));
                 }
-            }
-            
-            /* Write the bundle back to disc */
-            $fp = fopen($this->bundle_path . "bundle.xml", "w");
-            if ($fp){
-                fwrite($fp, new xml_document('adapt_framework', $xml));
-                fclose($fp);
             }
         }
         
+        public function update(){
+            
+        }
+        
+        public function add_boot_config_handler($hook, $handler_function){
+            $handlers = $this->store('adapt.boot_config_handlers');
+            if (is_null($handlers)) $handlers = array();
+            
+            $handlers[$hook] = $handler_function;
+            $this->store('adapt.boot_config_handlers', $handlers);
+        }
+        
+        public function add_install_config_handler($hook, $handler_function){
+            $handlers = $this->store('adapt.install_config_handlers');
+            if (is_null($handlers)) $handlers = array();
+            
+            $handlers[$hook] = $handler_function;
+            $this->store('adapt.install_config_handlers', $handlers);
+        }
+        
+        /* Static functions */
+        public static function bundle($path){
+            
+        }
+        
+        public static function unbundle($bundle){
+            
+        }
     }
+    
     
 }
 
