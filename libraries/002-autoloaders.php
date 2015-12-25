@@ -41,109 +41,165 @@ function voodoo($class){
     $namespaces = explode("\\", $class);
     $class_name = array_pop($namespaces);
     
-    //print_r($namespaces);
+    //print "<pre>Class: {$class}</pre>";
+    //print "<pre>" . print_r($namespaces, true) . "</pre>";
+    $registered_namespaces = $adapt->store('adapt.namespaces');
+    //print "<pre>" . print_r($registered_namespaces, true) . "</pre>";
+    //exit(1);
     //print "Class: {$class_name}\n";
     
-    if (count($namespaces) > 0){
-        $bundle_type = strtolower($namespaces[0]);
-        
-        $simple_types = array('applications', 'extensions', 'frameworks');
-        //$complex_types = array('templates'); This namespace will never be used because templates use the origins namespace!
-        $alias_types = array('application');
-        
-        if (in_array($bundle_type, $simple_types) && count($namespaces) >= 2){
-            $bundle_name = strtolower($namespaces[1]);
-            
-            $bundle_name = strtolower($namespaces[1]);
-            
-            /*
-             * Get a list of templates
-             */
-            $templates = scandir(TEMPLATE_PATH);
-            
-            if (is_array($templates) && (count($templates))){
-                foreach($templates as $template){
-                    if (substr($template, 0, 1) != "."){
-                        
-                        $locations = array('views', 'controllers', 'models');
-                        
-                        foreach($locations as $location){
-                            if (file_exists(TEMPLATE_PATH . "{$template}/{$bundle_name}/{$location}/{$class_name}.php")){
-                                require_once(TEMPLATE_PATH . "{$template}/{$bundle_name}/{$location}/{$class_name}.php");
-                                $class_loaded = true;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if ($class_loaded == false){
-                $locations = array('classes', 'views', 'controllers', 'models');
-                
-                if (count($namespaces) >= 3 && strtolower($namespaces[2]) == 'interfaces'){
-                    $locations = array('interfaces');
-                }
-                
-                foreach($locations as $location){
-                    if (file_exists(ADAPT_PATH . "{$bundle_type}/{$bundle_name}/{$location}/{$class_name}.php")){
-                        require_once(ADAPT_PATH . "{$bundle_type}/{$bundle_name}/{$location}/{$class_name}.php");
-                        $class_loaded = true;
-                    }
-                }
-            }
-            
-            
-        }elseif (in_array($bundle_type, $alias_types)){
-            $bundle_name = strtolower($namespaces[1]);
+    if (count($namespaces) && count($registered_namespaces)){
+        if ($namespaces[0] == "application"){
+            /* Alias the application bundle */
+            $bundle_name = strtolower($namespaces[0]);
             $application = $adapt->setting('adapt.running_application');
             
             if (isset($application)){
-                $class_def = "namespace application{ class {$class_name} extends \\applications\\{$application}\\{$class_name}{} }";
+                $class_def = "namespace application{ class {$class_name} extends \\{$application}\\{$class_name}{} }";
                 eval($class_def);
                 $class_loaded = true;
             }
+        }else{
+            /* Check against registered namespaces */
+            $requested_namespace = "\\" . implode("\\", $namespaces);
+            //print "<pre>Seeking '{$requested_namespace}'</pre>";
+            //print "<pre>" . print_r($registered_namespaces[$requested_namespace]) . "</pre>";
+            
+            $path = ADAPT_PATH . "{$registered_namespaces[$requested_namespace]['bundle_name']}/{$registered_namespaces[$requested_namespace]['bundle_name']}-{$registered_namespaces[$requested_namespace]['bundle_version']}/";
+            //print "<pre>Base path: {$path}</pre>";
+            
+            $locations = array('classes/', 'views/', 'controllers/', 'models/', 'interfaces/');
+            foreach($locations as $location){
+                if (file_exists($path . $location . $class_name . ".php")){
+                    //print "<pre>FOUND IN: " . $path . $location . $class_name . ".php</pre>";
+                    require_once($path . $location . $class_name . ".php");
+                    $class_loaded = true;
+                }
+            }
         }
     }
+    
+    //if (count($namespaces) > 0){
+    //    $bundle_type = strtolower($namespaces[0]);
+    //    
+    //    $simple_types = array('applications', 'extensions', 'frameworks');
+    //    //$complex_types = array('templates'); This namespace will never be used because templates use the origins namespace!
+    //    $alias_types = array('application');
+    //    
+    //    if (in_array($bundle_type, $simple_types) && count($namespaces) >= 2){
+    //        $bundle_name = strtolower($namespaces[1]);
+    //        
+    //        $bundle_name = strtolower($namespaces[1]);
+    //        
+    //        /*
+    //         * Get a list of templates
+    //         */
+    //        $templates = scandir(TEMPLATE_PATH);
+    //        
+    //        if (is_array($templates) && (count($templates))){
+    //            foreach($templates as $template){
+    //                if (substr($template, 0, 1) != "."){
+    //                    
+    //                    $locations = array('views', 'controllers', 'models');
+    //                    
+    //                    foreach($locations as $location){
+    //                        if (file_exists(TEMPLATE_PATH . "{$template}/{$bundle_name}/{$location}/{$class_name}.php")){
+    //                            require_once(TEMPLATE_PATH . "{$template}/{$bundle_name}/{$location}/{$class_name}.php");
+    //                            $class_loaded = true;
+    //                        }
+    //                    }
+    //                }
+    //            }
+    //        }
+    //        
+    //        if ($class_loaded == false){
+    //            $locations = array('classes', 'views', 'controllers', 'models');
+    //            
+    //            if (count($namespaces) >= 3 && strtolower($namespaces[2]) == 'interfaces'){
+    //                $locations = array('interfaces');
+    //            }
+    //            
+    //            foreach($locations as $location){
+    //                if (file_exists(ADAPT_PATH . "{$bundle_type}/{$bundle_name}/{$location}/{$class_name}.php")){
+    //                    require_once(ADAPT_PATH . "{$bundle_type}/{$bundle_name}/{$location}/{$class_name}.php");
+    //                    $class_loaded = true;
+    //                }
+    //            }
+    //        }
+    //        
+    //        
+    //    }elseif (in_array($bundle_type, $alias_types)){
+    //        $bundle_name = strtolower($namespaces[1]);
+    //        $application = $adapt->setting('adapt.running_application');
+    //        
+    //        if (isset($application)){
+    //            $class_def = "namespace application{ class {$class_name} extends \\applications\\{$application}\\{$class_name}{} }";
+    //            eval($class_def);
+    //            $class_loaded = true;
+    //        }
+    //    }
+    //}
     
     /*
      * We haven't been able to find the class,
      * if the class is a model it may have been
      * declared in another bundle, so lets check.
      */
-    if ($class_loaded == false){
-        if (substr($class_name, 0, 5) == 'model'){
-            $paths = array(
-                'frameworks',
-                'applications',
-                'extensions'
-            );
+    if ($class_loaded == false && substr($class_name, 0, 5) == 'model'){
+        if (is_array($registered_namespaces) && count($registered_namespaces) && count($namespaces)){
+            $requested_namespace = "\\" . implode("\\", $namespaces);
             
-            foreach($paths as $path){
-                $bundle_list = scandir(ADAPT_PATH . $path);
-                foreach($bundle_list as $bundle){
-                    if (substr($bundle, 0, 1) != "."){
-                        $file_path = ADAPT_PATH . "{$path}/{$bundle}/models/{$class_name}.php";
-                        if (file_exists($file_path)){
-                            $namespace = "";
-                            if (count($namespaces) > 0){
-                                $namespace = implode("\\", $namespaces); 
-                            }
-                            
-                            $class_def = "class {$class_name} extends \\{$path}\\{$bundle}\\{$class_name}{}";
-                            if ($namespace != ""){
-                                $class_def = "namespace {$namespace}{{$class_def}}";
-                            }
-                            
-                            eval($class_def);
-                            $class_loaded = true;
-                        }
+            foreach($registered_namespaces as $registered_namespace){
+                $path = ADAPT_PATH . "{$registered_namespaces[$registered_namespace]['bundle_name']}/{$registered_namespaces[$registered_namespace]['bundle_name']}-{$registered_namespaces[$registered_namespace]['bundle_version']}/models/{$class_name}.php";
+                
+                if (file_exists($path)){
+                    $class_def = "class {$class_name} extends \\{$registered_namespace}\\{$class_name}{}";
+                    if ($requested_namespace != ""){
+                        $class_def = "namespace {$requested_namespace}{{$class_def}}";
                     }
+                    
+                    eval($class_def);
+                    $class_loaded = true;
                 }
             }
-            
         }
-        
     }
+    
+    
+    //if ($class_loaded == false){
+    //    if (substr($class_name, 0, 5) == 'model'){
+    //        $paths = array(
+    //            'frameworks',
+    //            'applications',
+    //            'extensions'
+    //        );
+    //        
+    //        foreach($paths as $path){
+    //            $bundle_list = scandir(ADAPT_PATH . $path);
+    //            foreach($bundle_list as $bundle){
+    //                if (substr($bundle, 0, 1) != "."){
+    //                    $file_path = ADAPT_PATH . "{$path}/{$bundle}/models/{$class_name}.php";
+    //                    if (file_exists($file_path)){
+    //                        $namespace = "";
+    //                        if (count($namespaces) > 0){
+    //                            $namespace = implode("\\", $namespaces); 
+    //                        }
+    //                        
+    //                        $class_def = "class {$class_name} extends \\{$path}\\{$bundle}\\{$class_name}{}";
+    //                        if ($namespace != ""){
+    //                            $class_def = "namespace {$namespace}{{$class_def}}";
+    //                        }
+    //                        
+    //                        eval($class_def);
+    //                        $class_loaded = true;
+    //                    }
+    //                }
+    //            }
+    //        }
+    //        
+    //    }
+    //    
+    //}
     
     /*
      * If we still haven't loaded then
@@ -151,7 +207,10 @@ function voodoo($class){
      * do the job
      */
     if ($class_loaded == false){
+        //print "<pre>Class not found, trying handlers</pre>";
         $handlers = $adapt->store('adapt.handlers');
+        //print "<pre>Handlers: " . print_r($handlers, true) . "</pre>";
+        
         
         if (is_array($handlers) && count($handlers)){
             foreach($handlers as $handler){
@@ -175,7 +234,7 @@ function voodoo($class){
                     if (strlen($namespace) > 0){
                         $class_def = "namespace {$namespace}{{$class_def}}";
                     }
-                    
+                    //print "<pre>{$class_def}</pre>";
                     eval($class_def);
                     break;
                 }

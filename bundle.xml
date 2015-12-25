@@ -5,7 +5,7 @@
     <name>adapt</name>
     <version>1.0.0</version>
     <type>framework</type>
-    <namespace>/frameworks/adapt</namespace>
+    <namespace>\adapt</namespace>
     <description>Adapt framework is designed for rapid application and web deployment, built to scale it can meet the needs of the most demanding websites.</description>
     <copyright>2015 Adapt Framework</copyright>
     <license>MIT</license>
@@ -78,6 +78,10 @@
           <label>Host</label>
         </setting>
         <setting>
+          <name>data_source.port</name>
+          <label>Port</label>
+        </setting>
+        <setting>
           <name>data_source.schema</name>
           <label>Schema</label>
         </setting>
@@ -96,8 +100,12 @@
       </category>
       <category name="Applications">
         <setting>
-          <name>adapt.default_application</name>
+          <name>adapt.default_application_name</name>
           <label>Which application should be booted?</label>
+        </setting>
+        <setting>
+          <name>adapt.default_application_version</name>
+          <label>Which version of the application should be booted?</label>
         </setting>
       </category>
       <category name="Repository settings">
@@ -105,7 +113,7 @@
           <name>repository.url</name>
           <label>Repoistory URL</label>
           <default_values>
-            <value>http://repo.adaptframework.com</value>
+            <value>https://repository.adaptframework.com</value>
           </default_values>
         </setting>
         <setting>
@@ -152,6 +160,48 @@
     </settings>
     <schema>
       <add>
+        <table name="bundle_version">
+          <field name="bundle_version_id" key="primary" auto-increment="Yes">
+            <label>Bundle #</label>
+            <description>A unique ID representing this bundle on this system.</description>
+            <data_type>bigint</data_type>
+          </field>
+          <field name="name">
+            <label>Name</label>
+            <description>The name of the bundle</description>
+            <data_type>varchar</data_type>
+            <max_length>128</max_length>
+            <nullable>No</nullable>
+          </field>
+          <field name="type">
+            <label>Name</label>
+            <description>The type of bundle this is</description>
+            <data_type>varchar</data_type>
+            <max_length>64</max_length>
+            <nullable>No</nullable>
+          </field>
+          <field name="version">
+            <label>Version</label>
+            <description>The version of the bundle</description>
+            <data_type>varchar</data_type>
+            <max_length>16</max_length>
+            <nullable>No</nullable>
+          </field>
+          <field name="local">
+            <label>Is local?</label>
+            <description>Is the bundle available locally?</description>
+            <data_type>enum('Yes', 'No')</data_type>
+            <default_value>No</default_value>
+            <nullable>No</nullable>
+          </field>
+          <field name="installed">
+            <label>Installed?</label>
+            <description>Has the bundle been installed in this data source?</description>
+            <data_type>enum('Yes', 'No')</data_type>
+            <default_value>No</default_value>
+            <nullable>No</nullable>
+          </field>
+        </table>
         <table name="data_type">
           <field name="data_type_id" key="primary" auto-increment="Yes">
             <label>Data type #</label>
@@ -306,8 +356,8 @@
             <nullable>No</nullable>
           </field>
           <field name="timestamp">
-            <label>Primary key?</label>
-            <description>Is this field a primary key?</description>
+            <label>Timestamp?</label>
+            <description>Is this field a timestamp?</description>
             <data_type>enum('Yes', 'No')</data_type>
             <default_value>Yes</default_value>
             <nullable>No</nullable>

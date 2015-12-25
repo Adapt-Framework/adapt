@@ -3,8 +3,8 @@
 /*
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2015 Matt Bruton
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,18 +30,175 @@
  * Prevent direct access
  */
 defined('ADAPT_STARTED') or die;
+
+$GLOBALS['time_offset'] = microtime(true);
+
+/*
+ * Load libraries
+ */
+if (is_dir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/libraries")){
+    $files = scandir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/libraries", SCANDIR_SORT_ASCENDING);
+    
+    foreach($files as $file){
+        if (preg_match("/\.php$/", $file)){
+            require_once(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/libraries/" . $file);
+        }
+    }
+}
+
+//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+//print "<pre>Time to load libraries: " . round($GLOBALS['time'], 3) . "</pre>";
+//$GLOBALS['time_offset'] = microtime(true);
+
+/*
+ * Create a gloabl adapt object
+ * that can be accessed from
+ * $GLOBALS['adapt']
+ */
+global $adapt;
+$adapt = new \adapt\base();
+
+//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+//print "<pre>Time to globalize adapt: " . round($GLOBALS['time'], 3) . "</pre>";
+//$GLOBALS['time_offset'] = microtime(true);
+
+/*
+ * Create a global bundles object
+ */
+$adapt->bundles = new \adapt\bundles();
+
+//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+//print "<pre>Time to globalize bundles: " . round($GLOBALS['time'], 3) . "</pre>";
+//$GLOBALS['time_offset'] = microtime(true);
+
+/*
+ * Register the adapt namespace manually
+ */
+$adapt->bundles->register_namespace("\\adapt", 'adapt', ADAPT_VERSION);
+
+//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+//print "<pre>Time to register adapt namespace: " . round($GLOBALS['time'], 3) . "</pre>";
+//$GLOBALS['time_offset'] = microtime(true);
+
+/*
+ * Load configuration
+ */
+if (is_dir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/config")){
+    $files = scandir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/config", SCANDIR_SORT_ASCENDING);
+    
+    foreach($files as $file){
+        if (preg_match("/\.php$/", $file)){
+            require_once(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/config/" . $file);
+        }
+    }
+}
+
+//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+//print "<pre>Time to load configuration: " . round($GLOBALS['time'], 3) . "</pre>";
+//$GLOBALS['time_offset'] = microtime(true);
+
+/*
+ * Add handlers
+ */
+$adapt->add_handler("\\adapt\\xml");
+$adapt->add_handler("\\adapt\\html");
+$adapt->add_handler("\\adapt\\model");
+$adapt->add_handler("\\adapt\\bundle");
+
+//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+//print "<pre>Time to add handlers " . round($GLOBALS['time'], 3) . "</pre>";
+//$GLOBALS['time_offset'] = microtime(true);
+
+/*
+ * Define the file storage path
+ */
+
+/* Set the file path if it's not set */
+$path = $adapt->setting('adapt.file_store_path');
+
+if (is_null($path)){
+    $path = ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/store/";
+    $adapt->setting('adapt.file_store_path', $path);
+}
+
+/* Set the file store */
+$adapt->file_store = new \adapt\storage_file_system();
+
+//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+//print "<pre>Time to globalize file storage: " . round($GLOBALS['time'], 3) . "</pre>";
+//$GLOBALS['time_offset'] = microtime(true);
+
+/* Set the cache */
+$adapt->cache = new \adapt\cache();
+
+//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+//print "<pre>Time to globalize cache: " . round($GLOBALS['time'], 3) . "</pre>";
+//$GLOBALS['time_offset'] = microtime(true);
+
+/*
+ * Is the current page cached?
+ */
+if (!isset($adapt->request['actions'])){
+    if ($_SERVER && is_array($_SERVER) && isset($_SERVER['REQUEST_URI'])){
+        $key = $_SERVER['REQUEST_URI'];
+        $page = $adapt->cache->get($key);
+        if ($page){
+            $content_type = $adapt->cache->get_content_type($key);
+            
+            if ($content_type){
+                header("content-type: {$content_type}");
+                print $page;
+                exit(0);
+            }
+        }
+    }
+}
+
+//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+//print "<pre>Time check for cached page: " . round($GLOBALS['time'], 3) . "</pre>";
+//$GLOBALS['time_offset'] = microtime(true);
+
+
+
+$bundle_adapt = $adapt->bundles->get_bundle('adapt', ADAPT_VERSION);
+
+//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+//print "<pre>Time to get the adapt bundle: " . round($GLOBALS['time'], 3) . "</pre>";
+//$GLOBALS['time_offset'] = microtime(true);
+
+
+//print new html_p("Loaded bundle: " . $bundle_adapt->name);
+//print new html_pre(print_r($bundle_adapt->errors(true), true));
+//print $bundle_adapt;
+//print new html_strong("Hello world");
+
+//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+//print "<pre>Time to be ready for boot: " . round($GLOBALS['time'], 3) . "</pre>";
+//$GLOBALS['time_offset'] = microtime(true);
+
+$adapt->bundles->boot_system();
+print new html_pre(print_r($adapt->bundles->errors(true), true)); 
+exit(1); 
+
+/*
+ * Prevent direct access
+ */
+defined('ADAPT_STARTED') or die;
 //$time_offset = microtime(true);
 
 
 /*
  * Load libraries
  */
-if (is_dir(FRAMEWORK_PATH . "adapt/libraries")){
-    $files = scandir(FRAMEWORK_PATH . "adapt/libraries", SCANDIR_SORT_ASCENDING);
+if (is_dir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/libraries")){
+//if (is_dir(FRAMEWORK_PATH . "adapt/libraries")){
+    $files = scandir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/libraries", SCANDIR_SORT_ASCENDING);
+    //$files = scandir(FRAMEWORK_PATH . "adapt/libraries", SCANDIR_SORT_ASCENDING);
     
     foreach($files as $file){
         if (preg_match("/\.php$/", $file)){
-            require_once(FRAMEWORK_PATH . "adapt/libraries/" . $file);
+            require_once(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/libraries/" . $file);
+            //require_once(FRAMEWORK_PATH . "adapt/libraries/" . $file);
         }
     }
 }
@@ -56,7 +213,8 @@ if (is_dir(FRAMEWORK_PATH . "adapt/libraries")){
  * $GLOBALS['adapt']
  */
 global $adapt;
-$adapt = new \frameworks\adapt\base();
+//$adapt = new \frameworks\adapt\base();
+$adapt = new \adapt\base();
 
 //$time = microtime(true) - $time_offset;
 //print "<pre>Time to initial base: " . $time . "</pre>";
@@ -65,12 +223,15 @@ $adapt = new \frameworks\adapt\base();
 /*
  * Load configuration
  */
-if (is_dir(FRAMEWORK_PATH . "adapt/config")){
-    $files = scandir(FRAMEWORK_PATH . "adapt/config", SCANDIR_SORT_ASCENDING);
+//if (is_dir(FRAMEWORK_PATH . "adapt/config")){
+if (is_dir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/config")){
+    //$files = scandir(FRAMEWORK_PATH . "adapt/config", SCANDIR_SORT_ASCENDING);
+    $files = scandir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/config", SCANDIR_SORT_ASCENDING);
     
     foreach($files as $file){
         if (preg_match("/\.php$/", $file)){
-            require_once(FRAMEWORK_PATH . "adapt/config/" . $file);
+            //require_once(FRAMEWORK_PATH . "adapt/config/" . $file);
+            require_once(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/config/" . $file);
         }
     }
 }
@@ -82,9 +243,12 @@ if (is_dir(FRAMEWORK_PATH . "adapt/config")){
 /*
  * Add handlers
  */
-$adapt->add_handler("\\frameworks\\adapt\\xml");
-$adapt->add_handler("\\frameworks\\adapt\\html");
-$adapt->add_handler("\\frameworks\\adapt\\model");
+//$adapt->add_handler("\\frameworks\\adapt\\xml");
+//$adapt->add_handler("\\frameworks\\adapt\\html");
+//$adapt->add_handler("\\frameworks\\adapt\\model");
+$adapt->add_handler("\\adapt\\xml");
+$adapt->add_handler("\\adapt\\html");
+$adapt->add_handler("\\adapt\\model");
 
 //$time = microtime(true) - $time_offset;
 //print "<pre>Time to add handlers: " . $time . "</pre>";
@@ -94,15 +258,18 @@ $adapt->add_handler("\\frameworks\\adapt\\model");
 $path = $adapt->setting('adapt.file_store_path');
 
 if (is_null($path)){
-    $path = FRAMEWORK_PATH . 'adapt/store/';
+    //$path = FRAMEWORK_PATH . 'adapt/store/';
+    $path = ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/store/";
     $adapt->setting('adapt.file_store_path', $path);
 }
 
 /* Set the file store */
-$adapt->file_store = new \frameworks\adapt\storage_file_system();
+//$adapt->file_store = new \frameworks\adapt\storage_file_system();
+$adapt->file_store = new \adapt\storage_file_system();
 
 /* Set the cache */
-$adapt->cache = new \frameworks\adapt\cache();
+//$adapt->cache = new \frameworks\adapt\cache();
+$adapt->cache = new \adapt\cache();
 
 //$time = microtime(true) - $time_offset;
 //print "<pre>Time to initialise file_system &amp; cache: " . $time . "</pre>";
@@ -141,11 +308,14 @@ if (!isset($adapt->request['actions'])){
 /*
  * Load settings
  */
-$bundles = new \frameworks\adapt\bundles();
-$bundle_adapt = $bundles->get('adapt');
+//$bundles = new \frameworks\adapt\bundles();
+$bundles = new \adapt\bundles();
+//$bundle_adapt = $bundles->get('adapt');
+$bundles->register_namespace("adapt", 'adapt', ADAPT_VERSION);
+$bundle_adapt = $bundles->get_bundle('adapt', array(ADAPT_VERSION));
 
-if ($bundle_adapt && $bundle_adapt instanceof \frameworks\adapt\bundle){
-    $bundle_adapt->apply_settings();
+if ($bundle_adapt && $bundle_adapt instanceof \adapt\bundle){
+    $bundle_adapt->apply_settings(); //TODO: <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }
 
 //$time = microtime(true) - $time_offset;
@@ -156,7 +326,8 @@ if ($bundle_adapt && $bundle_adapt instanceof \frameworks\adapt\bundle){
  * Create the root view
  */
 //if ($_SERVER && is_array($_SERVER)){
-    $adapt->dom = new \frameworks\adapt\page();
+    //$adapt->dom = new \frameworks\adapt\page();
+    $adapt->dom = new \adapt\page();
 //}
 
 
@@ -167,7 +338,8 @@ if ($bundle_adapt && $bundle_adapt instanceof \frameworks\adapt\bundle){
 /*
  * Boot the active application
  */
-$bundles->boot();
+//$bundles->boot();
+$bundles->boot_system();
 
 /*
  * Cache the system
@@ -185,10 +357,11 @@ $bundles->boot();
  */
 if (isset($_SERVER['SHELL'])){
     /* Command Line Interface */
-    print "Adapt Framework CLI\n";
+    print "Adapt Framework (" . ADAPT_VERSION . ") CLI\n";
     
     /* Fire the ready event */
-    $adapt->trigger(\frameworks\adapt\base::EVENT_READY);
+    //$adapt->trigger(\frameworks\adapt\base::EVENT_READY);
+    $adapt->trigger(\adapt\base::EVENT_READY);
     
 }else{
     /* Web Session */
@@ -199,7 +372,8 @@ if (isset($_SERVER['SHELL'])){
         
          /* Add the adapt controller to the root */
         \application\controller_root::extend('view__adapt', function($_this){
-            return $_this->load_controller("\\frameworks\\adapt\\controller_adapt");
+            //return $_this->load_controller("\\frameworks\\adapt\\controller_adapt");
+            return $_this->load_controller("\\adapt\\controller_adapt");
         });
         
         $controller = new \application\controller_root();
@@ -208,9 +382,11 @@ if (isset($_SERVER['SHELL'])){
         $adapt->dom->add($controller->view);
     }
     
-    if (isset($controller) && $controller instanceof \frameworks\adapt\controller){
+    //if (isset($controller) && $controller instanceof \frameworks\adapt\controller){
+    if (isset($controller) && $controller instanceof \adapt\controller){
         
-        $adapt->trigger(\frameworks\adapt\base::EVENT_READY);
+        //$adapt->trigger(\frameworks\adapt\base::EVENT_READY);
+        $adapt->trigger(\adapt\base::EVENT_READY);
         
         /* Process actions */
         if (isset($adapt->request['actions'])){
@@ -249,7 +425,8 @@ if (isset($_SERVER['SHELL'])){
         if ($output){
             print $output;
         }else{
-            if ($adapt->dom instanceof \frameworks\adapt\page && $adapt->dom->cache_time > 0){
+            //if ($adapt->dom instanceof \frameworks\adapt\page && $adapt->dom->cache_time > 0){
+            if ($adapt->dom instanceof \adapt\page && $adapt->dom->cache_time > 0){
                 if (!isset($this->request['actions'])){
                     /* We can cache the page */
                     $key = $_SERVER['REQUEST_URI'];

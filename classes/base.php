@@ -26,7 +26,7 @@
  *  
  */
 
-namespace frameworks\adapt{
+namespace adapt{
     
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
@@ -365,6 +365,17 @@ namespace frameworks\adapt{
             $this->store('adapt.cache', $cache);
         }
         
+        /*
+         * Get the bundles object
+         */
+        public function aget_bundles(){
+            return $this->store('adapt._bundles');
+        }
+        
+        public function aset_bundles($bundles){
+            $this->store('adapt._bundles', $bundles);
+        }
+        
         
         
         /*
@@ -487,7 +498,7 @@ namespace frameworks\adapt{
         public function aget_sanitize(){
             $sanitizer = $this->store('adapt.sanitizer');
             if (is_null($sanitizer)){
-                $sanitizer = new \frameworks\adapt\sanitizer();
+                $sanitizer = new sanitizer();
                 $this->store('adapt.sanitizer', $sanitizer);
             }
             

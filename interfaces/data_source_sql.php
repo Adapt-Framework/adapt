@@ -26,7 +26,7 @@
  *  
  */
 
-namespace frameworks\adapt\interfaces{
+namespace adapt\interfaces{
     
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;

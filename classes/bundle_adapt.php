@@ -1,11 +1,11 @@
 <?php
 
-namespace frameworks\adapt{
+namespace adapt{
     
     /* Prevent Direct Access */
     defined('ADAPT_STARTED') or die;
     
-    class bundle_adapt extends new_bundle{
+    class bundle_adapt extends bundle{
         
         public function __construct(){
             parent::__construct('adapt');
@@ -13,17 +13,21 @@ namespace frameworks\adapt{
             $this->add_boot_config_handler(
                 'settings',
                 function($_this, $xml_node){
+                    $settings = array();
+                        
                     if ($xml_node instanceof xml && $xml_node->tag == 'settings'){
                         $categories = $xml_node->get();
                         
                         foreach($categories as $category){
                             if ($category instanceof xml && $category->tag == 'category'){
-                                $settings = $category->get();
+                                $cat_settings = $category->get();
                                 
-                                foreach($settings as $setting){
+                                foreach($cat_settings as $setting){
+                                    $setting_name = "";
+                                    $setting_value = "";
+                                    
                                     if ($setting instanceof xml && $setting->tag == 'setting'){
-                                        $setting_name = "";
-                                        $setting_value = "";
+                                        
                                         
                                         $children = $setting->get();
                                         
@@ -52,6 +56,7 @@ namespace frameworks\adapt{
                                         
                                         if ($setting_name != ""){
                                             $_this->setting($setting_name, $setting_value);
+                                            $settings[$setting_name] = $setting_value;
                                         }
                                     }
                                 }

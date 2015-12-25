@@ -1,0 +1,12 @@
+#!/usr/bin/php
+<?php
+
+if (is_array($argv) && isset($argv[1])){
+    if ($argv[1] == "reset"){
+        print "Resetting stage...\n";
+    }else{
+        print "Staging {$argv[1]}...\n";
+    }
+}
+
+?>

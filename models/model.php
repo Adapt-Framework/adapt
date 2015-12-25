@@ -26,12 +26,12 @@
  *  
  */
 
-namespace frameworks\adapt{
+namespace adapt{
     
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
     
-    class model extends \frameworks\adapt\base{
+    class model extends base{
         
         /* Events */
         const EVENT_ON_LOAD = 'model.on_load';

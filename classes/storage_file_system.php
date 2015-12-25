@@ -26,7 +26,7 @@
  *  
  */
 
-namespace frameworks\adapt{
+namespace adapt{
     
     class storage_file_system extends base{
         

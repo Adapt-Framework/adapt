@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="https://www.w3.org/2001/XMLSchema">
+    <xs:element name="adapt_framework">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="bundle" type="bundle_type" minOccurs="1" maxOccurs="1" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:complexType name="bundle_type">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string" />
+            <xs:element name="label" type="xs:string" />
+            <xs:element name="type" type="xs:string" />
+            <xs:element name="version" type="xs:string" />
+            <xs:element name="namespace" type="xs:string" />
+            <xs:element name="description" type="xs:string" />
+            <xs:element name="copyright" type="xs:string" />
+            <xs:element name="license" type="xs:string" />
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

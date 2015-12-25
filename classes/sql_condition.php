@@ -26,7 +26,7 @@
  *  
  */
 
-namespace frameworks\adapt{
+namespace adapt{
     
     class sql_condition extends sql{
         

@@ -1,6 +1,6 @@
 <?php
 
-namespace frameworks\adapt{
+namespace adapt{
     
     /* Prevent Direct Access */
     defined('ADAPT_STARTED') or die;
@@ -11,10 +11,14 @@ namespace frameworks\adapt{
         protected $_data;
         protected $_has_changed;
         protected $_is_loaded;
+        protected $_model;
+        protected $_booted;
         
-        public function __construct($bundle_name){
+        public function __construct($bundle_name, $bundle_version = null){
             parent::__construct();
-            $this->load($bundle_name);
+            $this->_booted = false;
+            //$this->_model = new model_bundle_version();
+            $this->load($bundle_name, $bundle_version);
         }
         
         /*
@@ -60,6 +64,14 @@ namespace frameworks\adapt{
             return parent::__set($key, $value);
         }
         
+        public function __toString(){
+            if ($this->_is_loaded && $this->_data instanceof xml){
+                return $_data;
+            }
+            
+            return "";
+        }
+        
         /*
          * Properties
          */
@@ -69,6 +81,18 @@ namespace frameworks\adapt{
         
         public function pget_has_changed(){
             return $this->_has_changed;
+        }
+        
+        public function pget_has_booted(){
+            return $this->bundles->has_booted($this->name);
+        }
+        
+        public function pget_is_installed(){
+            if ($this->_model->installed == "Yes"){
+                return true;
+            }
+            
+            return false;
         }
         
         public function pget_path(){
@@ -130,28 +154,38 @@ namespace frameworks\adapt{
             $out = array();
             
             if ($this->_is_loaded){
-                $dependencies = $this->_data->find('depends_on > bundle')->get();
-                foreach($dependencies as $dependant){
-                    print $dependant;
-                    if ($dependant instanceof xml && $dependant->tag == 'bundle'){
-                        $children = $dependant->get();
-                        $name = null;
-                        
-                        foreach($children as $child){
-                            if ($child instanceof xml){
-                                switch($child->tag){
-                                case "name":
-                                    $name = strval($child->get(0));
-                                    $out[$name] = array();
-                                    break;
-                                case "version":
-                                    $value = strval($child->get(0));
-                                    $out[$name][] = $value;
-                                    break;
+                $cached_copy = $this->cache->get("adapt.bundle." . $this->name . "." . $this->version . ".depends_on");
+                if (is_array($cached_copy)){
+                    
+                    //print new html_pre("Cached dep list");
+                    return $cached_copy;
+                }else{
+                    
+                    $dependencies = $this->_data->find('depends_on > bundle')->get();
+                    foreach($dependencies as $dependant){
+                        //print $dependant;
+                        if ($dependant instanceof xml && $dependant->tag == 'bundle'){
+                            $children = $dependant->get();
+                            $name = null;
+                            
+                            foreach($children as $child){
+                                if ($child instanceof xml){
+                                    switch($child->tag){
+                                    case "name":
+                                        $name = strval($child->get(0));
+                                        $out[$name] = array();
+                                        break;
+                                    case "version":
+                                        $value = strval($child->get(0));
+                                        $out[$name][] = $value;
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
+                    
+                    $this->cache->serialize("adapt.bundle." . $this->name . "." . $this->version . ".depends_on", $out, 600);
                 }
             }
             
@@ -159,10 +193,116 @@ namespace frameworks\adapt{
         }
 
         
-        public function load($bundle_name){
+        public function load($bundle_name, $bundle_version = null){
             $this->_is_loaded = false;
             $this->_has_changed = false;
             $this->_data = null;
+            
+            /* Create a cache key, versioned if we are */
+            $bundle_cache_key = "adapt.bundle." . $bundle_name;
+            $path_cache_key = "adapt.bundle-path." . $bundle_name;
+            
+            if (!is_null($bundle_version)){
+                $bundle_cache_key .= "-" . $bundle_version;
+                $path_cache_key .= "-" . $bundle_version;
+            }
+            
+            /* Is bundle.xml already cached? */
+            $bundle_data = $this->cache->get($bundle_cache_key);
+            $bundle_path = $this->cache->get($path_cache_key);
+            
+            if (is_null($bundle_data) || !$bundle_data instanceof xml || !is_string($bundle_path)){
+                
+                /* It's not cached so we need to read and parse */
+                $bundle_path = ADAPT_PATH . $bundle_name . "/";
+                
+                if (is_dir($bundle_path)){
+                    $available_versions = scandir($bundle_path);
+                    
+                    $selected_version = null;
+                    
+                    foreach($available_versions as $available_version){
+                        $version_path = $bundle_path . $available_version . "/";
+                        //print new html_pre("Version path: {$version_path}");
+                        if (substr($available_version, 0, 1) != "." && is_dir($version_path)){
+                            list($version_name, $version) = explode("-", $available_version);
+                            //print new html_pre("Version: {$version}\nVersion name: {$version_name}\nBundle name: {$bundle_name}");
+                            if ($version_name == $bundle_name && preg_match("/^\d+\.\d+\.\d+$/", $version)){
+                                //print new html_pre("valid");
+                                if (!is_null($bundle_version)){
+                                    
+                                    if (bundles::matches_version($bundle_version, $version)){
+                                        if (is_null($selected_version)){
+                                            $selected_version = $version;
+                                        }else{
+                                            //Is Newer?
+                                            $selected_version = bundles::get_newest_version($selected_version, $version);
+                                        }
+                                    }
+                                    
+                                }else{
+                                    if (is_null($selected_version)){
+                                        $selected_version = $version;
+                                    }else{
+                                        //Is Newer?
+                                        $selected_version = bundles::get_newest_version($selected_version, $version);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (!is_null($selected_version)){
+                        $bundle_path .= "{$bundle_name}-{$selected_version}/";
+                        
+                        if (file_exists($bundle_path . "bundle.xml")){
+                            
+                            /* Read the file */
+                            $bundle_data = file_get_contents($bundle_path . "bundle.xml");
+                            
+                            if ($bundle_data && xml::is_xml($bundle_data)){
+                                $bundle_data = xml::parse($bundle_data);
+                                
+                                if ($bundle_data instanceof xml){
+                                    /* Yay! */
+                                }else{
+                                    $this->error("Unable to load bundle '{$bundle_name}' version '{$selected_version}', could not parse 'bundle.xml'.");
+                                }
+                            }else{
+                                $this->error("Unable to load bundle '{$bundle_name}' version '{$selected_version}', could not read 'bundle.xml'.");
+                                return false;
+                            }
+                            
+                        }
+                        
+                    }else{
+                        $this->error("Unable to load bundle '{$bundle_name}' due to the version required ({$bundle_version}) not being available");
+                        return false;
+                    }
+                    
+                }else{
+                    $this->error("Unable to load bundle '{$bundle_name}' in '$bundle_path'.");
+                    return false;
+                }
+                
+                
+            }
+            
+            $this->_data = $bundle_data;
+            $this->_path = $bundle_path;
+            $this->_is_loaded = true;
+            
+            /* Cache the data */
+            $this->cache->serialize($bundle_cache_key, $this->_data, 600);
+            $this->cache->set($path_cache_key, $this->_path, 600, 'text/plain');
+            
+            return true;
+        
+            
+            $this->_is_loaded = false;
+            $this->_has_changed = false;
+            $this->_data = null;
+            //$this->_model->load_by_name($bundle_name);
             //print_r($this->cache);
             $cached_data = $this->cache->get('descriptor.bundle.' . $bundle_name);
             $cached_path = $this->cache->get('path.bundle.' . $bundle_name);
@@ -172,10 +312,11 @@ namespace frameworks\adapt{
                 return true;
             }else{
                 $paths = array(
-                    FRAMEWORK_PATH,
+                    /*FRAMEWORK_PATH,
                     EXTENSION_PATH,
                     APPLICATION_PATH,
-                    TEMPLATE_PATH
+                    TEMPLATE_PATH*/
+                    ADAPT_PATH
                 );
                 
                 foreach($paths as $path){
@@ -224,6 +365,7 @@ namespace frameworks\adapt{
         
         public function save(){
             if ($this->is_loaded){
+                $this->_model->save();
                 if ($this->_has_changed){
                     $fp = fopen($this->_path . "bundle.xml", "w");
                     if ($fp){
@@ -267,12 +409,31 @@ namespace frameworks\adapt{
                         }
                     }
                 }
+                
+                //$this->_model->installed = "Yes";
+                //$this->_model->save();
+                return true;
             }
+            
+            return false;
+        }
+        
+        public function uninstall(){
+            
         }
         
         public function boot(){
             /* Process boot handlers */
             if ($this->_is_loaded){
+                
+                if ($this->has_booted){
+                    return true;
+                }else{
+                    print new html_h1("Booting {$this->name} {$this->version}");
+                }
+                
+                $GLOBALS['time_offset'] = microtime(true);
+                
                 $handlers = $this->store('adapt.boot_config_handlers');
                 if ($handlers && is_array($handlers)){
                     
@@ -289,7 +450,72 @@ namespace frameworks\adapt{
                         }
                     }
                 }
+                
+                $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+                print "<pre>Time to process boot handlers ({$this->name}): " . round($GLOBALS['time'], 3) . "</pre>";
+                $GLOBALS['time_offset'] = microtime(true);
+                
+                /* Boot child bundles */
+                $dependencies = $this->get_dependencies();
+                //print new html_pre("Depeneds on:" . print_r($dependencies, true));
+                $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+                print "<pre>Time to find depencencies ({$this->name}): " . round($GLOBALS['time'], 3) . "</pre>";
+                $GLOBALS['time_offset'] = microtime(true);
+                
+                foreach($dependencies as $name => $versions){
+                    if (is_array($versions) && count($versions)){
+                        $selected = $versions[0];
+                        foreach($versions as $version){
+                            $selected = bundles::get_newest_version($selected, $version);
+                        }
+                        
+                        if ($selected == "0.0.0"){
+                            $this->error("Unable to boot bundle '{$name}'");
+                            return false;
+                        }else{
+                            $bundle = $this->bundles->get_bundle($name, $selected);
+                            if ($bundle instanceof bundle && $bundle->is_loaded){
+                                if (!$bundle->boot()){
+                                    $errors = $bundle->errors(true);
+                                    foreach($errors as $error){
+                                        $this->error($error);
+                                    }
+                                    
+                                    return false;
+                                }
+                            }else{
+                                $this->error("Unable to load bundle '{$name}'");
+                                return false;
+                            }
+                        }
+                        
+                    }else{
+                        $bundle = $this->bundles->get_bundle($name);
+                        if ($bundle instanceof bundle && $bundle->is_loaded){
+                            if (!$bundle->boot()){
+                                $errors = $bundle->errors(true);
+                                foreach($errors as $error){
+                                    $this->error($error);
+                                }
+                                
+                                return false;
+                            }
+                        }else{
+                            $this->error("Unable to load bundle '{$name}'");
+                            return false;
+                        }
+                    }
+                }
+                
+                $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+                print "<pre>Time to process depencencies ({$this->name}): " . round($GLOBALS['time'], 3) . "</pre>";
+                $GLOBALS['time_offset'] = microtime(true);
+                
+                $this->bundles->set_booted($this->name);
+                return true;
             }
+            
+            return false;
         }
         
         public function update(){
@@ -312,14 +538,6 @@ namespace frameworks\adapt{
             $this->store('adapt.install_config_handlers', $handlers);
         }
         
-        /* Static functions */
-        public static function bundle($path){
-            
-        }
-        
-        public static function unbundle($bundle){
-            
-        }
     }
     
     

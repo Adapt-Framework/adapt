@@ -26,7 +26,7 @@
  *  
  */
 
-namespace frameworks\adapt{
+namespace adapt{
     
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
@@ -84,6 +84,9 @@ namespace frameworks\adapt{
             return $output;
         }
         
+        public function view_about(){
+            
+        }
     }
 }
 
