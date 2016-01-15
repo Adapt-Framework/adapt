@@ -16,6 +16,15 @@ namespace adapt{
         protected $_is_loaded;
         protected $_booted_bundles = array();
         
+        /* The following is used create a boot order list
+         * for the booting application so that it can be
+         * cached and the in future executed without
+         * any recurrsion.
+         */
+        protected $_boot_stratagies = array();
+        protected $_booting_application = null;
+        protected $_booting_application_version = null;
+        
         public function __construct(){
             parent::__construct();
             //$this->_settings = new xml_document('adapt_framework', new xml_settings());
@@ -41,12 +50,33 @@ namespace adapt{
         /*
          * Methods
          */
+        public function create_boot_stratagy($bundle_name, $bundle_version){
+            if (!is_null($this->_booting_application)){
+                $stratergy = array();
+                
+                if (isset($this->_boot_stratagies[$this->_booting_application][$this->_booting_application_version])){
+                    $stratergy = $this->_boot_stratagies[$this->_booting_application][$this->_booting_application_version];
+                }
+                
+                if (!in_array($bundle_name, array_keys($stratergy))){
+                    $stratergy[$bundle_name] = $bundle_version;
+                }
+                
+                $this->_boot_stratagies[$this->_booting_application][$this->_booting_application_version] = $stratergy;
+                
+                //print new html_pre("Current stratergies: " . print_r($this->_boot_stratagies, true));
+            }
+        }
+        
         public function has_booted($bundle_name){
             return in_array($bundle_name, $this->_booted_bundles);
         }
         
-        public function set_booted($bundle_name){
+        public function set_booted($bundle_name, $bundle_version = null){
             $this->_booted_bundles[] = $bundle_name;
+            
+            /* Lets record this is the boot stratergy */
+            $this->create_boot_stratagy($bundle_name, $bundle_version);
         }
         
         
@@ -67,6 +97,7 @@ namespace adapt{
         }
         
         public function register_namespace($namespace, $bundle_name, $bundle_version){
+            //print "<p>Registering namespace <strong>{$namespace}</strong></p>"; //new html_p(array("Registering namespace ", new html_strong($namespace)));
             $namespaces = $this->store('adapt.namespaces');
             if (!is_array($namespaces)){
                 if ($this->cache && $this->cache instanceof cache){
@@ -94,13 +125,21 @@ namespace adapt{
         
         
         public function boot_system($application_name = null, $application_version = null){
+            
+            /* Load boot stratagies from the cache */
+            $stratagies = $this->cache->get('adapt.boot_stratagies');
+            //print new html_pre("Stratergies from cache" . print_r($stratagies, true));
+            if (is_array($stratagies)){
+                $this->_boot_stratagies = $stratagies;
+            }
+            
             $GLOBALS['time_offset'] = microtime(true);
             
             /* Load the global settings */
             $this->load_global_settings();
             
             $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-            print "<pre>Time to load settings (And pre boot): " . round($GLOBALS['time'], 3) . "</pre>";
+            print "<pre>Time to load settings (And pre boot): " . round($GLOBALS['time'], 4) . "</pre>";
             $GLOBALS['time_offset'] = microtime(true);
             
             /* Apply global settings */
@@ -108,7 +147,7 @@ namespace adapt{
             
             
             $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-            print "<pre>Time to apply settings: " . round($GLOBALS['time'], 3) . "</pre>";
+            print "<pre>Time to apply settings: " . round($GLOBALS['time'], 4) . "</pre>";
             $GLOBALS['time_offset'] = microtime(true);
             
             /* Find a valid application to boot */
@@ -118,13 +157,13 @@ namespace adapt{
                 $application_name = $this->setting('adapt.default_application_name');
                 
                 $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                print "<pre>Time to get application name from settings: " . round($GLOBALS['time'], 3) . "</pre>";
+                print "<pre>Time to get application name from settings: " . round($GLOBALS['time'], 4) . "</pre>";
                 $GLOBALS['time_offset'] = microtime(true);
                 
                 $application_version = $this->seting('adapt.default_application_version');
                 
                 $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                print "<pre>Time to get application version: " . round($GLOBALS['time'], 3) . "</pre>";
+                print "<pre>Time to get application version: " . round($GLOBALS['time'], 4) . "</pre>";
                 $GLOBALS['time_offset'] = microtime(true);
             }
             
@@ -133,7 +172,7 @@ namespace adapt{
                 $applications = $this->list_local_applications();
                 
                 $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                print "<pre>Time to list local applications: " . round($GLOBALS['time'], 3) . "</pre>";
+                print "<pre>Time to list local applications: " . round($GLOBALS['time'], 4) . "</pre>";
                 $GLOBALS['time_offset'] = microtime(true);
                 
                 if (count($applications)){
@@ -155,96 +194,214 @@ namespace adapt{
             if (!is_null($application_name)){
                 
                 $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                print "<pre>Time to find application candidate: " . round($GLOBALS['time'], 3) . "</pre>";
+                print "<pre>Time to find application candidate: " . round($GLOBALS['time'], 4) . "</pre>";
                 $GLOBALS['time_offset'] = microtime(true);
                 
-                /* Is the bundle installed? */
-                if (!$this->has_bundle($application_name, $application_version)){
-                    /* Does the repository have it? */
-                    $this->fetch_from_respository($application_name, $application_version);
-                    
-                    $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                    print "<pre>Time to fetch application: " . round($GLOBALS['time'], 3) . "</pre>";
-                    $GLOBALS['time_offset'] = microtime(true);
-                }
+                /* We can make some assumtions here, if we have a boot stratagy
+                 * for this application then we can just assume we have everything
+                 * and go ahead and just boot them one by one.
+                 *
+                 * We will need to connect the data source here first.
+                 */
                 
-                if ($this->has_bundle($application_name, $application_version)){
+                if (isset($this->_boot_stratagies[$application_name][$application_version])){
+                    
+                    /* Connect the data source if we have one */
+                    $drivers = $this->settings('data_source.driver');
+                    $hosts = $this->settings('data_source.host');
+                    $posts = $this->settings('data_source.port');
+                    $usernames = $this->settings('data_source.username');
+                    $passwords = $this->settings('data_source.password');
+                    $schemas = $this->settings('data_source.schema');
+                    $writables = $this->settings('data_source.writable');
+                    
+                    if (is_array($drivers) && is_array($hosts) && is_array($schemas)
+                        && is_array($usernames) && is_array($passwords) && is_array($writables)
+                        && count($drivers) == count($hosts) && count($drivers) == count($schemas)
+                        && count($drivers) == count($usernames) && count($drivers) == count($passwords)
+                        && count($drivers) == count($writables)){
+                        
+                        for($i = 0; $i < count($drivers); $i++){
+                            if (class_exists($drivers[$i])){
+                                if (isset($this->data_source)){
+                                    /* Connect a new host */
+                                    if ($this->data_source instanceof $drivers[$i]){
+                                        $this->data_source->add($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+                                    }
+                                }else{
+                                    /* Create a new data source */
+                                    $driver = $drivers[$i];
+                                    $this->data_source = new $driver($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+                                }
+                            }
+                        }
+                        
+                    }else{
+                        $this->error('Unable to connect to the data base, the data source settings in settings.xml are not valid.');
+                    }
+                    
                     
                     $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                    print "<pre>Time to check if we have the application: " . round($GLOBALS['time'], 3) . "</pre>";
+                    print "<pre>Time be ready to bundle boot: " . round($GLOBALS['time'], 4) . "</pre>";
                     $GLOBALS['time_offset'] = microtime(true);
                     
-                    $this->get_dependencies($application_name, $application_version);
+                    /* Boot the bundles one by one in order */
+                    $stratagy = $this->_boot_stratagies[$application_name][$application_version];
                     
-                    $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                    print "<pre>Time to get dependencies: " . round($GLOBALS['time'], 3) . "</pre>";
-                    $GLOBALS['time_offset'] = microtime(true);
+                    print new html_pre("Using stratergy: " . print_r($stratagy, true));
+                    
+                    foreach($stratagy as $bundle_name => $bundle_version){
+                        $bundle = $this->get_bundle($bundle_name, $bundle_version);
+                        
+                        $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+                        print "<pre>Time to load {$bundle->name}: " . round($GLOBALS['time'], 4) . "</pre>";
+                        $GLOBALS['time_offset'] = microtime(true);
+                        
+                        $bundle->boot(false);
+                        
+                        $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+                        print "<pre>Time to boot {$bundle->name}: " . round($GLOBALS['time'], 4) . "</pre>";
+                        $GLOBALS['time_offset'] = microtime(true);
+                    }
+                    
+                    /* We must return true */
+                    return true;
                     
                 }else{
-                    $this->error("Unable to locate application '{$application_name}'");
-                    return false;
+                    
+                    /* We don't have a boot stratagy so we are going to create one as we go */
+                    $this->_booting_application = $application_name;
+                    $this->_booting_application_version = $application_version;
+                    
+                    /* Is the bundle installed? */
+                    if (!$this->has_bundle($application_name, $application_version)){
+                        /* Does the repository have it? */
+                        $this->fetch_from_respository($application_name, $application_version);
+                        
+                        //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+                        //print "<pre>Time to fetch application: " . round($GLOBALS['time'], 3) . "</pre>";
+                        //$GLOBALS['time_offset'] = microtime(true);
+                    }
+                    
+                    if ($this->has_bundle($application_name, $application_version)){
+                        
+                        //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+                        //print "<pre>Time to check if we have the application: " . round($GLOBALS['time'], 3) . "</pre>";
+                        //$GLOBALS['time_offset'] = microtime(true);
+                        
+                        $this->get_dependencies($application_name, $application_version);
+                        
+                        //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+                        //print "<pre>Time to get dependencies: " . round($GLOBALS['time'], 3) . "</pre>";
+                        //$GLOBALS['time_offset'] = microtime(true);
+                        
+                        /* Save global settings if they've changed */
+                        $this->save_global_settings();
+                        
+                        /* Connect the data source if we have one */
+                        $drivers = $this->settings('data_source.driver');
+                        $hosts = $this->settings('data_source.host');
+                        $posts = $this->settings('data_source.port');
+                        $usernames = $this->settings('data_source.username');
+                        $passwords = $this->settings('data_source.password');
+                        $schemas = $this->settings('data_source.schema');
+                        $writables = $this->settings('data_source.writable');
+                        
+                        if (is_array($drivers) && is_array($hosts) && is_array($schemas)
+                            && is_array($usernames) && is_array($passwords) && is_array($writables)
+                            && count($drivers) == count($hosts) && count($drivers) == count($schemas)
+                            && count($drivers) == count($usernames) && count($drivers) == count($passwords)
+                            && count($drivers) == count($writables)){
+                            
+                            for($i = 0; $i < count($drivers); $i++){
+                                if (class_exists($drivers[$i])){
+                                    if (isset($this->data_source)){
+                                        /* Connect a new host */
+                                        if ($this->data_source instanceof $drivers[$i]){
+                                            $this->data_source->add($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+                                        }
+                                    }else{
+                                        /* Create a new data source */
+                                        $driver = $drivers[$i];
+                                        $this->data_source = new $driver($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+                                    }
+                                }
+                            }
+                            
+                        }else{
+                            $this->error('Unable to connect to the data base, the data source settings in settings.xml are not valid.');
+                        }
+                        
+                    }else{
+                        $this->error("Unable to locate application '{$application_name}'");
+                        return false;
+                    }
                 }
-                
                 
             }else{
                 $this->error('Unable to find a vaild application to boot');
                 return false;
             }
             
-            /* Save global settings if they've changed */
-            $this->save_global_settings();
+            ///* Save global settings if they've changed */
+            //$this->save_global_settings();
             
-            $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-            print "<pre>Time to save settings: " . round($GLOBALS['time'], 3) . "</pre>";
-            $GLOBALS['time_offset'] = microtime(true);
+            //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+            //print "<pre>Time to save settings: " . round($GLOBALS['time'], 3) . "</pre>";
+            //$GLOBALS['time_offset'] = microtime(true);
             
-            /* Connect the data source if we have one */
-            $drivers = $this->settings('data_source.driver');
-            $hosts = $this->settings('data_source.host');
-            $posts = $this->settings('data_source.port');
-            $usernames = $this->settings('data_source.username');
-            $passwords = $this->settings('data_source.password');
-            $schemas = $this->settings('data_source.schema');
-            $writables = $this->settings('data_source.writable');
-            
-            if (is_array($drivers) && is_array($hosts) && is_array($schemas)
-                && is_array($usernames) && is_array($passwords) && is_array($writables)
-                && count($drivers) == count($hosts) && count($drivers) == count($schemas)
-                && count($drivers) == count($usernames) && count($drivers) == count($passwords)
-                && count($drivers) == count($writables)){
-                
-                for($i = 0; $i < count($drivers); $i++){
-                    if (class_exists($drivers[$i])){
-                        if (isset($this->data_source)){
-                            /* Connect a new host */
-                            if ($this->data_source instanceof $drivers[$i]){
-                                $this->data_source->add($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
-                            }
-                        }else{
-                            /* Create a new data source */
-                            $driver = $drivers[$i];
-                            $this->data_source = new $driver($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
-                        }
-                    }
-                }
-                
-            }else{
-                $this->error('Unable to connect to the data base, the data source settings in settings.xml are not valid.');
-            }
+            ///* Connect the data source if we have one */
+            //$drivers = $this->settings('data_source.driver');
+            //$hosts = $this->settings('data_source.host');
+            //$posts = $this->settings('data_source.port');
+            //$usernames = $this->settings('data_source.username');
+            //$passwords = $this->settings('data_source.password');
+            //$schemas = $this->settings('data_source.schema');
+            //$writables = $this->settings('data_source.writable');
+            //
+            //if (is_array($drivers) && is_array($hosts) && is_array($schemas)
+            //    && is_array($usernames) && is_array($passwords) && is_array($writables)
+            //    && count($drivers) == count($hosts) && count($drivers) == count($schemas)
+            //    && count($drivers) == count($usernames) && count($drivers) == count($passwords)
+            //    && count($drivers) == count($writables)){
+            //    
+            //    for($i = 0; $i < count($drivers); $i++){
+            //        if (class_exists($drivers[$i])){
+            //            if (isset($this->data_source)){
+            //                /* Connect a new host */
+            //                if ($this->data_source instanceof $drivers[$i]){
+            //                    $this->data_source->add($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+            //                }
+            //            }else{
+            //                /* Create a new data source */
+            //                $driver = $drivers[$i];
+            //                $this->data_source = new $driver($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+            //            }
+            //        }
+            //    }
+            //    
+            //}else{
+            //    $this->error('Unable to connect to the data base, the data source settings in settings.xml are not valid.');
+            //}
             
             
             /* Boot the bundle */
             $bundle = $this->get_bundle($application_name, $application_version);
             
-            $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-            print "<pre>Time to get bundle: " . round($GLOBALS['time'], 3) . "</pre>";
-            $GLOBALS['time_offset'] = microtime(true);
+            //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+            //print "<pre>Time to get bundle: " . round($GLOBALS['time'], 3) . "</pre>";
+            //$GLOBALS['time_offset'] = microtime(true);
             
             if ($bundle && $bundle instanceof bundle && $bundle->is_loaded){
                 if ($bundle->boot()){
-                    $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                    print "<pre>Time to boot: " . round($GLOBALS['time'], 3) . "</pre>";
-                    $GLOBALS['time_offset'] = microtime(true);
+                    //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+                    //print "<pre>Time to boot: " . round($GLOBALS['time'], 3) . "</pre>";
+                    //$GLOBALS['time_offset'] = microtime(true);
+                    
+                    //print new html_pre("Final stratergy: " . print_r($this->_boot_stratagies, true));
+                    
+                    $this->cache->serialize('adapt.boot_stratagies', $this->_boot_stratagies, 600);
+                    
                     return true;
                 }else{
                     $errors = $bundle->errors(true);
@@ -263,7 +420,7 @@ namespace adapt{
         public function get_bundle($bundle_name, $bundle_version = null){
             $cache_key = "adapt.bundle.get_bundle.{$bundle_name}";
             
-            print new html_pre("Request bundle = {$bundle_name} - {$bundle_version}");
+            //print new html_pre("Request bundle = {$bundle_name} - {$bundle_version}");
             if (!is_null($bundle_version)){
                 $cache_key .= "{$bundle_version}";
                 if (!is_array($bundle_version)) $bundle_version = array($bundle_version);
@@ -271,7 +428,7 @@ namespace adapt{
             
             $bundle = $this->cache->get($cache_key);
             if ($bundle instanceof bundle){
-                print new html_pre("Pulling from cache");
+                //print new html_pre("Pulling from cache");
                 return $bundle;
             }
             
@@ -373,7 +530,7 @@ namespace adapt{
                                 
                                 /* Get the bundle class */
                                 $bundle_class = $namespace . "\\bundle_" . $bundle_name;
-                               // print new html_pre("Bundle class: {$bundle_class}");
+                                print new html_pre("Bundle class: {$bundle_class}");
                                 $bundle = new $bundle_class();
                                 
                                 if ($bundle && $bundle instanceof bundle){
@@ -500,16 +657,21 @@ namespace adapt{
                 
                 if (file_exists($file_path)){
                     $file_content = file_get_contents($file_path);
-                    if (xml::is_xml($file_content)){
-                        $file_content = xml::parse($file_content);
-                        
-                        if ($file_content instanceof xml){
-                            $type = $file_content->find('type')->get(0)->get(0);
-                            if ($type == "application"){
-                                $output[] = $bundle_name;
-                            }
-                        }
+                    
+                    if (strpos($file_content, "<type>application</type>") !== false){
+                        $output[] = $bundle_name;
                     }
+                    
+                    //if (xml::is_xml($file_content)){
+                    //    $file_content = xml::parse($file_content);
+                    //    
+                    //    if ($file_content instanceof xml){
+                    //        $type = $file_content->find('type')->get(0)->get(0);
+                    //        if ($type == "application"){
+                    //            $output[] = $bundle_name;
+                    //        }
+                    //    }
+                    //}
                 }
             }
             

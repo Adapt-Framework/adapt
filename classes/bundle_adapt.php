@@ -261,6 +261,13 @@ namespace adapt{
             );
         }
         
+        public function boot($boot_dependencies = true){
+            if (!$this->has_booted){
+                parent::boot($boot_dependencies);
+                $this->dom = new page();
+            }
+        }
+        
         public function generate_xml_schema($bundle_name, $table_name){
             $xml = xml_table(array('name' => $table_name));
             

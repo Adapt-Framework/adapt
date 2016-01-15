@@ -154,7 +154,8 @@ namespace adapt{
             $out = array();
             
             if ($this->_is_loaded){
-                $cached_copy = $this->cache->get("adapt.bundle." . $this->name . "." . $this->version . ".depends_on");
+                $cache_key = "adapt.bundle." . $this->name . "." . $this->version . ".depends_on_array";
+                $cached_copy = $this->cache->get($cache_key);
                 if (is_array($cached_copy)){
                     
                     //print new html_pre("Cached dep list");
@@ -185,7 +186,7 @@ namespace adapt{
                         }
                     }
                     
-                    $this->cache->serialize("adapt.bundle." . $this->name . "." . $this->version . ".depends_on", $out, 600);
+                    $this->cache->serialize($cache_key, $out, 600);
                 }
             }
             
@@ -265,6 +266,9 @@ namespace adapt{
                                 
                                 if ($bundle_data instanceof xml){
                                     /* Yay! */
+                                    /* Cache the data */
+                                    $this->cache->serialize($bundle_cache_key, $this->_data, 600);
+                                    $this->cache->set($path_cache_key, $this->_path, 600, 'text/plain');
                                 }else{
                                     $this->error("Unable to load bundle '{$bundle_name}' version '{$selected_version}', could not parse 'bundle.xml'.");
                                 }
@@ -292,9 +296,7 @@ namespace adapt{
             $this->_path = $bundle_path;
             $this->_is_loaded = true;
             
-            /* Cache the data */
-            $this->cache->serialize($bundle_cache_key, $this->_data, 600);
-            $this->cache->set($path_cache_key, $this->_path, 600, 'text/plain');
+            
             
             return true;
         
@@ -422,14 +424,19 @@ namespace adapt{
             
         }
         
-        public function boot(){
+        public function boot($boot_dependencies = true){
             /* Process boot handlers */
             if ($this->_is_loaded){
                 
                 if ($this->has_booted){
                     return true;
                 }else{
-                    print new html_h1("Booting {$this->name} {$this->version}");
+                    //print new html_h1("Booting {$this->name} {$this->version}");
+                }
+                
+                /* Install before booting if needed */
+                if (!$this->is_installed){
+                    //$this->install();
                 }
                 
                 $GLOBALS['time_offset'] = microtime(true);
@@ -452,28 +459,47 @@ namespace adapt{
                 }
                 
                 $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                print "<pre>Time to process boot handlers ({$this->name}): " . round($GLOBALS['time'], 3) . "</pre>";
+                print "<pre>Time to process boot handlers ({$this->name}): " . round($GLOBALS['time'], 4) . "</pre>";
                 $GLOBALS['time_offset'] = microtime(true);
+                
                 
                 /* Boot child bundles */
-                $dependencies = $this->get_dependencies();
-                //print new html_pre("Depeneds on:" . print_r($dependencies, true));
-                $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                print "<pre>Time to find depencencies ({$this->name}): " . round($GLOBALS['time'], 3) . "</pre>";
-                $GLOBALS['time_offset'] = microtime(true);
-                
-                foreach($dependencies as $name => $versions){
-                    if (is_array($versions) && count($versions)){
-                        $selected = $versions[0];
-                        foreach($versions as $version){
-                            $selected = bundles::get_newest_version($selected, $version);
-                        }
-                        
-                        if ($selected == "0.0.0"){
-                            $this->error("Unable to boot bundle '{$name}'");
-                            return false;
+                if ($boot_dependencies){
+                    $dependencies = $this->get_dependencies();
+                    //print new html_pre("Depeneds on:" . print_r($dependencies, true));
+                    //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+                    //print "<pre>Time to find depencencies ({$this->name}): " . round($GLOBALS['time'], 3) . "</pre>";
+                    //$GLOBALS['time_offset'] = microtime(true);
+                    
+                    foreach($dependencies as $name => $versions){
+                        if (is_array($versions) && count($versions)){
+                            $selected = $versions[0];
+                            foreach($versions as $version){
+                                $selected = bundles::get_newest_version($selected, $version);
+                            }
+                            
+                            if ($selected == "0.0.0"){
+                                $this->error("Unable to boot bundle '{$name}'");
+                                return false;
+                            }else{
+                                $bundle = $this->bundles->get_bundle($name, $selected);
+                                if ($bundle instanceof bundle && $bundle->is_loaded){
+                                    if (!$bundle->boot()){
+                                        $errors = $bundle->errors(true);
+                                        foreach($errors as $error){
+                                            $this->error($error);
+                                        }
+                                        
+                                        return false;
+                                    }
+                                }else{
+                                    $this->error("Unable to load bundle '{$name}'");
+                                    return false;
+                                }
+                            }
+                            
                         }else{
-                            $bundle = $this->bundles->get_bundle($name, $selected);
+                            $bundle = $this->bundles->get_bundle($name);
                             if ($bundle instanceof bundle && $bundle->is_loaded){
                                 if (!$bundle->boot()){
                                     $errors = $bundle->errors(true);
@@ -488,22 +514,6 @@ namespace adapt{
                                 return false;
                             }
                         }
-                        
-                    }else{
-                        $bundle = $this->bundles->get_bundle($name);
-                        if ($bundle instanceof bundle && $bundle->is_loaded){
-                            if (!$bundle->boot()){
-                                $errors = $bundle->errors(true);
-                                foreach($errors as $error){
-                                    $this->error($error);
-                                }
-                                
-                                return false;
-                            }
-                        }else{
-                            $this->error("Unable to load bundle '{$name}'");
-                            return false;
-                        }
                     }
                 }
                 
@@ -511,7 +521,11 @@ namespace adapt{
                 print "<pre>Time to process depencencies ({$this->name}): " . round($GLOBALS['time'], 3) . "</pre>";
                 $GLOBALS['time_offset'] = microtime(true);
                 
-                $this->bundles->set_booted($this->name);
+                $this->bundles->set_booted($this->name, $this->version);
+                
+                $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
+                print "<pre>Time to mark as booted ({$this->name}): " . round($GLOBALS['time'], 3) . "</pre>";
+                $GLOBALS['time_offset'] = microtime(true);
                 return true;
             }
             

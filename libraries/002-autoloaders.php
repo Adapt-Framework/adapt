@@ -71,7 +71,7 @@ function voodoo($class){
             $locations = array('classes/', 'views/', 'controllers/', 'models/', 'interfaces/');
             foreach($locations as $location){
                 if (file_exists($path . $location . $class_name . ".php")){
-                    //print "<pre>FOUND IN: " . $path . $location . $class_name . ".php</pre>";
+                    print "<pre>FOUND IN: " . $path . $location . $class_name . ".php</pre>";
                     require_once($path . $location . $class_name . ".php");
                     $class_loaded = true;
                 }

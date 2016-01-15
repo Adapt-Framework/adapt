@@ -47,7 +47,7 @@ if (is_dir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/libraries")){
 }
 
 //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to load libraries: " . round($GLOBALS['time'], 3) . "</pre>";
+//print "<pre>Time to load libraries: " . round($GLOBALS['time'], 4) . "</pre>";
 //$GLOBALS['time_offset'] = microtime(true);
 
 /*
@@ -59,7 +59,7 @@ global $adapt;
 $adapt = new \adapt\base();
 
 //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to globalize adapt: " . round($GLOBALS['time'], 3) . "</pre>";
+//print "<pre>Time to globalize adapt: " . round($GLOBALS['time'], 4) . "</pre>";
 //$GLOBALS['time_offset'] = microtime(true);
 
 /*
@@ -68,7 +68,7 @@ $adapt = new \adapt\base();
 $adapt->bundles = new \adapt\bundles();
 
 //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to globalize bundles: " . round($GLOBALS['time'], 3) . "</pre>";
+//print "<pre>Time to globalize bundles: " . round($GLOBALS['time'], 4) . "</pre>";
 //$GLOBALS['time_offset'] = microtime(true);
 
 /*
@@ -77,7 +77,7 @@ $adapt->bundles = new \adapt\bundles();
 $adapt->bundles->register_namespace("\\adapt", 'adapt', ADAPT_VERSION);
 
 //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to register adapt namespace: " . round($GLOBALS['time'], 3) . "</pre>";
+//print "<pre>Time to register adapt namespace: " . round($GLOBALS['time'], 4) . "</pre>";
 //$GLOBALS['time_offset'] = microtime(true);
 
 /*
@@ -94,7 +94,7 @@ if (is_dir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/config")){
 }
 
 //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to load configuration: " . round($GLOBALS['time'], 3) . "</pre>";
+//print "<pre>Time to load configuration: " . round($GLOBALS['time'], 4) . "</pre>";
 //$GLOBALS['time_offset'] = microtime(true);
 
 /*
@@ -106,7 +106,7 @@ $adapt->add_handler("\\adapt\\model");
 $adapt->add_handler("\\adapt\\bundle");
 
 //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to add handlers " . round($GLOBALS['time'], 3) . "</pre>";
+//print "<pre>Time to add handlers " . round($GLOBALS['time'], 4) . "</pre>";
 //$GLOBALS['time_offset'] = microtime(true);
 
 /*
@@ -125,14 +125,14 @@ if (is_null($path)){
 $adapt->file_store = new \adapt\storage_file_system();
 
 //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to globalize file storage: " . round($GLOBALS['time'], 3) . "</pre>";
+//print "<pre>Time to globalize file storage: " . round($GLOBALS['time'], 4) . "</pre>";
 //$GLOBALS['time_offset'] = microtime(true);
 
 /* Set the cache */
 $adapt->cache = new \adapt\cache();
 
 //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to globalize cache: " . round($GLOBALS['time'], 3) . "</pre>";
+//print "<pre>Time to globalize cache: " . round($GLOBALS['time'], 4) . "</pre>";
 //$GLOBALS['time_offset'] = microtime(true);
 
 /*
@@ -155,7 +155,7 @@ if (!isset($adapt->request['actions'])){
 }
 
 //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time check for cached page: " . round($GLOBALS['time'], 3) . "</pre>";
+//print "<pre>Time check for cached page: " . round($GLOBALS['time'], 4) . "</pre>";
 //$GLOBALS['time_offset'] = microtime(true);
 
 
@@ -163,7 +163,7 @@ if (!isset($adapt->request['actions'])){
 $bundle_adapt = $adapt->bundles->get_bundle('adapt', ADAPT_VERSION);
 
 //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to get the adapt bundle: " . round($GLOBALS['time'], 3) . "</pre>";
+//print "<pre>Time to get the adapt bundle: " . round($GLOBALS['time'], 4) . "</pre>";
 //$GLOBALS['time_offset'] = microtime(true);
 
 
@@ -177,6 +177,10 @@ $bundle_adapt = $adapt->bundles->get_bundle('adapt', ADAPT_VERSION);
 //$GLOBALS['time_offset'] = microtime(true);
 
 $adapt->bundles->boot_system();
+
+//TODO: Process requests
+print $adapt->dom;
+
 print new html_pre(print_r($adapt->bundles->errors(true), true)); 
 exit(1); 
 

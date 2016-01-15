@@ -50,10 +50,12 @@ namespace adapt{
                 $this->head->add(new html_title($title));
             }
             
+            $bundle_adapt = $this->bundles->get_bundle('adapt');
+            
             $this->head->add(new html_meta(array('http-equiv' => 'content-type', 'content' => 'text/html;charset=utf-8')));            
             $this->head->add(new html_script(array('type' => 'text/javascript', 'src' => '/_adapt/sanitizers')));
-            $this->head->add(new html_script(array('type' => 'text/javascript', 'src' => '/adapt/frameworks/adapt/static/js/adapt.js')));
-            $this->head->add(new html_script(array('type' => 'text/javascript', 'src' => '/adapt/frameworks/adapt/static/js/date.js')));
+            $this->head->add(new html_script(array('type' => 'text/javascript', 'src' => "/adapt/adapt/adapt-{$bundle_adapt->version}/static/js/adapt.js")));
+            $this->head->add(new html_script(array('type' => 'text/javascript', 'src' => "/adapt/adapt/adapt-{$bundle_adapt->version}/static/js/date.js")));
         }
         
         public function aget_cache_time(){
