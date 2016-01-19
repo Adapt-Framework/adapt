@@ -389,7 +389,7 @@ namespace adapt{
             if ($this->_day < 1){
                 $this->_month--;
                 if ($this->_month < 1){
-                    $this->_year++;
+                    $this->_year--;
                     $this->_month = 12;
                 }
                 $this->_day = $this->days_in_month();
@@ -427,19 +427,29 @@ namespace adapt{
         
         public function goto_hours($hours){
             if ($hours < 0){
+                if ($hours < -23){
+                    $days = floor($hours / 23);
+                    $hours = $hours % 23;
+                    $this->goto_days($days);
+                }
                 for ($i = $hours; $i < 0; $i++){
                     $this->_hour--;
                     if ($this->_hour < 0){
-                        $this->goto_days(-1);
+                        //$this->goto_days(-1);
                         $this->_hour = 23;
                     }
                 }
             }else{
+                if ($hours > 23){
+                    $days = floor($hours / 24);
+                    $hours = $hours % 60;
+                    $this->goto_days($days);
+                }
                 for($i = 0; $i < $hours; $i++){
                     $this->_hour++;
                     if ($this->_hour == 24){
                         $this->_hour = 0;
-                        $this->goto_days(1);
+                        //$this->goto_days(1);
                     }
                 }
             }
@@ -447,19 +457,29 @@ namespace adapt{
         
         public function goto_minutes($minutes){
             if ($minutes < 0){
+                if ($minutes < -59){
+                    $hours = floor($minutes / 60);
+                    $minutes = $minutes % 60;
+                    $this->goto_hours($hours);
+                }
                 for ($i = $minutes; $i < 0; $i++){
                     $this->_minute--;
                     if ($this->_minute < 0){
-                        $this->goto_hours(-1);
+                        //$this->goto_hours(-1);
                         $this->_minute = 59;
                     }
                 }
             }else{
+                if ($minutes > 59){
+                    $hours = floor($minutes / 60);
+                    $minutes = $minutes % 60;
+                    $this->goto_hours($hours);
+                }
                 for($i = 0; $i < $minutes; $i++){
                     $this->_minute++;
                     if ($this->_minute == 60){
                         $this->_minute = 0;
-                        $this->goto_hours(1);
+                        //$this->goto_hours(1);
                     }
                 }
             }
@@ -467,19 +487,29 @@ namespace adapt{
         
         public function goto_seconds($seconds){
             if ($seconds < 0){
+                if ($seconds < -59){
+                    $minutes = floor($seconds / 60);
+                    $seconds = $seconds % 60;
+                    $this->goto_minutes($minutes);
+                }
                 for ($i = $seconds; $i < 0; $i++){
                     $this->_second--;
                     if ($this->_second < 0){
-                        $this->goto_minutes(-1);
+                        //$this->goto_minutes(-1);
                         $this->_second = 59;
                     }
                 }
             }else{
+                if ($seconds > 59){
+                    $minutes = floor($seconds / 60);
+                    $seconds = $seconds % 60;
+                    $this->goto_minutes($minutes);
+                }
                 for($i = 0; $i < $seconds; $i++){
                     $this->_second++;
                     if ($this->_second == 60){
                         $this->_second = 0;
-                        $this->goto_minutes(1);
+                        //$this->goto_minutes(1);
                     }
                 }
             }
