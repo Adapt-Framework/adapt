@@ -70,6 +70,10 @@ namespace adapt{
         //    return $path . $key;
         //}
         
+        public function is_key_valid($key){
+            return preg_match("/[0-9a-zA-Z]+(\/?[.-_A-Za-z0-9]+)*/", $key);
+        }
+        
         public function get_new_key(){
             if ($this->available){
                 $chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwzyz0123456789";
@@ -87,6 +91,45 @@ namespace adapt{
         }
         
         public function set($key, $data, $content_type = null, $public = false){
+            if ($this->available){
+                if ($this->is_key_valid($key)){
+                    $path = $this->_store_path . ($public ? "public/" : "private/");
+                    $namespaces = explode("/", $key);
+                    
+                    if (count($namespaces) > 1){
+                        for($i = 0; $i < count($namespaces) - 1; $i++){
+                            $path .= $namespaces[$i] . "/";
+                            if (!file_exists($path)){
+                                mkdir($path);
+                            }
+                        }
+                        
+                        $path .= $namespaces[count($namespaces) - 1];
+                    }else{
+                        $path .= $namespaces[0];
+                    }
+                    
+                    $fp = fopen($path, "w");
+                    if ($fp){
+                        fwrite($fp, $data);
+                        fclose($fp);
+                        
+                        if (!is_null($content_type)) $this->set_content_type($key, $content_type);
+                        
+                        return true;
+                    }else{
+                        $this->error("Unable to write file {$this->_store_path}{$key}");
+                    }
+                    
+                }else{
+                    $this->error("The key '{$key}' is not valid.");
+                }
+            }else{
+                $this->error("File system file storage is unavailable.");
+            }
+            
+            return false;
+            
             if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
             if ($this->available){
                 $path = $this->_store_path . ($public ? "public/" : "private/");
@@ -110,26 +153,29 @@ namespace adapt{
         
         
         public function set_by_file($key, $path, $content_type = null, $public = false){
-            if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
+            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
             if ($this->available){
                 
-                if (file_exists($path)){
-                    $store_path = $this->_store_path . ($public ? "public/" : "private/");
-                    $fp = fopen($store_path, "w");
-                    if ($fp){
-                        fwrite($fp, file_get_contents($path));
-                        fclose($fp);
-                        
-                        if (!is_null($content_type)) $this->set_content_type($key, $content_type);
-                        
-                        return true;
+                if ($this->is_key_valid($key)){
+                    if (file_exists($path)){
+                        $store_path = $this->_store_path . ($public ? "public/" : "private/");
+                        $fp = fopen($store_path, "w");
+                        if ($fp){
+                            fwrite($fp, file_get_contents($path));
+                            fclose($fp);
+                            
+                            if (!is_null($content_type)) $this->set_content_type($key, $content_type);
+                            
+                            return true;
+                        }else{
+                            $this->error("Unable to write file {$this->_store_path}{$key}");
+                        }
                     }else{
-                        $this->error("Unable to write file {$this->_store_path}{$key}");
+                        $this->error("Unable to find {$path}");
                     }
                 }else{
-                    $this->error("Unable to find {$path}");
+                    $this->error("Invalid file storage key '{$key}'");
                 }
-                
             }else{
                 $this->error("Unable to store the file, storage unavailable");
             }
@@ -138,68 +184,78 @@ namespace adapt{
         }
         
         public function get($key, $number_of_bytes = null, $offset = 0){
-            if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
-            $path = $this->_store_path . 'private/' . $key;
-            if (file_exists($path)){
-                if (!is_null($number_of_bytes)){
-                    return file_get_contents($path, false, null, $offset, $number_of_bytes);
-                }else{
-                    return file_get_contents($path, false, null, $offset);
+            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
+            if ($this->is_key_valid($key)){
+                $path = $this->_store_path . 'private/' . $key;
+                if (file_exists($path)){
+                    if (!is_null($number_of_bytes)){
+                        return file_get_contents($path, false, null, $offset, $number_of_bytes);
+                    }else{
+                        return file_get_contents($path, false, null, $offset);
+                    }
                 }
-            }
-            
-            $path = $this->_store_path . 'public/' . $key;
-            if (file_exists($path)){
-                if (!is_null($number_of_bytes)){
-                    return file_get_contents($path, false, null, $offset, $number_of_bytes);
-                }else{
-                    return file_get_contents($path, false, null, $offset);
+                
+                $path = $this->_store_path . 'public/' . $key;
+                if (file_exists($path)){
+                    if (!is_null($number_of_bytes)){
+                        return file_get_contents($path, false, null, $offset, $number_of_bytes);
+                    }else{
+                        return file_get_contents($path, false, null, $offset);
+                    }
                 }
+            }else{
+                $this->error("Invalid file storage key '{$key}'");
             }
             
             return null;
         }
         
         public function write_to_file($key, $path = null){
-            if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
-            if (is_null($path)) $path = TEMP_PATH . $this->get_new_key();
-            
-            if (file_exists($this->_store_path . "private/" . $key) || file_exists($this->_store_path . "public/" . $key)){
-                if (is_writable(dirname($path))){
-                    $fp = fopen($path, "r");
-                    if ($fp){
-                        fwrite($fp, $this->get($key));
-                        fclose($fp);
-                        
-                        return $path;
+            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
+            if ($this->is_key_valid($key)){
+                if (is_null($path)) $path = TEMP_PATH . $this->get_new_key();
+                
+                if (file_exists($this->_store_path . "private/" . $key) || file_exists($this->_store_path . "public/" . $key)){
+                    if (is_writable(dirname($path))){
+                        $fp = fopen($path, "r");
+                        if ($fp){
+                            fwrite($fp, $this->get($key));
+                            fclose($fp);
+                            
+                            return $path;
+                        }else{
+                            $this->error("Unable to write_to_file, could not write to " . $path);
+                        }
                     }else{
-                        $this->error("Unable to write_to_file, could not write to " . $path);
+                        $this->error("Unable to write_to_file, could not write to " . dirname($path));
                     }
                 }else{
-                    $this->error("Unable to write_to_file, could not write to " . dirname($path));
+                    $this->error("Unable to write_to_file, could not find key {$key}");
                 }
-            }else{
-                $this->error("Unable to write_to_file, could not find key {$key}");
             }
             
             return false;
         }
         
         public function delete($key){
-            if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
+            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
             $path = $this->_store_path . $key;
             
             if ($this->available){
-                if (file_exists($this->_store_path . "private/" . $key)){
-                    unlink($this->_store_path . "private/" . $key);
+                if ($this->is_key_valid($key)){
+                    if (file_exists($this->_store_path . "private/" . $key)){
+                        unlink($this->_store_path . "private/" . $key);
+                        
+                    }elseif (file_exists($this->_store_path . "public/" . $key)){
+                        unlink($this->_store_path . "public/" . $key);
+                        
+                    }
                     
-                }elseif (file_exists($this->_store_path . "public/" . $key)){
-                    unlink($this->_store_path . "public/" . $key);
-                    
-                }
-                
-                if (file_exists($this->_store_path . "private/" . $key . ".meta")){
-                    unlink($this->_store_path . "private/" . $key . ".meta");
+                    if (file_exists($this->_store_path . "private/" . $key . ".meta")){
+                        unlink($this->_store_path . "private/" . $key . ".meta");
+                    }
+                }else{
+                    $this->error("Invalid file storage key '{$key}'");
                 }
             }else{
                 $this->error("Unable to delete the file, storage unavailable");
@@ -207,40 +263,43 @@ namespace adapt{
         }
         
         public function get_size($key){
-            if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
-            
-            $path = $this->_store_path . "private/" . $key;
-            if (file_exists($path)){
-                return file_size($path);
-            }
-            
-            $path = $this->_store_path . "public/" . $key;
-            if (file_exists($path)){
-                return file_size($path);
+            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
+            if ($this->is_key_valid($key)){
+                $path = $this->_store_path . "private/" . $key;
+                if (file_exists($path)){
+                    return file_size($path);
+                }
+                
+                $path = $this->_store_path . "public/" . $key;
+                if (file_exists($path)){
+                    return file_size($path);
+                }
+            }else{
+                $this->error("Invalid file storage key '{$key}'");
             }
             
             return 0;
         }
         
         public function set_content_type($key, $content_type = null){
-            if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
+            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
             $this->set_meta_data($key, 'content_type', $content_type);
         }
         
         public function get_content_type($key){
-            if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
+            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
             return $this->get_meta_data($key, 'content_type');
         }
         
         public function set_meta_data($key, $tag, $value){
-            if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
+            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
             $data = $this->get_meta_data_file($key);
             $data[$tag] = $value;
             $this->set_meta_data_file($key, $data);
         }
         
         public function get_meta_data($key, $tag){
-            if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
+            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
             $data = $this->get_meta_data_file($key);
             if (is_array($data) && isset($data[$tag])){
                 return $data[$tag];
@@ -251,31 +310,39 @@ namespace adapt{
         
         
         public function get_meta_data_file($key){
-            if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
-            if (file_exists($this->_store_path . "private/" . $key . ".meta")){
-                $raw_data = file_get_contents($this->_store_path . "private/" . $key . ".meta");
-                if ($raw_data){
-                    $data = unserialize($raw_data);
-                    
-                    if ($data && is_array($data)){
-                        return $data;
+            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
+            if ($this->is_key_valid($key)){
+                if (file_exists($this->_store_path . "private/" . $key . ".meta")){
+                    $raw_data = file_get_contents($this->_store_path . "private/" . $key . ".meta");
+                    if ($raw_data){
+                        $data = unserialize($raw_data);
+                        
+                        if ($data && is_array($data)){
+                            return $data;
+                        }
                     }
                 }
+            }else{
+                $this->error("Invalid file storage key '{$key}'");
             }
             
             return array();
         }
         
         public function set_meta_data_file($key, $data){
-            if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
-            $fp = fopen($this->_store_path . "private/" . $key . ".meta", "w");
-            if ($fp){
-                fwrite($fp, serialize($data));
-                fclose($fp);
-                
-                return true;
+            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
+            if ($this->is_key_valid($key)){
+                $fp = fopen($this->_store_path . "private/" . $key . ".meta", "w");
+                if ($fp){
+                    fwrite($fp, serialize($data));
+                    fclose($fp);
+                    
+                    return true;
+                }else{
+                    $this->error("Unable to write file {$this->_store_path}private/{$key}.meta");
+                }
             }else{
-                $this->error("Unable to write file {$this->_store_path}private/{$key}.meta");
+                $this->error("Invalid file storage key '{$key}'");
             }
         }
     }

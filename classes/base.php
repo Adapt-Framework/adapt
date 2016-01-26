@@ -289,6 +289,11 @@ namespace adapt{
             return $GLOBALS['__adapt']['settings'];
         }
         
+        public function set_settings($hash){
+            if (!isset($GLOBALS['__adapt'])) $GLOBALS['__adapt'] = array();
+            $GLOBALS['__adapt']['settings'] = $hash;
+        }
+        
         public function remove_setting($key){
             if (!isset($GLOBALS['__adapt'])) $GLOBALS['__adapt'] = array();
             if (!isset($GLOBALS['__adapt']['settings'])) $GLOBALS['__adapt']['settings'] = array();

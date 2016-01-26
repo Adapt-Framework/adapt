@@ -50,7 +50,7 @@ namespace adapt{
                 $this->head->add(new html_title($title));
             }
             
-            $bundle_adapt = $this->bundles->get_bundle('adapt');
+            $bundle_adapt = $this->bundles->load_bundle('adapt');
             
             $this->head->add(new html_meta(array('http-equiv' => 'content-type', 'content' => 'text/html;charset=utf-8')));            
             $this->head->add(new html_script(array('type' => 'text/javascript', 'src' => '/_adapt/sanitizers')));

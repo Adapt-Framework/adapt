@@ -37,9 +37,10 @@ namespace adapt{
             parent::__construct();
         }
         
+        
         public function get($key){
             if (strtolower($this->setting('adapt.disable_caching')) != 'yes'){
-                $key = md5($key);
+                $key = $this->_get_key($key);
                 $data = $this->file_store->get($key);
                 if (!is_null($data)){
                     $expires = $this->file_store->get_meta_data($key, 'expires');
@@ -60,13 +61,15 @@ namespace adapt{
         }
         
         public function get_content_type($key){
-            $key = md5($key);
+            $key = $this->_get_key($key);
             return $this->file_store->get_content_type($key);
         }
         
         public function set($key, $data, $expires = 300, $content_type = null, $public = false){
             if (strtolower($this->setting('adapt.disable_caching')) != 'yes'){
-                $key = md5($key);
+                //print "<pre>{$key} becomes ";
+                $key = $this->_get_key($key);
+                //print "{$key}</pre>";
                 $this->file_store->set($key, $data, $content_type, $public);
                 $date = new date();
                 $date->goto_seconds($expires);
@@ -75,7 +78,7 @@ namespace adapt{
         }
         
         public function delete($key){
-            $key = md5($key);
+            $key = $this->_get_key($key);
             $this->file_store->delete($key);
         }
         
@@ -113,6 +116,10 @@ namespace adapt{
         
         public function css($key, $css, $expires = 600, $public = false){
             $this->set($key, $css, $expires, 'text/css', $public);
+        }
+        
+        protected function _get_key($key){
+            return "adapt/cache/" . $key;
         }
         
     }

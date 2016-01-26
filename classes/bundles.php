@@ -2,34 +2,27 @@
 
 namespace adapt{
     
-    /*
-     * Prevent direct access
-     */
+    /* Prevent Direct Access */
     defined('ADAPT_STARTED') or die;
     
     class bundles extends base{
         
-        protected $_global_settings = array();
+        protected $_bundle_cache;
+        protected $_bundle_cache_changed = false;
+        
+        protected $_bundle_class_paths;
+        
+        protected $_global_settings;
+        protected $_global_settings_changed = false;
+        
         protected $_repository;
-        //protected $_settings;
-        protected $_has_changed;
-        protected $_is_loaded;
-        protected $_booted_bundles = array();
         
-        /* The following is used create a boot order list
-         * for the booting application so that it can be
-         * cached and the in future executed without
-         * any recurrsion.
+        /*
+         * Contruction
          */
-        protected $_boot_stratagies = array();
-        protected $_booting_application = null;
-        protected $_booting_application_version = null;
-        
-        public function __construct(){
+        public function __constuct(){
             parent::__construct();
-            //$this->_settings = new xml_document('adapt_framework', new xml_settings());
-            $this->_is_loaded = false;
-            $this->_has_changed = false;
+            $this->_global_settings = array();
         }
         
         /*
@@ -48,172 +41,200 @@ namespace adapt{
         }
         
         /*
-         * Methods
+         * Global settings
          */
-        public function create_boot_stratagy($bundle_name, $bundle_version){
-            if (!is_null($this->_booting_application)){
-                $stratergy = array();
+        public function load_global_settings(){
+            $this->_global_settings = $this->cache->get("adapt/global.settings");
+            $this->_global_settings_changed = false;
+            
+            if (!is_array($this->_global_settings)){
+                $this->_global_settings = array();
                 
-                if (isset($this->_boot_stratagies[$this->_booting_application][$this->_booting_application_version])){
-                    $stratergy = $this->_boot_stratagies[$this->_booting_application][$this->_booting_application_version];
+                $settings_path = ADAPT_PATH . "settings.xml";
+                
+                if (file_exists($settings_path)){
+                    $settings_data = file_get_contents($settings_path);
+                    
+                    if ($settings_data && xml::is_xml($settings_data)){
+                        $settings_data = xml::parse($settings_data);
+                        
+                        if ($settings_data instanceof xml){
+                            
+                            $children = $settings_data->get(0)->get();
+                            
+                            foreach($children as $child){
+                                
+                                if ($child instanceof xml && strtolower($child->tag) == 'setting'){
+                                    $items = $child->get();
+                                    $name = null;
+                                    $value = null;
+                                    
+                                    foreach($items as $item){
+                                        if ($item instanceof xml){
+                                            $tag = strtolower($item->tag);
+                                            
+                                            switch($tag){
+                                            case "name":
+                                                $name = $item->get(0);
+                                                break;
+                                            case "value":
+                                                $value = $item->get(0);
+                                                break;
+                                            case "values":
+                                                $value = array();
+                                                $nodes = $item->get();
+                                                foreach($nodes as $node){
+                                                    if ($node instanceof xml){
+                                                        if (strtolower($node->tag) == 'value'){
+                                                            $value[] = $node->get(0);
+                                                        }
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    
+                                    if (!is_null($name) && is_string($name) && strlen($name) > 0){
+                                        $this->_global_settings[$name] = $value;
+                                    }
+                                }
+                            }
+                            
+                            /* Cache the settings */
+                            $this->cache->serialize("adapt/global.settings", $this->_global_settings, 60 * 60 * 24 * 5);
+                        }
+                        
+                    }
                 }
-                
-                if (!in_array($bundle_name, array_keys($stratergy))){
-                    $stratergy[$bundle_name] = $bundle_version;
-                }
-                
-                $this->_boot_stratagies[$this->_booting_application][$this->_booting_application_version] = $stratergy;
-                
-                //print new html_pre("Current stratergies: " . print_r($this->_boot_stratagies, true));
             }
         }
         
-        public function has_booted($bundle_name){
-            return in_array($bundle_name, $this->_booted_bundles);
+        public function apply_global_settings(){
+            if (is_array($GLOBALS['__adapt']['settings'])){
+                $GLOBALS['__adapt']['settings'] = array_merge($GLOBALS['__adapt']['settings'], $this->_global_settings);
+            }else{
+                $GLOBALS['__adapt']['settings'] = $this->_global_settings;
+            }
         }
         
-        public function set_booted($bundle_name, $bundle_version = null){
-            $this->_booted_bundles[] = $bundle_name;
+        public function save_global_settings(){
+            if ($this->_global_settings_changed){
+                $this->cache->serialize('adapt/global.settings', $this->_global_settings, 60 * 60 * 24 * 5);
+                
+                $settings = new xml_settings();
+                foreach($this->_global_settings as $name => $value){
+                    $setting = new xml_setting();
+                    $setting->add(new xml_name($name));
+                    
+                    if (is_array($value)){
+                        $values = new xml_values();
+                        foreach($value as $val){
+                            $values->add(new xml_value($val));
+                        }
+                        $setting->add($values);
+                    }else{
+                        $setting->add(new xml_value($value));
+                    }
+                    
+                    $settings->add($setting);
+                }
+                
+                $fp = fopen(ADAPT_PATH . "settings.xml", "w");
+                if ($fp){
+                    fwrite($fp, new xml_document('adapt_framework', $settings));
+                    fclose($fp);
+                    $this->_global_settings_changed = false;
+                }else{
+                    $this->error("Error saving " . ADAPT_PATH . "settings.xml");
+                    return false;
+                }
+            }
             
-            /* Lets record this is the boot stratergy */
-            $this->create_boot_stratagy($bundle_name, $bundle_version);
+            return true;
         }
-        
-        
         
         public function get_global_setting($key){
-            return $this->_global_settings[$key];
+            if (isset($this->_global_settings[$key])){
+                return $this->_global_settings[$key];
+            }
+            
+            return null;
         }
         
         public function set_global_setting($key, $value){
-            if ($key && trim($key) != ""){
-                $current_value = $this->get_global_setting($key);
-                
-                if ($current_value != $value){
-                    $this->_has_changed = true;
-                    $this->_global_settings[$key] = $value;
-                }
+            if ($this->get_global_setting($key) != $value){
+                $this->_global_settings[$key] = $value;
+                $this->_global_settings_changed = true;
             }
         }
         
-        public function register_namespace($namespace, $bundle_name, $bundle_version){
-            //print "<p>Registering namespace <strong>{$namespace}</strong></p>"; //new html_p(array("Registering namespace ", new html_strong($namespace)));
-            $namespaces = $this->store('adapt.namespaces');
-            if (!is_array($namespaces)){
-                if ($this->cache && $this->cache instanceof cache){
-                    $namespaces = $this->cache->get('adapt.namespaces');
-                    
-                    if (!is_array($namespaces)){
-                        $namespaces = array();
-                    }
-                }else{
-                    $namespaces = array();
-                }
-            }
-            
-            $namespaces[$namespace] = array(
-                'bundle_name' => $bundle_name,
-                'bundle_version' => $bundle_version
-            );
-            
-            $this->store('adapt.namespaces', $namespaces);
-            
-            if ($this->cache && $this->cache instanceof cache){
-                $this->cache->serialize('adapt.namespaces', $namespaces, 600);
-            }
+        public function get_global_settings(){
+            return $this->_global_settings;
         }
         
+        public function set_global_settings($hash){
+            $this->_global_settings = $hash;
+        }
         
-        public function boot_system($application_name = null, $application_version = null){
+        /*
+         * System booting
+         */
+        public function boot_application($application_name = null, $application_version = null){
             
-            /* Load boot stratagies from the cache */
-            $stratagies = $this->cache->get('adapt.boot_stratagies');
-            //print new html_pre("Stratergies from cache" . print_r($stratagies, true));
-            if (is_array($stratagies)){
-                $this->_boot_stratagies = $stratagies;
-            }
-            
-            $GLOBALS['time_offset'] = microtime(true);
-            
-            /* Load the global settings */
+            /* Load global settings */
             $this->load_global_settings();
-            
-            $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-            print "<pre>Time to load settings (And pre boot): " . round($GLOBALS['time'], 4) . "</pre>";
-            $GLOBALS['time_offset'] = microtime(true);
             
             /* Apply global settings */
             $this->apply_global_settings();
             
-            
-            $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-            print "<pre>Time to apply settings: " . round($GLOBALS['time'], 4) . "</pre>";
-            $GLOBALS['time_offset'] = microtime(true);
-            
-            /* Find a valid application to boot */
-            
-            /* Has a default application been specified in settings? */
             if (is_null($application_name)){
-                $application_name = $this->setting('adapt.default_application_name');
+                /* Do we have an application listed in settings? */
+                $name = $this->get_global_setting('adapt.default.application');
+                $version = $this->get_global_setting('adapt.default.application.version');
                 
-                $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                print "<pre>Time to get application name from settings: " . round($GLOBALS['time'], 4) . "</pre>";
-                $GLOBALS['time_offset'] = microtime(true);
-                
-                $application_version = $this->seting('adapt.default_application_version');
-                
-                $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                print "<pre>Time to get application version: " . round($GLOBALS['time'], 4) . "</pre>";
-                $GLOBALS['time_offset'] = microtime(true);
-            }
-            
-            /* Are there any applications locally? */
-            if (is_null($application_name)){
-                $applications = $this->list_local_applications();
-                
-                $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                print "<pre>Time to list local applications: " . round($GLOBALS['time'], 4) . "</pre>";
-                $GLOBALS['time_offset'] = microtime(true);
-                
-                if (count($applications)){
-                    $application_name = $applications[0];
+                if (isset($name) && strlen($name) > 0){
+                    $application_name = $name;
+                    $application_version = $version;
+                }else{
+                    /* Lets find the first application on the system */
+                    $bundles = self::list_bundles();
+                    foreach($bundles as $bundle){
+                        $versions = self::list_bundle_versions($bundle);
+                        $path = ADAPT_PATH . "{$bundle}/{$bundle}-{$versions[0]}/bundle.xml";
+                        
+                        if (file_exists($path)){
+                            $bundle_data = file_get_contents($path);
+                            if ($bundle_data && strpos($bundle_data, "<type>application</type>")){
+                                $application_name = $bundle;
+                                $version = self::get_newest_version($versions);
+                                $application_version = $version;
+                                
+                                /* Store in global settings */
+                                $this->set_global_setting("adapt.default.application", $application_name);
+                                $this->set_global_setting("adapt.default.application.version", $application_verion);
+                                break;
+                            }
+                        }
+                    }
                 }
                 
-                $this->set_global_setting('adapt.default_application_name', $application_name);
-                $this->set_global_setting('adapt.default_application_version', $application_version);
-                
-            }
-            
-            /* Default to adapt_setup */
-            if (is_null($application_name)){
-                $application_name = 'adapt_setup';
-                $this->set_global_setting('adapt.default_application_name', $application_name);
-                $this->set_global_setting('adapt.default_application_version', null);
-            }
-            
-            if (!is_null($application_name)){
-                
-                $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                print "<pre>Time to find application candidate: " . round($GLOBALS['time'], 4) . "</pre>";
-                $GLOBALS['time_offset'] = microtime(true);
-                
-                /* We can make some assumtions here, if we have a boot stratagy
-                 * for this application then we can just assume we have everything
-                 * and go ahead and just boot them one by one.
-                 *
-                 * We will need to connect the data source here first.
+                /* If we don't have a valid application at this point
+                 * then we are going to have to bail
                  */
                 
-                if (isset($this->_boot_stratagies[$application_name][$application_version])){
-                    
-                    /* Connect the data source if we have one */
-                    $drivers = $this->settings('data_source.driver');
-                    $hosts = $this->settings('data_source.host');
-                    $posts = $this->settings('data_source.port');
-                    $usernames = $this->settings('data_source.username');
-                    $passwords = $this->settings('data_source.password');
-                    $schemas = $this->settings('data_source.schema');
-                    $writables = $this->settings('data_source.writable');
+                if (is_null($application_name)){
+                    $this->error("Unable to find a valid application to boot.");
+                    return false;
+                }else{
+                    /* Connect any data sources we have */
+                    $drivers = $this->get_global_setting('data_source.driver');
+                    $hosts = $this->get_global_setting('data_source.host');
+                    $posts = $this->get_global_setting('data_source.port');
+                    $usernames = $this->get_global_setting('data_source.username');
+                    $passwords = $this->get_global_setting('data_source.password');
+                    $schemas = $this->get_global_setting('data_source.schema');
+                    $writables = $this->get_global_setting('data_source.writable');
                     
                     if (is_array($drivers) && is_array($hosts) && is_array($schemas)
                         && is_array($usernames) && is_array($passwords) && is_array($writables)
@@ -237,657 +258,69 @@ namespace adapt{
                         }
                         
                     }else{
-                        $this->error('Unable to connect to the data base, the data source settings in settings.xml are not valid.');
+                        $this->error('Unable to connect to the database, the data source settings in settings.xml are not valid.');
                     }
                     
+                    /* Load the application */
+                    $application = $this->load_bundle($application_name, $application_version);
                     
-                    $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                    print "<pre>Time be ready to bundle boot: " . round($GLOBALS['time'], 4) . "</pre>";
-                    $GLOBALS['time_offset'] = microtime(true);
-                    
-                    /* Boot the bundles one by one in order */
-                    $stratagy = $this->_boot_stratagies[$application_name][$application_version];
-                    
-                    print new html_pre("Using stratergy: " . print_r($stratagy, true));
-                    
-                    foreach($stratagy as $bundle_name => $bundle_version){
-                        $bundle = $this->get_bundle($bundle_name, $bundle_version);
+                    if ($application instanceof bundle && $application->is_loaded){
+                        //print "<pre>Loaded application {$application->name}</pre>";
                         
-                        $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                        print "<pre>Time to load {$bundle->name}: " . round($GLOBALS['time'], 4) . "</pre>";
-                        $GLOBALS['time_offset'] = microtime(true);
+                        //Maybe impletement boot statergies here, if (we have one){...}
+                        $dependencies_resolved = $this->has_all_dependencies($application->name, $application->version);
+                        $in_error = false;
                         
-                        $bundle->boot(false);
-                        
-                        $GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                        print "<pre>Time to boot {$bundle->name}: " . round($GLOBALS['time'], 4) . "</pre>";
-                        $GLOBALS['time_offset'] = microtime(true);
-                    }
-                    
-                    /* We must return true */
-                    return true;
-                    
-                }else{
-                    
-                    /* We don't have a boot stratagy so we are going to create one as we go */
-                    $this->_booting_application = $application_name;
-                    $this->_booting_application_version = $application_version;
-                    
-                    /* Is the bundle installed? */
-                    if (!$this->has_bundle($application_name, $application_version)){
-                        /* Does the repository have it? */
-                        $this->fetch_from_respository($application_name, $application_version);
-                        
-                        //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                        //print "<pre>Time to fetch application: " . round($GLOBALS['time'], 3) . "</pre>";
-                        //$GLOBALS['time_offset'] = microtime(true);
-                    }
-                    
-                    if ($this->has_bundle($application_name, $application_version)){
-                        
-                        //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                        //print "<pre>Time to check if we have the application: " . round($GLOBALS['time'], 3) . "</pre>";
-                        //$GLOBALS['time_offset'] = microtime(true);
-                        
-                        $this->get_dependencies($application_name, $application_version);
-                        
-                        //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                        //print "<pre>Time to get dependencies: " . round($GLOBALS['time'], 3) . "</pre>";
-                        //$GLOBALS['time_offset'] = microtime(true);
-                        
-                        /* Save global settings if they've changed */
-                        $this->save_global_settings();
-                        
-                        /* Connect the data source if we have one */
-                        $drivers = $this->settings('data_source.driver');
-                        $hosts = $this->settings('data_source.host');
-                        $posts = $this->settings('data_source.port');
-                        $usernames = $this->settings('data_source.username');
-                        $passwords = $this->settings('data_source.password');
-                        $schemas = $this->settings('data_source.schema');
-                        $writables = $this->settings('data_source.writable');
-                        
-                        if (is_array($drivers) && is_array($hosts) && is_array($schemas)
-                            && is_array($usernames) && is_array($passwords) && is_array($writables)
-                            && count($drivers) == count($hosts) && count($drivers) == count($schemas)
-                            && count($drivers) == count($usernames) && count($drivers) == count($passwords)
-                            && count($drivers) == count($writables)){
+                        while(!$in_error && is_array($dependencies_resolved)){
                             
-                            for($i = 0; $i < count($drivers); $i++){
-                                if (class_exists($drivers[$i])){
-                                    if (isset($this->data_source)){
-                                        /* Connect a new host */
-                                        if ($this->data_source instanceof $drivers[$i]){
-                                            $this->data_source->add($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
-                                        }
-                                    }else{
-                                        /* Create a new data source */
-                                        $driver = $drivers[$i];
-                                        $this->data_source = new $driver($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
-                                    }
+                            /* Fetch from the repository */
+                            foreach($dependencies_resolved as $name => $versions){
+                                $version = self::get_newest_version($versions);
+                                if (!$this->fetch_bundle($name, $version)){
+                                    $in_error = true;
                                 }
                             }
                             
-                        }else{
-                            $this->error('Unable to connect to the data base, the data source settings in settings.xml are not valid.');
+                            if (!$in_error){
+                                $dependencies_resolved = $this->has_all_dependencies($application->name, $application->version);
+                            }
+                            //print "<pre>" . print_r($dependencies_resolved, true) . "</pre>";
+                            //ob_flush();
+                            //$dependencies_resolved = false;
                         }
                         
-                    }else{
-                        $this->error("Unable to locate application '{$application_name}'");
-                        return false;
-                    }
-                }
-                
-            }else{
-                $this->error('Unable to find a vaild application to boot');
-                return false;
-            }
-            
-            ///* Save global settings if they've changed */
-            //$this->save_global_settings();
-            
-            //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-            //print "<pre>Time to save settings: " . round($GLOBALS['time'], 3) . "</pre>";
-            //$GLOBALS['time_offset'] = microtime(true);
-            
-            ///* Connect the data source if we have one */
-            //$drivers = $this->settings('data_source.driver');
-            //$hosts = $this->settings('data_source.host');
-            //$posts = $this->settings('data_source.port');
-            //$usernames = $this->settings('data_source.username');
-            //$passwords = $this->settings('data_source.password');
-            //$schemas = $this->settings('data_source.schema');
-            //$writables = $this->settings('data_source.writable');
-            //
-            //if (is_array($drivers) && is_array($hosts) && is_array($schemas)
-            //    && is_array($usernames) && is_array($passwords) && is_array($writables)
-            //    && count($drivers) == count($hosts) && count($drivers) == count($schemas)
-            //    && count($drivers) == count($usernames) && count($drivers) == count($passwords)
-            //    && count($drivers) == count($writables)){
-            //    
-            //    for($i = 0; $i < count($drivers); $i++){
-            //        if (class_exists($drivers[$i])){
-            //            if (isset($this->data_source)){
-            //                /* Connect a new host */
-            //                if ($this->data_source instanceof $drivers[$i]){
-            //                    $this->data_source->add($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
-            //                }
-            //            }else{
-            //                /* Create a new data source */
-            //                $driver = $drivers[$i];
-            //                $this->data_source = new $driver($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
-            //            }
-            //        }
-            //    }
-            //    
-            //}else{
-            //    $this->error('Unable to connect to the data base, the data source settings in settings.xml are not valid.');
-            //}
-            
-            
-            /* Boot the bundle */
-            $bundle = $this->get_bundle($application_name, $application_version);
-            
-            //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-            //print "<pre>Time to get bundle: " . round($GLOBALS['time'], 3) . "</pre>";
-            //$GLOBALS['time_offset'] = microtime(true);
-            
-            if ($bundle && $bundle instanceof bundle && $bundle->is_loaded){
-                if ($bundle->boot()){
-                    //$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-                    //print "<pre>Time to boot: " . round($GLOBALS['time'], 3) . "</pre>";
-                    //$GLOBALS['time_offset'] = microtime(true);
-                    
-                    //print new html_pre("Final stratergy: " . print_r($this->_boot_stratagies, true));
-                    
-                    $this->cache->serialize('adapt.boot_stratagies', $this->_boot_stratagies, 600);
-                    
-                    return true;
-                }else{
-                    $errors = $bundle->errors(true);
-                    foreach($errors as $error){
-                        $this->error($error);
-                    }
-                    
-                    return false;
-                }
-            }else{
-                $this->error("Unable to load application '{$application_name}'");
-                return false;
-            }
-        }
-        
-        public function get_bundle($bundle_name, $bundle_version = null){
-            $cache_key = "adapt.bundle.get_bundle.{$bundle_name}";
-            
-            //print new html_pre("Request bundle = {$bundle_name} - {$bundle_version}");
-            if (!is_null($bundle_version)){
-                $cache_key .= "{$bundle_version}";
-                if (!is_array($bundle_version)) $bundle_version = array($bundle_version);
-            }
-            
-            $bundle = $this->cache->get($cache_key);
-            if ($bundle instanceof bundle){
-                //print new html_pre("Pulling from cache");
-                return $bundle;
-            }
-            
-            
-            //print new html_pre("Requested versions: " . print_r($bundle_version, true));
-            
-            /* Check the cache */
-            $cached_bundles = $this->store('adapt.bundles');
-            
-            if (is_array($cached_bundles)){
-                //print new html_pre("Searching bundle cache...");
-                foreach($cached_bundles as $name => $versions){
-                    //print new html_pre("Checking againts {$name}");
-                    if ($name == $bundle_name){
-                        //print new html_pre("Names match");
-                        if (is_array($bundle_version) && count($bundle_version)){
-                            //print new html_pre("Has versions");
-                            foreach($versions as $version => $bundle){
-                                foreach($bundle_version as $v){
-                                    if (self::matches_version($v, $bundle->version)){
-                                        return $bundle;
-                                    }
-                                }
-                            }
+                        if ($dependencies_resolved === true){
                             
-                        }else{
-                            /* Just return the first version we find */
-                            //print new html_pre(print_r($versions, true));
-                            $keys = array_keys($versions);
-                            return $versions[$keys[0]];
-                        }
-                        
-                    }
-                }
-            }
-            
-            /* If we get here then we have been unable to find the bundle in the cache
-             * so we need to locate it and load it.  We should always load the most
-             * recent version available to us unless bundle_version specifies
-             * otherwise.
-             */
-            if ($this->has_bundle($bundle_name, $bundle_version)){
-                $path = ADAPT_PATH . $bundle_name . "/";
-                
-                $available_versions = scandir($path);
-                //print new html_pre("AV: " . print_r($available_versions, true));
-                //print new html_pre("AV: " . print_r($bundle_version, true));
-                
-                $selected = "0.0.0";
-                foreach($available_versions as $ver){
-                    if (substr($ver, 0, 1) != "." && is_dir($path . $ver)){
-                        list($version_name, $ver) = explode("-", $ver);
-                        if (count($bundle_version)){
-                            foreach($bundle_version as $bv){
-                                if (self::matches_version($ver, $bv)){
-                                    if ($selected == "0.0.0"){
-                                        $selected = $ver;
-                                    }else{
-                                        $selected = self::get_newest_version($ver, $selected);
-                                    }
-                                }
-                            }
-                        }else{
-                            if ($selected == "0.0.0"){
-                                $selected = $ver;
-                            }else{
-                                $selected = self::get_newest_version($ver, $selected);
-                            }
-                        }
-                    }
-                }
-                
-                if ($selected == "0.0.0"){
-                    $this->error("Adapt was unable to load the bundle '{$bundle_name}'.");
-                    return false;
-                }else{
-                    /* We have a version we can use, we
-                     * could just call \adapt\bundle::load(...)
-                     * which will of course work, however, the bundle
-                     * maybe providing it's own class named
-                     * bundle_<bundle_name> which may including
-                     * custom loading so we will have to call manually
-                     * since the auto_loader 'voodoo' needs to a registered
-                     * name space to load :/
-                     * */
-                    
-                    /* Get the namespace from the bundle.xml */
-                    $bundle_xml_file_path = ADAPT_PATH . $bundle_name . "/" . $bundle_name . "-" . $selected . "/bundle.xml";
-                    if (file_exists($bundle_xml_file_path)){
-                        
-                        $xml_data = file_get_contents($bundle_xml_file_path);
-                        if ($xml_data && xml::is_xml($xml_data)){
-                            $xml_data = xml::parse($xml_data);
+                            /* Set the running application for the auto loader */
+                            $this->setting("adapt.running_application", $application->namespace);
                             
-                            if ($xml_data instanceof xml){
-                                $namespace = $xml_data->find('namespace')->get(0)->get(0);
-                                /* Register the namespace */
-                                $this->register_namespace($namespace, $bundle_name, $selected);
-                                
-                                /* Get the bundle class */
-                                $bundle_class = $namespace . "\\bundle_" . $bundle_name;
-                                print new html_pre("Bundle class: {$bundle_class}");
-                                $bundle = new $bundle_class();
-                                
-                                if ($bundle && $bundle instanceof bundle){
-                                    /* Cache the bundle (This is a local runtime only cache) */
-                                    $this->cache_bundle($bundle);
-                                    
-                                    /* Add it to the global cache */
-                                    $this->cache->serialize($cache_key, $bundle, 600);
-                                    
-                                    /* Return the bundle */
-                                    return $bundle;
-                                }else{
-                                    $this->error("Adapt was unable to load the bundle class '{$bundle_class}'");
-                                    return false;
-                                }
-                                
-                            }else{
-                                $this->error("Adapt was unable to parse the bundle.xml for bundle '{$bundle_name}'.");
-                                return false;
-                            }
-                        }else{
-                            $this->error("Adapt was unable to load the bundle '{$bundle_name}', could not read bundle.xml.");
-                            return false;
-                        }
-                        
-                    }else{
-                        $this->error("Adapt was unable to load the bundle '{$bundle_name}', could not read the bundle.xml file.");
-                        return false;
-                    }
-                    
-                }
-                
-            }else{
-                $this->error("The bundle '{$bundle_name}' is not available locally, it maybe available in the Adapt Repository.");
-                return false;
-            }
-            
-        }
-        
-        public function cache_bundle($bundle){
-            if ($bundle instanceof \adapt\bundle){
-                $bundles = $this->store('adapt.bundles');
-                
-                //$key = $bundle->name . '-' . $bundle->version;
-                $name = $bundle->name;
-                $version = $bundle->version;
-                if (!is_array($bundles[$name])){
-                    $bundles[$name] = array();
-                }
-                $bundles[$name][$version] = $bundle;
-                
-                $this->store('adapt.bundles', $bundles);
-            }
-        }
-        
-        public function has_bundle($bundle_name, $bundle_version = null){
-            if (!is_null($bundle_version)){
-                if (!is_array($bundle_version)) $bundle_version = array($bundle_version);
-            }
-            
-            //print new html_pre("bundles:has_bundle\n'{$bundle_name}'\n" . print_r($bundle_version, true));
-            
-            
-            //Locally
-            $bundle_list = $this->list_local_bundles();
-            
-            //print new html_pre("Bundle list: " . print_r($bundle_list, true));
-            
-            if (in_array($bundle_name, array_keys($bundle_list))){
-                if (is_array($bundle_version) && count($bundle_version)){
-                    foreach($bundle_list[$bundle_name] as $bv){
-                        foreach($bundle_version as $version){
-                            if ($this->matches_version($version, $bv)){
-                                //print new html_pre("Returning true1");
+                            /* Boot the application */
+                            if ($application->boot()){
                                 return true;
-                            }
-                        }    
-                    }
-                }else{
-                    //print new html_pre("Returning true2");
-                    return true;
-                }
-            }
-            //print new html_pre("Returning false3");
-            return false;
-        }
-        
-        public function list_local_bundles(){
-            $output = array();
-            $path = ADAPT_PATH;
-            $list_files = scandir($path);
-            
-            foreach($list_files as $file){
-                $full_path = $path . $file;
-                
-                if (substr($file, 0, 1) != '.'){
-                    if (is_dir($full_path)){
-                        $output[$file] = array();
-                        
-                        $list_versions = scandir($full_path);
-                        foreach($list_versions as $v){
-                            if (substr($v, 0, 1) != '.'){
-                                if (is_dir($full_path . '/' . $v)){
-                                    list($name, $ver) = explode("-", $v);
-                                    $output[$file][] = $ver;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            return $output;
-        }
-        
-        public function list_local_applications(){
-            $output = array();
-            
-            /* Get a list of local bundles */
-            $bundles = $this->list_local_bundles();
-            
-            foreach($bundles as $bundle_name => $bundle_versions){
-                $file_path = ADAPT_PATH . $bundle_name . "/" . $bundle_name . "-" . $bundle_versions[0] . "/bundle.xml";
-                
-                if (file_exists($file_path)){
-                    $file_content = file_get_contents($file_path);
-                    
-                    if (strpos($file_content, "<type>application</type>") !== false){
-                        $output[] = $bundle_name;
-                    }
-                    
-                    //if (xml::is_xml($file_content)){
-                    //    $file_content = xml::parse($file_content);
-                    //    
-                    //    if ($file_content instanceof xml){
-                    //        $type = $file_content->find('type')->get(0)->get(0);
-                    //        if ($type == "application"){
-                    //            $output[] = $bundle_name;
-                    //        }
-                    //    }
-                    //}
-                }
-            }
-            
-            return $output;
-        }
-        
-        public function what_works_with($bundle_name, $bundle_version = array()){
-            
-        }
-        
-        public function get_dependencies($bundle_name, $bundle_version = null){
-            
-            if (is_null($bundle_version)){
-                if ($this->cache->get($bundle_name . "." . $bundle_verion . ".has_dependencies") == 'true'){
-                    return true;
-                }
-            }else{
-                if ($this->cache->get($bundle_name . ".has_dependencies") == 'true'){
-                    return true;
-                }
-            }
-            
-            $bundle = $this->get_bundle($bundle_name, $bundle_version);
-            
-            if ($bundle && $bundle instanceof bundle && $bundle->is_loaded){
-                $dependencies = $bundle->get_dependencies();
-                //print new html_pre(print_r($dependencies, true));
-                foreach($dependencies as $dependency_name => $dependency_versions){
-                    
-                    if (count($dependency_versions)){
-                        $selected_version = null;
-                        foreach($dependency_versions as $version){
-                            if (is_null($selected_version)){
-                                $selected_version = $version;
                             }else{
-                                $selected_version = self::get_newest_version($selected_version, $version);
-                            }
-                        }
-                        
-                        if (is_null($selected_version)){
-                            if (!$this->has_bundle($dependency_name)){
-                                if (!$this->fetch_from_respository($dependency_name)){
-                                    $this->error("Unable to fetch {$dependency_name}");
-                                    return false;
-                                }
+                                $errors = $application->errors(true);
+                                foreach($errors as $error) $this->error($error);
                             }
                             
-                            if ($this->has_bundle($dependency_name)){
-                                if (!$this->get_dependencies($dependency_name)){
-                                    return false;
-                                }
-                            }else{
-                                $this->error("{$dependency_name} is unavailable");
-                                return false;
-                            }
                         }else{
-                            if (!$this->has_bundle($dependency_name, $selected_version)){
-                                if (!$this->fetch_from_respository($dependency_name, $selected_version)){
-                                    $this->error("Unable to fetch {$dependency_name} {$selected_version}");
-                                    return false;
-                                }
-                            }
-                            
-                            if ($this->has_bundle($dependency_name, $selected_version)){
-                                if (!$this->get_dependencies($dependency_name, $selected_version)){
-                                    return false;
-                                }
-                            }else{
-                                $this->error("{$dependency_name} is unavailable");
-                                return false;
-                            }
-                        }
-                    }else{
-                        /* We don't care about the version */
-                        if (!$this->has_bundle($dependency_name)){
-                            if (!$this->fetch_from_respository($dependency_name)){
-                                $this->error("Unable to fetch {$dependency_name}");
-                                return false;
-                            }
-                        }
-                        
-                        if ($this->has_bundle($dependency_name)){
-                            if (!$this->get_dependencies($dependency_name)){
-                                return false;
-                            }
-                        }else{
-                            $this->error("{$dependency_name} is unavailable");
+                            $this->error("Unable to boot system, dependencies couldn't be resolved");
                             return false;
                         }
-                    }
-                }
-            }else{
-                $this->error("{$bundle_name} not found.");
-                //print new html_pre(print_r($bundle, true));
-                return false;
-            }
-            
-            if (is_null($bundle_version)){
-                $this->cache->set($bundle_name . "." . $bundle_verion . ".has_dependencies", 'true', 600);
-            }else{
-                $this->cache->set($bundle_name . ".has_dependencies", 'true', 600);
-            }
-            
-            return true;
-            
-            $dependencies = $this->has_all_dependencies($bundle_name, $bundle_version);
-            
-            while($dependencies !== true){
-                $child_dependencies = array();
-                foreach($dependencies as $name => $versions){
-                    //print new html_h1("Working with {$name}");
-                    if (is_array($versions) && count($versions)){
-                        $selected_version = "0.0.0";
-                        
-                        foreach($versions as $version){
-                            if ($selected_version != "0.0.0"){
-                                $selected_version = $version;
-                            }else{
-                                $selected_version = self::get_newest_version($selected_version, $version);
-                            }
-                        }
-                        
-                        if ($selected_version != "0.0.0"){
-                            if (!$this->fetch_from_respository($name, $selected_version)){
-                                $this->error("Unable to fetch '{$name}' (v{$selected_version}) from the repository");
-                                return false;
-                            }else{
-                                if (!$this->get_dependencies($name, $selected_version)){
-                                    return false;
-                                }
-                            }
-                        }else{
-                            if (!$this->fetch_from_respository($name)){
-                                $this->error("Unable to fetch '{$name}' from the repository");
-                                return false;
-                            }else{
-                                if (!$this->get_dependencies($name)){
-                                    return false;
-                                }
-                            }
-                        }
-                        
                         
                     }else{
-                        if (!$this->fetch_from_respository($name)){
-                            $this->error("Unable to fetch '{$name}' from the repository");
-                            return false;
-                        }else{
-                            if (!$this->get_dependencies($name, $selected_version)){
-                                return false;
-                            }
-                        }
+                        $this->error("Unable to find an application to boot :(");
+                        
+                        return false;
                     }
                     
-                    //$child_dependencies = $this->has_all_dependencies($name, $bundle_version);
-                    //if ($this->get_dependencies($name, $bund))
-                }
-                
-                //if (is_array($child_dependencies)) $dependencies = array_merge($child_dependencies, $dependencies);
-                
-                
-            }
-            
-            
-            return true;
-        }
-        
-        public function has_all_dependencies($bundle_name, $bundle_version = null){
-            //print new html_h4("Checking dependencies for: {$bundle_name} {$bundle_version}");
-            //return true or an array of bundles/versions required
-            $output = array();
-            
-            $bundle = $this->get_bundle($bundle_name, $bundle_version);
-            
-            if ($bundle instanceof bundle && $bundle->is_loaded){
-                $dependencies = $bundle->get_dependencies();
-                
-                foreach($dependencies as $name => $versions){
-                    if (is_array($versions) && count($versions)){
-                        $selected = "0.0.0";
-                        foreach($versions as $version){
-                            if ($this->has_bundle($name, $version)){
-                                $selected = $version;
-                                
-                                $child_dependencies = $this->has_all_dependencies($name, $version);
-                                if (is_array($child_dependencies)){
-                                    $output = array_merge($output, $child_dependencies);
-                                }
-                            }
-                        }
-                        
-                        if ($selected == "0.0.0"){
-                            $output[$name] = $versions;
-                        }
-                        
-                    }else{
-                        if (!$this->has_bundle($name)){
-                            $output[$name] = array();
-                        }else{
-                            $child_dependencies = $this->has_all_dependencies($name);
-                            if (is_array($child_dependencies)){
-                                $output = array_merge($output, $child_dependencies);
-                            }
-                        }
-                    }
                 }
             }
-            
-            if (count($output) == 0){
-                return true;
-            }
-            
-            return $output;
         }
         
-        public function fetch_from_respository($bundle_name, $bundle_version = null){
+        /*
+         * Remote bundle management
+         */
+        public function fetch_bundle($bundle_name, $bundle_version = null){
             if ($this->repository->has($bundle_name, $bundle_version)){
                 if ($this->repository->get($bundle_name, $bundle_version) !== false){
                     return true;
@@ -909,238 +342,337 @@ namespace adapt{
             }
         }
         
-        public function load_global_settings(){
-            /*
-             * We are going to load the global
-             * settings and apply them to each bundle
-             * before booting.
-             */
-            if (!$this->_is_loaded){
-                $cached_settings = parent::aget_cache()->get('adapt.global_settings');
-                
-                if ($cached_settings && is_array($cached_settings)){
-                    $this->_global_settings = $cached_settings;
-                    $this->_has_changed = false;
-                    $this->_is_loaded = true;
+        /*
+         * Local bundle management
+         */
+        public function has_bundle($bundle_name, $bundle_version = null){
+            if (in_array($bundle_name, $this->list_bundles())){
+                if (is_null($bundle_version)){
                     return true;
                 }else{
-                    if (file_exists(ADAPT_PATH . "settings.xml")){
-                        $file_content = trim(file_get_contents(ADAPT_PATH . "settings.xml"));
-                        
-                        if ($file_content && strlen($file_content) > 0 && xml::is_xml($file_content)){
-                            $settings = xml::parse($file_content);
-                            
-                            if ($settings instanceof xml){
-                                $this->_is_loaded = true;
-                                $this->_has_changed = true;
-                                
-                                
-                                $children = $settings->get();
-                                foreach($children as $child){
-                                    
-                                    if ($child instanceof xml && strtolower($child->tag) == 'setting'){
-                                        $items = $child->get();
-                                        $name = null;
-                                        $value = null;
-                                        
-                                        foreach($items as $item){
-                                            if ($item instanceof xml){
-                                                $tag = strtolower($item->tag);
-                                                
-                                                switch($tag){
-                                                case "name":
-                                                    $name = $item->get(0);
-                                                    break;
-                                                case "value":
-                                                    $value = $item->get(0);
-                                                    break;
-                                                case "values":
-                                                    $value = array();
-                                                    $nodes = $item->get();
-                                                    foreach($nodes as $node){
-                                                        if ($node instanceof xml){
-                                                            if (strtolower($node->tag) == 'value'){
-                                                                $value[] = $node->get(0);
-                                                            }
-                                                        }
-                                                    }
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                        
-                                        if (!is_null($name) && is_string($name) && strlen($name) > 0){
-                                            $this->_global_settings[$name] = $value;
-                                        }
-                                    }
-                                }
-                                
-                            }else{
-                                $this->error("Unable to parse " . ADAPT_PATH . "settings.xml");
-                                return false;
-                            }
-                        }else{
-                            $this->error(ADAPT_PATH . "settings.xml doesn't appear to be valid xml so we completely ignored it (Well apart from this error message and the resulting false that follows).");
-                            return false;
+                    $versions = $this->list_bundle_versions($bundle_name);
+                    foreach($versions as $version){
+                        if (self::matches_version($bundle_version, $version)){
+                            return true;
                         }
                     }
                 }
-            }
-            
-            return true;
-        }
-        
-        public function save_global_settings(){
-            if ($this->_has_changed){
-                parent::aget_cache()->serialize('adapt.global_settings', $this->_global_settings, 120);
-                
-                $settings = new xml_settings();
-                foreach($this->_global_settings as $name => $value){
-                    $setting = new xml_setting();
-                    $setting->add(new xml_name($name));
-                    
-                    if (is_array($value)){
-                        $values = new xml_values();
-                        foreach($values as $val){
-                            $values->add(new xml_value($val));
-                        }
-                        $setting->add($values);
-                    }else{
-                        $setting->add(new xml_value($value));
-                    }
-                    
-                    $settings->add($setting);
-                }
-                
-                $fp = fopen(ADAPT_PATH . "settings.xml", "w");
-                if ($fp){
-                    fwrite($fp, new xml_document('adapt_framework', $settings));
-                    fclose($fp);
-                    $this->_has_changed = false;
-                    $this->_is_loaded = true;
-                }else{
-                    $this->error("Error saving " . ADAPT_PATH . "settings.xml");
-                    return false;
-                }
-            }
-            
-            return true;
-        }
-        
-        public function apply_global_settings(){
-            foreach($this->_global_settings as $key => $value){
-                $this->setting($key, $value);
-            }
-        }
-        
-        
-        
-        
-        
-        public function bundle($bundle_name, $bundle_version){
-            
-        }
-        
-        public function unbundle($bundle_file_path){
-            /*
-             * We need to extract the manifest
-             * to get the type and name.
-             */
-            $fp = fopen($bundle_file_path, "r");
-            if ($fp){
-                $raw_index = fgets($fp);
-                $bundle_index = json_decode($raw_index, true);
-                $offset = strlen($raw_index);
-                
-                if (is_array($bundle_index) && count($bundle_index)){
-                    foreach($bundle_index as $file){
-                        if ($file['name'] == 'bundle.xml'){
-                            fseek($fp, $offset);
-                            $manifest = fread($fp, $file['length']);
-                        }
-                        $offset += $file['length'];
-                    }
-                    
-                    if (xml::is_xml($manifest)){
-                        $manifest = xml::parse($manifest);
-                        $name = $manifest->find('name');
-                        $type = $manifest->find('type');
-                        $version = $manifest->find('version');
-                        $name = trim($name->get(0)->text);
-                        $type = trim($type->get(0)->text);
-                        $version = trim($version->get(0)->text);
-                        //list($major, $minor, $revision) = explode(".", $version);
-                        
-                        if (in_array(strtolower($type), array('application', 'extension', 'framework'))){
-                            /* Is this bundle already installed? */
-                            if ($this->has_bundle($name, $version) === false){
-                                /*
-                                 * The bundle isn't installed so we are going
-                                 * to unbundle it
-                                 */
-                                $path = ADAPT_PATH;
-                                /*switch($type){
-                                case 'application':
-                                    $path = APPLICATION_PATH;
-                                    break;
-                                case 'extension':
-                                    $path = EXTENSION_PATH;
-                                    break;
-                                case 'framework':
-                                    $path = FRAMEWORK_PATH;
-                                    break;
-                                }*/
-                                
-                                mkdir($path . $name);
-                                $path .= $name . '/';
-                                
-                                mkdir($path . $name . "-" . $version);
-                                $path .= $name . '-' . $version . '/';
-                                
-                                /* Reset the bundle file point back to the start of the body */
-                                fseek($fp, strlen($raw_index));
-                                
-                                /* Lets extract the bundle */
-                                foreach($bundle_index as $file){
-                                    $path_parts = explode('/', trim(dirname($file['name']), '/'));
-                                    $new_path = $path;
-                                    foreach($path_parts as $p){
-                                        $new_path .= "/{$p}";
-                                        if (!is_dir($new_path)){
-                                            mkdir($new_path);
-                                        }
-                                    }
-                                    
-                                    $ofp = fopen($path . $file['name'], "w");
-                                    
-                                    if ($ofp){
-                                        fwrite($ofp, fread($fp, $file['length']));
-                                        fclose($ofp);
-                                    }
-                                }
-                                
-                                fclose($fp);
-                                return $name;
-                            }else{
-                                return $name;
-                            }
-                        }
-                        
-                        
-                    }else{
-                        $this->error("Error unbundling {$bundle_file_path}, unable to read the manifest.");
-                    }
-                    
-                }else{
-                    $this->error("Error unbundling {$bundle_file_path}, unable to find the bundle index.");
-                }
-                
-                fclose($fp);
-            }else{
-                $this->error("Error unbundling {$bundle_file_path}, unable to read the file.");
             }
             
             return false;
+        }
+        
+        public function has_all_dependencies($bundle_name, $bundle_version = null){
+            $required_dependencies = array();
+            //print "<pre>XX {$bundle_name} {$bundle_version}</pre>";
+            $bundle = $this->load_bundle($bundle_name, $bundle_version);
+            
+            if ($bundle->is_loaded){
+                
+                $dependencies = $bundle->depends_on;
+                
+                //print "<pre>Seeking dependencies for: " . print_r($dependencies, true) . "</pre>";
+                if ($dependencies && is_array($dependencies)){
+                    foreach($dependencies as $name => $versions){
+                        $version = self::get_newest_version($versions);
+                        
+                        if ($this->has_bundle($name, $version)){
+                            $output = $this->has_all_dependencies($name, $version);
+                            if ($output === false){
+                                return false;
+                            }elseif(is_array($output)){
+                                $required_dependencies = array_merge($required_dependencies, $output);
+                            }
+                        }else{
+                            if (isset($required_dependencies[$bundle_name]) && !is_array($required_dependencies[$bundle_name])){
+                                $required_dependencies[$name] = array($version);
+                            }else{
+                                $required_dependencies[$name][] = $version;
+                            }
+                        }
+                    }
+                }else{
+                    $dependencies = array();
+                }
+                
+            }else{
+                $this->error("Unable to load bundle {$bundle_name}-{$bundle_version}");
+                return false;
+            }
+            
+            
+            if (count($required_dependencies) == 0){
+                return true;
+            }
+            
+            return $required_dependencies;
+        }
+        
+        public function get_dependency_list($bundle_name, $bundle_version){
+            $list = $this->cache->get("adapt/dependency.list.{$bundle_name}-{$bundle_version}");
+            
+            if (!is_array($list)){
+                $list = array();
+                
+                if ($this->has_all_dependencies($bundle_name, $bundle_version) === true){
+                    $bundle = $this->load_bundle($bundle_name, $bundle_version);
+                    
+                    if ($bundle->is_loaded){
+                        
+                        $dependencies = $bundle->depends_on;
+                        
+                        foreach($dependencies as $name => $versions){
+                            //print "<strong>{$name}</strong>";
+                            
+                            $version = self::get_newest_version($versions);
+                            
+                            $list[] = array(
+                                'name' => $name,
+                                'version' => $version
+                            );
+                            
+                            $output = $this->get_dependency_list($name, $version);
+                            foreach($output as $item){
+                                $found = false;
+                                foreach($list as $list_item){
+                                    
+                                    if ($list['name'] == $list_item['name']){
+                                        $found = true;
+                                        break;
+                                    }
+                                }
+                                
+                                if (!$found){
+                                    $list[] = array(
+                                        'name' => $item['name'],
+                                        'version' => $item['version']
+                                    );
+                                }
+                            }
+                        }
+                        
+                        //print "<pre>" . print_r($list, true) . "</pre>";
+                        
+                        /* Clean the list */
+                        $final = array();
+                        
+                        $list = array_reverse($list);
+                        foreach($list as $item){
+                            if (in_array($item['name'], array_keys($final))){
+                                $final[$item['name']][] = $item['version'];
+                            }else{
+                                $final[$item['name']] = array($item['version']);
+                            }
+                        }
+                        
+                        //print "<pre>FINAL:" . print_r($final, true) . "</pre>";
+                        
+                        $final = array_reverse($final);
+                        $list = array();
+                        
+                        foreach($final as $bundle_name => $versions){
+                            $list[] = array(
+                                'name' => $bundle_name,
+                                'version' => self::get_newest_version($versions)
+                            );
+                        }
+                        
+                        $this->cache->serialize("adapt/dependency.list.{$bundle_name}-{$bundle_version}", $list, 60 * 60 * 24 * 7);
+                        
+                    }else{
+                        $this->error("Unable to load bundle {$bundle_name}-{$bundle_version}");
+                        return false;
+                    }
+                }
+            }
+            
+            return $list;
+        }
+        
+        public function load_bundle($bundle_name, $bundle_version = null){
+            if (!is_array($this->_bundle_cache)){
+                
+                //$this->_bundle_cache = $this->cache->get("adapt/bundles.cache");
+                
+                $data = $this->cache->get("adapt/bundle_objects");
+                if (is_array($data)){
+                    $this->_bundle_class_paths = $data['paths'];
+                    if (is_array($this->_bundle_class_paths)){
+                        foreach($this->_bundle_class_paths as $path){
+                            require_once($path);
+                        }
+                    }
+                    
+                    $this->_bundle_cache = unserialize($data['objects']);
+                }
+            }
+            
+            if (is_array($this->_bundle_cache)){
+                
+                foreach($this->_bundle_cache as $bundle => $versions){
+                    if ($bundle_name == $bundle){
+                        
+                        $version_keys = array_keys($versions);
+                        //print "<pre>Bundles loading {$bundle_name} {$bundle_version}</pre>";
+                        if (is_null($bundle_version)){
+                            $version = self::get_newest_version($version_keys);
+                            //print "<pre>Using version {$version}</pre>";
+                            $bundle = $versions[$version];
+                            $this->register_namespace($bundle->namespace, $bundle_name, $version);
+                            //print "<pre>" . print_r($bundle, true) . "</pre>";
+                            return $bundle;
+                        }else{
+                            $matched_versions = array();
+                            foreach($version_keys as $version){
+                                if (self::matches_version($bundle_version, $version)){
+                                    $matched_versions[] = $version;
+                                }
+                            }
+                            
+                            $version = self::get_newest_version($matched_versions);
+                            if ($version){
+                                $bundle = $versions[$version];
+                                $this->register_namespace($bundle->namespace, $bundle_name, $version);
+                                return $bundle;
+                            }
+                        }
+                        
+                        break;
+                    }
+                }
+                
+            }else{
+                $this->_bundle_cache = array();
+                $this->_bundle_class_paths = array();
+            }
+            
+            /* Couldn't read from the cache so lets load manually */
+            $available_versions = self::list_bundle_versions($bundle_name);
+            $selected_version = null;
+            
+            if (is_null($bundle_version)){
+                $selected_version = self::get_newest_version($available_versions);
+            }else{
+                $matched_versions = array();
+                foreach($available_versions as $version){
+                    if (self::matches_version($bundle_version, $version)){
+                        $matched_versions[] = $version;
+                    }
+                }
+                
+                $selected_version = self::get_newest_version($matched_versions);
+            }
+            
+            if (is_null($selected_version)){
+                $this->error("Unable to find a valid version for bundle '{$bundle_name}'");
+                return false;
+            }else{
+                /* We need to register the bundles namespace */
+                $namespace = null;
+                
+                /* Parse the bundle.xml */
+                $bundle_path = ADAPT_PATH . "{$bundle_name}/{$bundle_name}-{$selected_version}/bundle.xml";
+                
+                $bundle_data = file_get_contents($bundle_path);
+                    
+                if ($bundle_data && xml::is_xml($bundle_data)){
+                    $data = xml::parse($bundle_data);
+                    $namespace = $data->find('bundle')->find('namespace')->get(0);
+                    if ($namespace instanceof xml) $namespace = $namespace->get(0);
+                    
+                    /* Record the bundle path if there is one to aid auto_loading later */
+                    $bundle_class_path = ADAPT_PATH . "{$bundle_name}/{$bundle_name}-{$selected_version}/classes/bundle_{$bundle_name}.php";
+                    if (file_exists($bundle_class_path)){
+                        $this->_bundle_class_paths[] = $bundle_class_path;
+                    }
+                    
+                    $this->register_namespace($namespace, $bundle_name, $selected_version);
+                    
+                    $class = "{$namespace}\\bundle_{$bundle_name}";
+                    //$class = "bundle";
+                    
+                    $object = new $class($data);
+                    //$object = new bundle($bundle_name, $data);
+                    
+                    if ($object && $object instanceof bundle){
+                        $this->_bundle_cache[$bundle_name][$selected_version] = $object;
+                        $this->_bundle_cache_changed = true;
+                        
+                        return $object;
+                    }else{
+                        $this->error("Failed to load bundle {$bundle_name} v{$selected_version}");
+                        return false;
+                    }
+                    
+                    
+                }else{
+                    $this->error("Unable to load {$bundle_path}");
+                    return false;
+                }
+                
+            }
+        }
+        
+        public function save_bundle_cache(){
+            if ($this->_bundle_cache_changed){
+                $this->_bundle_cache_changed = false;
+                //$this->cache->serialize("adapt/namespaces", $this->store('adapt.namespaces'), 60 * 60 * 24 * 5);
+                $this->cache->serialize("adapt/bundle_objects", array('paths' => $this->_bundle_class_paths, 'objects' => serialize($this->_bundle_cache)), 60 * 60 * 24 * 5);
+            }
+        }
+        
+        public static function list_bundles(){
+            $output = array();
+            
+            $bundles = scandir(ADAPT_PATH);
+            
+            foreach($bundles as $bundle){
+                if (substr($bundle, 0, 1) != ".") $output[] = $bundle;
+            }
+            
+            return $output;
+        }
+        
+        public static function list_bundle_versions($bundle_name){
+            $output = array();
+            
+            $bundles = scandir(ADAPT_PATH . $bundle_name . "/");
+            
+            foreach($bundles as $bundle){
+                if (substr($bundle, 0, 1) != "."){
+                    list($bundle, $version) = explode("-", $bundle);
+                    $output[] = $version;
+                }
+            }
+            
+            return $output;
+        }
+        
+        public function register_namespace($namespace, $bundle_name, $bundle_version){
+            //print "<p>Registering namespace <strong>{$namespace}-{$bundle_version}</strong></p>"; //new html_p(array("Registering namespace ", new html_strong($namespace)));
+            $namespaces = $this->store('adapt.namespaces');
+            //if (!is_array($namespaces)){
+            //    if ($this->cache && $this->cache instanceof cache){
+            //        $namespaces = $this->cache->get('adapt/namespaces');
+            //        
+            //        if (!is_array($namespaces)){
+            //            $namespaces = array();
+            //        }
+            //    }else{
+            //        $namespaces = array();
+            //    }
+            //}
+            
+            $namespaces[$namespace] = array(
+                'bundle_name' => $bundle_name,
+                'bundle_version' => $bundle_version
+            );
+            
+            $this->store('adapt.namespaces', $namespaces);
+            
+            //if ($this->cache && $this->cache instanceof cache){
+            //    $this->cache->serialize('adapt.namespaces', $namespaces, 600);
+            //}
         }
         
         public static function matches_version($version_1, $version_2){
@@ -1168,41 +700,60 @@ namespace adapt{
             return false;
         }
         
-        
-        public static function get_newest_version($version_1, $version_2){
-            $v1 = array('major' => '', 'minor' => '', 'revision' => '');
-            $v2 = array('major' => '', 'minor' => '', 'revision' => '');
-            
-            $matches = array();
-            
-            if (preg_match_all("/^(\d+)(\.(\d+))?(\.(\d+))?$/", $version_1, $matches)){
-                $v1['major'] = $matches[1][0] == "" ? '0' : $matches[1][0];
-                $v1['minor'] = $matches[3][0] == "" ? '0' : $matches[3][0];
-                $v1['revision'] = $matches[5][0] == "" ? '0' : $matches[5][0];
-            }
-            
-            if (preg_match_all("/^(\d+)(\.(\d+))?(\.(\d+))?$/", $version_2, $matches)){
-                $v2['major'] = $matches[1][0] == "" ? '0' : $matches[1][0];
-                $v2['minor'] = $matches[3][0] == "" ? '0' : $matches[3][0];
-                $v2['revision'] = $matches[5][0] == "" ? '0' : $matches[5][0];
-            }
-            
-            if ($v1['major'] > $v2['major']){
-                return $version_1;
-            }elseif($v1['major'] == $v2['major']){
-                if ($v1['minor'] > $v2['minor']){
+        public static function get_newest_version($version_1, $version_2 = null){
+            if (is_array($version_1)){
+                
+                if(count($version_1) == 1){
+                    return $version_1[0];
+                }elseif(count($version_1) > 1){
+                    $selected_version = $version_1[0];
+                    
+                    for($i = 1; $i < count($version_1); $i++){
+                        $selected_version = self::get_newest_version($selected_version, $version_1[0]);
+                    }
+                    
+                    return $selected_version;
+                }
+                
+                return null;
+                
+            }else{
+                $v1 = array('major' => '', 'minor' => '', 'revision' => '');
+                $v2 = array('major' => '', 'minor' => '', 'revision' => '');
+                
+                $matches = array();
+                
+                if (preg_match_all("/^(\d+)(\.(\d+))?(\.(\d+))?$/", $version_1, $matches)){
+                    $v1['major'] = $matches[1][0] == "" ? '0' : $matches[1][0];
+                    $v1['minor'] = $matches[3][0] == "" ? '0' : $matches[3][0];
+                    $v1['revision'] = $matches[5][0] == "" ? '0' : $matches[5][0];
+                }
+                
+                if (preg_match_all("/^(\d+)(\.(\d+))?(\.(\d+))?$/", $version_2, $matches)){
+                    $v2['major'] = $matches[1][0] == "" ? '0' : $matches[1][0];
+                    $v2['minor'] = $matches[3][0] == "" ? '0' : $matches[3][0];
+                    $v2['revision'] = $matches[5][0] == "" ? '0' : $matches[5][0];
+                }
+                
+                if ($v1['major'] > $v2['major']){
                     return $version_1;
-                }elseif($v1['minor'] == $v2['minor']){
-                    if ($v1['revision'] > $v2['revision']){
+                }elseif($v1['major'] == $v2['major']){
+                    if ($v1['minor'] > $v2['minor']){
                         return $version_1;
+                    }elseif($v1['minor'] == $v2['minor']){
+                        if ($v1['revision'] > $v2['revision']){
+                            return $version_1;
+                        }
                     }
                 }
+                
+                return $version_2;
             }
-            
-            return $version_2;
         }
         
     }
+    
+    
 }
 
 ?>

@@ -53,16 +53,17 @@ function voodoo($class){
             /* Alias the application bundle */
             $bundle_name = strtolower($namespaces[0]);
             $application = $adapt->setting('adapt.running_application');
-            
+            //print "<pre>" . print_r($registered_namespaces, true) . "</pre>";
             if (isset($application)){
-                $class_def = "namespace application{ class {$class_name} extends \\{$application}\\{$class_name}{} }";
+                $class_def = "namespace application{ class {$class_name} extends {$application}\\{$class_name}{} }";
+                //print $class_def;
                 eval($class_def);
                 $class_loaded = true;
             }
         }else{
             /* Check against registered namespaces */
             $requested_namespace = "\\" . implode("\\", $namespaces);
-            //print "<pre>Seeking '{$requested_namespace}'</pre>";
+            //print "<pre>Seeking '{$requested_namespace}' ({$class_name})</pre>";
             //print "<pre>" . print_r($registered_namespaces[$requested_namespace]) . "</pre>";
             
             $path = ADAPT_PATH . "{$registered_namespaces[$requested_namespace]['bundle_name']}/{$registered_namespaces[$requested_namespace]['bundle_name']}-{$registered_namespaces[$requested_namespace]['bundle_version']}/";
@@ -71,7 +72,7 @@ function voodoo($class){
             $locations = array('classes/', 'views/', 'controllers/', 'models/', 'interfaces/');
             foreach($locations as $location){
                 if (file_exists($path . $location . $class_name . ".php")){
-                    print "<pre>FOUND IN: " . $path . $location . $class_name . ".php</pre>";
+                    //print "<pre>FOUND IN: " . $path . $location . $class_name . ".php</pre>";
                     require_once($path . $location . $class_name . ".php");
                     $class_loaded = true;
                 }

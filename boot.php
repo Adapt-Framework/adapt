@@ -31,8 +31,6 @@
  */
 defined('ADAPT_STARTED') or die;
 
-$GLOBALS['time_offset'] = microtime(true);
-
 /*
  * Load libraries
  */
@@ -46,10 +44,6 @@ if (is_dir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/libraries")){
     }
 }
 
-//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to load libraries: " . round($GLOBALS['time'], 4) . "</pre>";
-//$GLOBALS['time_offset'] = microtime(true);
-
 /*
  * Create a gloabl adapt object
  * that can be accessed from
@@ -58,27 +52,17 @@ if (is_dir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/libraries")){
 global $adapt;
 $adapt = new \adapt\base();
 
-//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to globalize adapt: " . round($GLOBALS['time'], 4) . "</pre>";
-//$GLOBALS['time_offset'] = microtime(true);
 
 /*
  * Create a global bundles object
  */
 $adapt->bundles = new \adapt\bundles();
 
-//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to globalize bundles: " . round($GLOBALS['time'], 4) . "</pre>";
-//$GLOBALS['time_offset'] = microtime(true);
 
 /*
  * Register the adapt namespace manually
  */
 $adapt->bundles->register_namespace("\\adapt", 'adapt', ADAPT_VERSION);
-
-//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to register adapt namespace: " . round($GLOBALS['time'], 4) . "</pre>";
-//$GLOBALS['time_offset'] = microtime(true);
 
 /*
  * Load configuration
@@ -93,10 +77,6 @@ if (is_dir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/config")){
     }
 }
 
-//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to load configuration: " . round($GLOBALS['time'], 4) . "</pre>";
-//$GLOBALS['time_offset'] = microtime(true);
-
 /*
  * Add handlers
  */
@@ -105,9 +85,6 @@ $adapt->add_handler("\\adapt\\html");
 $adapt->add_handler("\\adapt\\model");
 $adapt->add_handler("\\adapt\\bundle");
 
-//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to add handlers " . round($GLOBALS['time'], 4) . "</pre>";
-//$GLOBALS['time_offset'] = microtime(true);
 
 /*
  * Define the file storage path
@@ -117,23 +94,15 @@ $adapt->add_handler("\\adapt\\bundle");
 $path = $adapt->setting('adapt.file_store_path');
 
 if (is_null($path)){
-    $path = ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/store/";
+    $path = ADAPT_PATH . "store/";
     $adapt->setting('adapt.file_store_path', $path);
 }
 
 /* Set the file store */
 $adapt->file_store = new \adapt\storage_file_system();
 
-//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to globalize file storage: " . round($GLOBALS['time'], 4) . "</pre>";
-//$GLOBALS['time_offset'] = microtime(true);
-
 /* Set the cache */
 $adapt->cache = new \adapt\cache();
-
-//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to globalize cache: " . round($GLOBALS['time'], 4) . "</pre>";
-//$GLOBALS['time_offset'] = microtime(true);
 
 /*
  * Is the current page cached?
@@ -154,34 +123,89 @@ if (!isset($adapt->request['actions'])){
     }
 }
 
-//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time check for cached page: " . round($GLOBALS['time'], 4) . "</pre>";
-//$GLOBALS['time_offset'] = microtime(true);
+/*
+ * Boot the system
+ */
 
+if ($adapt->bundles->boot_application()){
+    
+    $adapt->bundles->save_bundle_cache();
+    $adapt->bundles->save_global_settings();
+    
+    /* Do we have a root view controller? */
+    if (class_exists("\\application\\controller_root")){
+        
+        $controller = new \application\controller_root();
+        
+        if ($controller && $controller instanceof \adapt\controller){
+            
+            /* Add the controllers view to the dom */
+            $adapt->dom->add($controller->view);
+            
+            /* Fire the system ready event */
+            $adapt->trigger(\adapt\base::EVENT_READY);
+            
+            /* Process actions */
+            if (isset($adapt->request['actions'])){
+                $actions = explode(",", $adapt->request['actions']);
+                
+                for($i = 0; $i < count($actions); $i++){
+                    $adapt->store('adapt.current_action', $actions[$i]);
+                    if ($i < count($actions)){
+                        $adapt->store('adapt.next_action', $actions[$i + 1]);
+                    }else{
+                        $adapt->remove_store('adapt.next_action');
+                    }
+                    $controller->route($actions[$i], true);
+                }
+                $adapt->remove_store('adapt.current_action');
+                $adapt->remove_store('adapt.next_action');
+                
+                /* Are we redirecting? */
+                if (!is_null($adapt->store('adapt.redirect'))){
+                    header('location:' . $adapt->store('adapt.redirect'));
+                    exit(0);
+                }
+            }
+            
+            /* Route the URL */
+            $output = $controller->route($adapt->request['url']);
+            $content_type = $controller->content_type;
+            
+            /* Set the content type */
+            header("content-type: {$content_type}");
+            
+            if ($output){
+                /* Send only the current output to the browser (Likely AJAX) */
+                print $output;
+            }else{
+                /* Send out the whole page */
+                if ($adapt->dom instanceof \adapt\page && $adapt->dom->cache_time > 0){
+                    if (!isset($this->request['actions'])){
+                        /* We can cache the page */
+                        //$key = $_SERVER['REQUEST_URI'];
+                        //$adapt->cache->page($key, $output, $adapt->dom->cache_time, $content_type);
+                    }
+                }
+                print $adapt->dom;
+            }
+            
+        }else{
+            $adapt->dom->add(new html_h1("Something isn't right here..."));
+            $adapt->dom->add(new html_p("The root controller failed to load"));
+            print $adapt->dom;
+        }
+        
+    }else{
+        $adapt->dom->add(new html_h1("Something isn't right here..."));
+        $adapt->dom->add(new html_p("The root control could not be found."));
+        print $adapt->dom;
+    }
+    
+}else{
+    print "<pre>" . print_r($adapt->bundles->errors(), true) . "</pre>";
+}
 
-
-$bundle_adapt = $adapt->bundles->get_bundle('adapt', ADAPT_VERSION);
-
-//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to get the adapt bundle: " . round($GLOBALS['time'], 4) . "</pre>";
-//$GLOBALS['time_offset'] = microtime(true);
-
-
-//print new html_p("Loaded bundle: " . $bundle_adapt->name);
-//print new html_pre(print_r($bundle_adapt->errors(true), true));
-//print $bundle_adapt;
-//print new html_strong("Hello world");
-
-//$GLOBALS['time'] = microtime(true) - $GLOBALS['time_offset'];
-//print "<pre>Time to be ready for boot: " . round($GLOBALS['time'], 3) . "</pre>";
-//$GLOBALS['time_offset'] = microtime(true);
-
-$adapt->bundles->boot_system();
-
-//TODO: Process requests
-print $adapt->dom;
-
-print new html_pre(print_r($adapt->bundles->errors(true), true)); 
 exit(1); 
 
 /*
