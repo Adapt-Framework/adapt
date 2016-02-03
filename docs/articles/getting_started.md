@@ -77,4 +77,5 @@ first_web_application-1.0.0/
 * ```first_web_application-1.0.0/static/``` Contains any static content this bundle uses.
 * ```first_web_application-1.0.0/views/``` Contains the views for this bundle.
 
-
+### bundle.xml
+`bundle.xml` is the heart of the bundle, containing key information about the bundle.  Without this file the bundle cannot work.
