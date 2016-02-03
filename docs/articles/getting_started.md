@@ -55,5 +55,39 @@ Lets look at each one in a little more detail:
 
 Each of the above bundle directories will contain sub directories with the bundle name and version, for example, the adapt_setup bundle folder will contain a sub folder named ```adapt_setup-X.X.X``` with X indicating the version.
 
+Your first web application will also include a sub folder containing the name and version ```adapt/first_web_application/first_web_application-1.0.0```, this directory we will refer too as you ***application bundle directory***.
+
+
+## Bundle structure
+
+Everything in Adapt is a bundle, this means if a bundle exists that provides the functionaliy you need then you can just use it.  It also means any bundles you write can be re-used in any project in the future.
+
+The web application you created earlier will contain the following, the same is true of every bundle.
+
+```
+first_web_application-1.0.0/
+    bundle.xml
+    classes/
+        bundle_first_web_application.php
+    controllers/
+        controller_root.php
+    docs/
+    models/
+    static/
+        css/
+        js/
+        images/
+    views/
+```
+
+```first_web_application-1.0.0/bundle.xml``` Contains key information about the bundle, see the sub heading below labled bundle.xml. 
+```first_web_application-1.0.0/classes/``` Contains classes for this bundle. 
+```first_web_application-1.0.0/classes/bundle_first_web_application.php``` Contains the bundles boot process and performs any actions required during installation.  See [Working with bundles](/docs/articles/working_with_bundles.md) for more information.
+```first_web_application-1.0.0/controllers/``` Contains the view controllers for this bundle.
+```first_web_application-1.0.0/controllers/controller_root.php``` The main view controller for the application.  This controller is responsible for URL routing for your site.
+```first_web_application-1.0.0/docs/``` The documentation for the bundle.
+```first_web_application-1.0.0/models/``` Contains the models for this bundle.
+```first_web_application-1.0.0/static/``` Contains any static content this bundle uses.
+```first_web_application-1.0.0/views/``` Contains the views for this bundle.
 
 
