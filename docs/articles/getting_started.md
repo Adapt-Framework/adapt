@@ -78,4 +78,18 @@ first_web_application-1.0.0/
 * ```first_web_application-1.0.0/views/``` Contains the views for this bundle.
 
 ### bundle.xml
-`bundle.xml` is the heart of the bundle, containing key information about the bundle.  Without this file the bundle cannot work.
+`bundle.xml` is the heart of the bundle, containing key information about the bundle. You can use this file to define settings, database tables and list any bundles that this bundle requires to work.
+
+The basic `bundle.xml` looks something like this:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<adapt_framework>
+    <bundle>
+        <name>first_web_application</name>
+        <version>1.0.0</version>
+        <label>My First Web App</label>
+        
+    </bundle>
+</adapt_framework>
+```
