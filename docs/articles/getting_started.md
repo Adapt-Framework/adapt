@@ -146,7 +146,7 @@ The second line `defined('ADAPT_STARTED') or die;` is required in all PHP files,
 
 If your website address is www.example.com/ then the root controller is mapped directly to the website address.
 
-Go ahead and a public method called **view_default()** giving you a file like:
+Go ahead and add a public method called **view_default()** giving you a file like:
 
 ```php
 
@@ -250,5 +250,152 @@ namespace first_web_application{
 ```
 
 ### Routing URL's
-The above example is great if you have only a single page, so lets extend our first_web_application to include addition URL mapping.
+The above example is great if you have only a single page, so lets extend our first_web_application to include addition URL mappings.
 
+We are going to map www.example.com/about to our root controller, in Adapt this is as easy as creating a new method.
+
+Lets add the method **view_about()** to our controller:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+        
+        }
+        
+    }
+
+}
+```
+
+Whenever anyone vists www.example.com/about this function will be called, lets add something simple to method to make it display something. Go ahead add the following to the method:
+
+```php
+$this->add_view(new html_h1("About"));
+$this->add_view(new html_p("This is the about us page"));
+```
+
+Giving us a controller that looks like this:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+            $this->add_view(new html_h1("About"));
+            $this->add_view(new html_p("This is the about us page"));
+        }
+        
+    }
+
+}
+```
+
+Because Adapt maps URL's directly to functions you can only have URL's that are valid as a function name. For example if you wanted to map www.example.com/test! you would be unable to due to the fact that you can not call a method **view_test!()** in PHP.
+
+Adapt treats hypens '-' the same as underscores in URL's so if you wanted a URL of www.example.com/this-is-a-page you could do this by creating a function called **view_this_is_a_page()**, this function would also be available via www.example.com/this_is_a_page.
+
+If we want to use deeper URL's such as www.example.com/hello/world we need to create a new controller to handle the second level, so lets do that now.
+
+Create a new controller with the following code and save it as `<DOCUMENT ROOT>/adapt/first_web_application/first_web_application-1.0.0/controllers/controller_hello.php`:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_hello extends \adapt\controller{
+        
+        public function view_default(){
+            
+        }
+        
+        
+    }
+
+}
+```
+
+The first thing we have to do is map the first part of our URL (**www.example.com/hello**/world) to the new controller, to do this we need to add a new function called **view_hello()** to our controller_root.  So go ahead and do that so your controller_root looks like this:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+            $this->add_view(new html_h1("About"));
+            $this->add_view(new html_p("This is the about us page"));
+        }
+        
+        public function view_hello(){
+        
+        }
+        
+    }
+
+}
+```
