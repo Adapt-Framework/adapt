@@ -504,5 +504,248 @@ namespace first_web_application{
 }
 ```
 
-This is a basic introduction to URL routing and view controller, for more advanced routing please see [URL Routing](/docs/articles/url_routing.md).
+This is a basic introduction to URL routing, for more advanced routing please see [URL Routing](/docs/articles/url_routing.md).
 
+### Building content with view controllers
+
+In the above examples we used controller to do some basic routing, we can also use controllers to build our page step by step. Lets say you want a common header and footer on each page, you can add this to the controller_root and every page on the site will then have the same header and footer.  This allows you to write everything only once.
+
+Lets update our first_web_application to add a custom page header and footer to the site.  When we access www.example.com/ www.example/about www.example.com/hello or www.example.com/hello/world we will see the header and footer.
+
+The first thing we need to do is create a new property on our controller_root so that we can store main page content, not the header and footer.
+
+Add a protected property called `$_content` to your controller_root, like so:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        protected $_content;
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+            $this->add_view(new html_h1("About"));
+            $this->add_view(new html_p("This is the about us page"));
+        }
+        
+        public function view_hello(){
+            return $this->load_controller("controller_hello");
+        }
+        
+    }
+
+}
+```
+
+The next step is to add a constructer to the controller so that we can set the `$_content` property to be an empty div element, like so:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        protected $_content;
+        
+        public function __construct(){
+            parent::__construct();
+            $this->_content = new html_div();
+        }
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+            $this->add_view(new html_h1("About"));
+            $this->add_view(new html_p("This is the about us page"));
+        }
+        
+        public function view_hello(){
+            return $this->load_controller("controller_hello");
+        }
+        
+    }
+
+}
+```
+
+Also noticed that we called `parent::__construct()` without doing this our controller will fail to load.
+
+The next step is move our content so that it is added to our new `$_content` property instead of the main page, to do this we are going to over-ride the method `add_view()` so that it adds the content to `$_content`.
+
+So lets do it:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        protected $_content;
+        
+        public function __construct(){
+            parent::__construct();
+            $this->_content = new html_div();
+        }
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+            $this->add_view(new html_h1("About"));
+            $this->add_view(new html_p("This is the about us page"));
+        }
+        
+        public function view_hello(){
+            return $this->load_controller("controller_hello");
+        }
+        
+        public function add_view($content){
+            /* This function is overriding parent::add_view */
+            $this->_content->add($content);
+        }
+    }
+
+}
+```
+
+At this stage if we were to view the site we would see nothing because all the content is stored in `$_content` but we haven't added `$_content` to the page yet before we add the `$_content` to the page we need to first add our custom header.
+
+We could add our header to **view_default** but this will mean it will only be visable when someone visits www.example.com/, to make it visable on all pages we need to add the content in our constructor.
+
+For the purposes of this example, we are going to create a simple header that looks like this:
+```html
+<header>
+    <h1>example.com</h1>
+    <p>This is the header</p>
+</header>
+```
+
+In Adapt we would write this:
+```php
+$header = new html_header(
+    array(
+        new html_h1("example.com"),
+        new html_p("This is the header")
+    )
+);
+```
+
+This code will create a new variable called `$header` which contains our header, we need to add `$header` to the page to be useful.  In previous examples we used `$this->add_view(...)` to add content, unfortunatly we have overriden this and so using it will cause `$header` to be added to `$_content` which isn't what we want.  So to add `$header` to the page we need to use the parent's add_view method like so:
+
+```php
+parent::add_view($header);
+```
+
+This will leave the controller_root looking like this:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        protected $_content;
+        
+        public function __construct(){
+            parent::__construct();
+            $this->_content = new html_div();
+            
+            $header = new html_header(
+                array(
+                    new html_h1("example.com"),
+                    new html_p("This is the header")
+                )
+            );
+            
+            parent::add_view($header);
+        }
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+            $this->add_view(new html_h1("About"));
+            $this->add_view(new html_p("This is the about us page"));
+        }
+        
+        public function view_hello(){
+            return $this->load_controller("controller_hello");
+        }
+        
+        public function add_view($content){
+            /* This function is overriding parent::add_view */
+            $this->_content->add($content);
+        }
+    }
+
+}
+```
