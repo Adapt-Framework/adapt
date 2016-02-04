@@ -934,6 +934,7 @@ print $p;
 ```php
 $p = new html_p(array('class' => 'red'));
 $p->add("My Text");
+print $p;
 ```
 **OR**
 ```php
@@ -948,4 +949,328 @@ All of the above examples will output:
 <p class="red">My Text</p>
 ```
 
+### Building our first view
+So far we have used the `html` handler class to generate some basic html, lets take this future and create a view.
 
+Create a new file called `view_login_form.php` and save it in `<DOCUMENT ROOT>/adapt/first_web_application/first_web_application-1.0.0/views/view_login_form.php`.
+
+Write the following in the new file:
+
+```php
+namespace first_web_application{
+
+    defined('ADAPT_STARTED') or die;
+    
+    class view_login_view extends \adapt\view{
+    
+    }
+}
+```
+
+We are going to use this view to create a simple user login form.
+
+The first thing we need to do is add a constructor, views may have custom constructors as long as they call the parents constructor, the first parameter the parent requires is the type of tag this view is, this always defaults to div.
+
+So lets add the constructor:
+```php
+namespace first_web_application{
+
+    defined('ADAPT_STARTED') or die;
+    
+    class view_login_view extends \adapt\view{
+        
+        public function __construct(){
+            parent::__construct('div');
+        }
+        
+    }
+}
+```
+
+At this point if we were to print this view like this:
+```php
+print new view_login_view();
+```
+
+Would output:
+```html
+<div class="view form_login"></div>
+```
+
+Lets add a form element to our view, first by declaring it and then next by adding it with the following code:
+```php
+$form = new html_form(array('action' => '/', method => 'post'));
+$this->add($form);
+```
+
+So that our view looks like:
+```php
+namespace first_web_application{
+
+    defined('ADAPT_STARTED') or die;
+    
+    class view_login_view extends \adapt\view{
+        
+        public function __construct(){
+            parent::__construct('div');
+            
+            $form = new html_form(array('action' => '/', method => 'post'));
+            $this->add($form);
+        }
+        
+    }
+}
+```
+
+
+if we print out our view now we will get:
+```html
+<div class="view form_login">
+    <form action="/" method="post"></form>
+</div>
+```
+
+Lets go ahead and some fields and labels to the form, like so:
+
+```php
+namespace first_web_application{
+
+    defined('ADAPT_STARTED') or die;
+    
+    class view_login_view extends \adapt\view{
+        
+        public function __construct(){
+            parent::__construct('div');
+            
+            $form = new html_form(array('action' => '/', method => 'post'));
+            $this->add($form);
+            
+            //Add the username
+            $form->add(
+                new html_div(
+                    array(
+                        new html_label("Username", array('for' => 'id-username')),
+                        new html_input(array('name' => 'username', 'id' => 'id-username', 'type' => 'text'))
+                    )
+                )
+            );
+            
+            //Add the password
+            $form->add(
+                new html_div(
+                    array(
+                        new html_label("Username", array('for' => 'id-password')),
+                        new html_input(array('name' => 'username', 'id' => 'id-password', 'type' => 'password'))
+                    )
+                )
+            );
+        }
+        
+    }
+}
+```
+
+Printing out our view will display the following:
+```html
+<div class="view form_login">
+    <form action="/" method="post">
+        <div>
+            <label for="id-username">Username</label>
+            <input name="username" id="id-username" type="text">
+        </div>
+        <div>
+            <label for="id-username">Password</label>
+            <input name="password" id="id-password" type="password">
+        </div>
+    </form>
+</div>
+```
+
+We should also add a submit button like so:
+```php
+namespace first_web_application{
+
+    defined('ADAPT_STARTED') or die;
+    
+    class view_login_view extends \adapt\view{
+        
+        public function __construct(){
+            parent::__construct('div');
+            
+            $form = new html_form(array('action' => '/', method => 'post'));
+            $this->add($form);
+            
+            //Add the username
+            $form->add(
+                new html_div(
+                    array(
+                        new html_label("Username", array('for' => 'id-username')),
+                        new html_input(array('name' => 'username', 'id' => 'id-username', 'type' => 'text'))
+                    )
+                )
+            );
+            
+            //Add the password
+            $form->add(
+                new html_div(
+                    array(
+                        new html_label("Username", array('for' => 'id-password')),
+                        new html_input(array('name' => 'username', 'id' => 'id-password', 'type' => 'password'))
+                    )
+                )
+            );
+            
+            //Add a submit button
+            $form->add(new html_submit());
+        }
+        
+    }
+}
+```
+
+Now that we have created our view we can call it from our view controller, so lets map www.example.com/login to our view.
+
+Open up the controller_root and add the method **view_login**, so it looks like:
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        protected $_content;
+        
+        public function __construct(){
+            parent::__construct();
+            $this->_content = new html_div();
+            
+            $header = new html_header(
+                array(
+                    new html_h1("example.com"),
+                    new html_p("This is the header")
+                )
+            );
+            
+            parent::add_view($header);
+            
+            parent::add_view($this->_content);
+            
+            $footer = new html_footer(new html_p("Copyright 2016"));
+            parent::add_view($footer);
+        }
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+            $this->add_view(new html_h1("About"));
+            $this->add_view(new html_p("This is the about us page"));
+        }
+        
+        public function view_hello(){
+            return $this->load_controller("controller_hello");
+        }
+        
+        public function add_view($content){
+            /* This function is overriding parent::add_view */
+            $this->_content->add($content);
+        }
+        
+        public function view_login(){
+            
+        }
+    }
+
+}
+```
+
+We can then add our view to the page with the following:
+```php
+$this->add_view(new view_login_form());
+```
+
+Leaving our view controller looking like this:
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        protected $_content;
+        
+        public function __construct(){
+            parent::__construct();
+            $this->_content = new html_div();
+            
+            $header = new html_header(
+                array(
+                    new html_h1("example.com"),
+                    new html_p("This is the header")
+                )
+            );
+            
+            parent::add_view($header);
+            
+            parent::add_view($this->_content);
+            
+            $footer = new html_footer(new html_p("Copyright 2016"));
+            parent::add_view($footer);
+        }
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+            $this->add_view(new html_h1("About"));
+            $this->add_view(new html_p("This is the about us page"));
+        }
+        
+        public function view_hello(){
+            return $this->load_controller("controller_hello");
+        }
+        
+        public function add_view($content){
+            /* This function is overriding parent::add_view */
+            $this->_content->add($content);
+        }
+        
+        public function view_login(){
+            $this->add_view(new view_login_form());
+        }
+    }
+
+}
+```
+
+Going to www.example.com/login will display the header we created earlier, the login view we just created followed by the footer.
