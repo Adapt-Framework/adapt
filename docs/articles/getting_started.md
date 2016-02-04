@@ -96,10 +96,13 @@ The basic `bundle.xml` looks something like this:
 </adapt_framework>
 ```
 
-The key elements of the bundle are as follows:
+The mandatory elements of the bundle are as follows:
 
 Element         | Description
 ----------------|-----------------
 **name**        | The name of the bundle. If this bundle is published in the Adapt repository then the name must be unique.
 **version**     | The version of the bundle.  This must always be in the format X.X.X
-
+**label**       | A label for the bundle.  Think of **name** as the internal name and the label as the public facing name.
+**namespace**   | The namespace used by the bundle.
+**type**        | This tells Adapt what type of bundle this is.  The bundle we are building is a type of **application**, this means this bundle is responsible for controlling the website.  There are other types of bundles that can be used to add functionality to other bundles.  We will look more at types later.
+**description** | A nice human readable description of the bundle.
