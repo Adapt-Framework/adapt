@@ -961,7 +961,7 @@ namespace first_web_application{
 
     defined('ADAPT_STARTED') or die;
     
-    class view_login_view extends \adapt\view{
+    class view_login_form extends \adapt\view{
     
     }
 }
@@ -977,7 +977,7 @@ namespace first_web_application{
 
     defined('ADAPT_STARTED') or die;
     
-    class view_login_view extends \adapt\view{
+    class view_login_form extends \adapt\view{
         
         public function __construct(){
             parent::__construct('div');
@@ -989,12 +989,12 @@ namespace first_web_application{
 
 At this point if we were to print this view like this:
 ```php
-print new view_login_view();
+print new view_login_form();
 ```
 
 Would output:
 ```html
-<div class="view form_login"></div>
+<div class="view login-form"></div>
 ```
 
 Lets add a form element to our view, first by declaring it and then next by adding it with the following code:
@@ -1009,7 +1009,7 @@ namespace first_web_application{
 
     defined('ADAPT_STARTED') or die;
     
-    class view_login_view extends \adapt\view{
+    class view_login_form extends \adapt\view{
         
         public function __construct(){
             parent::__construct('div');
@@ -1025,7 +1025,7 @@ namespace first_web_application{
 
 if we print out our view now we will get:
 ```html
-<div class="view form_login">
+<div class="view login-form">
     <form action="/" method="post"></form>
 </div>
 ```
@@ -1037,7 +1037,7 @@ namespace first_web_application{
 
     defined('ADAPT_STARTED') or die;
     
-    class view_login_view extends \adapt\view{
+    class view_login_form extends \adapt\view{
         
         public function __construct(){
             parent::__construct('div');
@@ -1072,7 +1072,7 @@ namespace first_web_application{
 
 Printing out our view will display the following:
 ```html
-<div class="view form_login">
+<div class="view login-form">
     <form action="/" method="post">
         <div>
             <label for="id-username">Username</label>
@@ -1092,7 +1092,7 @@ namespace first_web_application{
 
     defined('ADAPT_STARTED') or die;
     
-    class view_login_view extends \adapt\view{
+    class view_login_form extends \adapt\view{
         
         public function __construct(){
             parent::__construct('div');
@@ -1274,3 +1274,145 @@ namespace first_web_application{
 ```
 
 Going to www.example.com/login will display the header we created earlier, the login view we just created followed by the footer.
+
+## Handling user input
+Up until now we have just served content, what if we want to do something?
+
+Earlier we created a view with a login form, so lets look at how we would process that form.
+
+When we created our view controller we learned that we could map views directly to URLs by prefixing the method with **view_** which is great for displaying view but isn't very useful for processing user input.  To do this view controllers offer a second prefix **action_** which allows you to route actions, in addition Adapt allows actions to be chained together, more on that later.
+
+So for us to process our form we need to first create an action to handle the request.
+
+So lets open up our controller_root and add a new method called **action_login()**, you can add this anywhere to the class, however, we'd prefer that you add it above any views so anyone else reading your code and easily find the actions.
+
+Your controller_root should now look like this:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        protected $_content;
+        
+        public function __construct(){
+            parent::__construct();
+            $this->_content = new html_div();
+            
+            $header = new html_header(
+                array(
+                    new html_h1("example.com"),
+                    new html_p("This is the header")
+                )
+            );
+            
+            parent::add_view($header);
+            
+            parent::add_view($this->_content);
+            
+            $footer = new html_footer(new html_p("Copyright 2016"));
+            parent::add_view($footer);
+        }
+        
+        
+        public function action_login(){
+            
+        }
+        
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+            $this->add_view(new html_h1("About"));
+            $this->add_view(new html_p("This is the about us page"));
+        }
+        
+        public function view_hello(){
+            return $this->load_controller("controller_hello");
+        }
+        
+        public function add_view($content){
+            /* This function is overriding parent::add_view */
+            $this->_content->add($content);
+        }
+        
+        public function view_login(){
+            $this->add_view(new view_login_form());
+        }
+    }
+
+}
+```
+
+Unlike views, actions cannot be called directly from the URL.  Browsing to www.example.com/login will call **view_login** and not **action_login**, to call actions we must must submit something to the server.
+
+In order for Adapt to know which action to call we must tie it to our form.  Lets open up our **view_login_form**, we need to add a new hidden input with a name called 'actions' and a value of 'login'.  After you've done this your view will look like this:
+
+```php
+namespace first_web_application{
+
+    defined('ADAPT_STARTED') or die;
+    
+    class view_login_form extends \adapt\view{
+        
+        public function __construct(){
+            parent::__construct('div');
+            
+            $form = new html_form(array('action' => '/', method => 'post'));
+            $this->add($form);
+            
+            //Add the action
+            $form->add(new html_input(array('type' => 'hidden', 'name' => 'actions', 'value' => 'login')));
+            
+            //Add the username
+            $form->add(
+                new html_div(
+                    array(
+                        new html_label("Username", array('for' => 'id-username')),
+                        new html_input(array('name' => 'username', 'id' => 'id-username', 'type' => 'text'))
+                    )
+                )
+            );
+            
+            //Add the password
+            $form->add(
+                new html_div(
+                    array(
+                        new html_label("Username", array('for' => 'id-password')),
+                        new html_input(array('name' => 'username', 'id' => 'id-password', 'type' => 'password'))
+                    )
+                )
+            );
+            
+            //Add a submit button
+            $form->add(new html_submit());
+        }
+        
+    }
+}
+```
+
+The form now contains the information for Adapt to process it, upon submitting the form, Adapt will trigger the method **action_login()** followed by **view_default()** on `controller_root`.  The reason the view is also triggered is because the forms action attribute is set to `/`, you could change it to `/hello/world` which would cause it to call **action_login()** on `controller_root` followed by **view_world** on `controller_hello`.
+
+You can chain actions together by comma seperating them in the hidden action input on the form.  For example, to call **action_login** on `controller_root` followed by **action_something_else** on `controller_hello` (This action doesn't exist, just pretend it does) you would set the hidden action inputs value to `login,hello/something_else`.  Notice how we had to provide the path to the second controller, also notice that unlike views, action paths do not start with a `/`.
+
+**IMPORTANT NOTE:** When routing views you can use relative paths by excluding the leading `/` in the same way you can in HTML. When routing actions the path is **always** absolute and it should never start with a leading `/`.  (Side note, you probably think this is silly and you're probably right.  If I'm honest until now I'd never thought about it.  This will probably change in the future).
+
