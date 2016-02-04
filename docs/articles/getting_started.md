@@ -89,7 +89,17 @@ The basic `bundle.xml` looks something like this:
         <name>first_web_application</name>
         <version>1.0.0</version>
         <label>My First Web App</label>
-        
+        <namespace>\first_web_application</namespace>
+        <type>application</type>
+        <description>My first web application!</description>
     </bundle>
 </adapt_framework>
 ```
+
+The key elements of the bundle are as follows:
+
+Element         | Description
+----------------------------------
+**name**        | The name of the bundle. If this bundle is published in the Adapt repository then the name must be unique.
+**version**     | The version of the bundle.  This must always be in the format X.X.X
+
