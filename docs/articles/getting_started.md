@@ -661,7 +661,7 @@ namespace first_web_application{
 }
 ```
 
-At this stage if we were to view the site we would see nothing because all the content is stored in `$_content` but we haven't added `$_content` to the page yet before we add the `$_content` to the page we need to first add our custom header.
+At this stage if we were to view the site we would see nothing because all the content is stored in `$_content` but we haven't added `$_content` to the page yet, before we add the `$_content` to the page we need to first add our custom header.
 
 We could add our header to **view_default** but this will mean it will only be visable when someone visits www.example.com/, to make it visable on all pages we need to add the content in our constructor.
 
@@ -749,3 +749,201 @@ namespace first_web_application{
 
 }
 ```
+
+If we view the site now we will see the header on every page but not the content.
+
+We need to add `$_content` to the page in our constructor using `parent::add_view(...)` like so:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        protected $_content;
+        
+        public function __construct(){
+            parent::__construct();
+            $this->_content = new html_div();
+            
+            $header = new html_header(
+                array(
+                    new html_h1("example.com"),
+                    new html_p("This is the header")
+                )
+            );
+            
+            parent::add_view($header);
+            
+            parent::add_view($this->_content);
+        }
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+            $this->add_view(new html_h1("About"));
+            $this->add_view(new html_p("This is the about us page"));
+        }
+        
+        public function view_hello(){
+            return $this->load_controller("controller_hello");
+        }
+        
+        public function add_view($content){
+            /* This function is overriding parent::add_view */
+            $this->_content->add($content);
+        }
+    }
+
+}
+```
+
+Now when we visit a page we will see the header on every page and the content for the page we are viewing.
+
+Lets add a really simple header, such as:
+```html
+<footer>
+    <p>Copyright 2016</p>
+</footer>
+```
+
+In Adapt this is written as:
+```php
+$footer = new html_footer(new html_p("Copyright 2016"));
+```
+
+And to add it to the page:
+```php
+parent::add_view($footer);
+```
+
+Making our controller_root look like:
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        protected $_content;
+        
+        public function __construct(){
+            parent::__construct();
+            $this->_content = new html_div();
+            
+            $header = new html_header(
+                array(
+                    new html_h1("example.com"),
+                    new html_p("This is the header")
+                )
+            );
+            
+            parent::add_view($header);
+            
+            parent::add_view($this->_content);
+            
+            $footer = new html_footer(new html_p("Copyright 2016"));
+            parent::add_view($footer);
+        }
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+            $this->add_view(new html_h1("About"));
+            $this->add_view(new html_p("This is the about us page"));
+        }
+        
+        public function view_hello(){
+            return $this->load_controller("controller_hello");
+        }
+        
+        public function add_view($content){
+            /* This function is overriding parent::add_view */
+            $this->_content->add($content);
+        }
+    }
+
+}
+```
+
+Viewing the site now will show a header and footer on every page with the correct content for the page.  We can add additional controllers to our site and all of them will automatically get the header and footer.
+
+## Working with views
+So far we have look at how to use view controllers to map URL's and build pages, in this section we will look at views and how to use them.
+
+To start with lets look a little more at the `html` class hander.
+
+We saw in previous examples how to create simple html elements, lets look at this in more detail.
+
+The first thing to note is the `html` class is printable.
+
+This:
+```php
+print new html_p("My text");
+```
+
+Becomes:
+```html
+<p>My text</p>
+```
+
+We can also specify parameters when constructing.  To add a class `red` to the p tag we can do one of the following:
+```php
+print new html_p("My Text", array('class' => 'red));
+
+/* OR */
+
+$p = new html_p("My Text");
+$p->attr('class', 'red');
+print $p;
+
+/* OR */
+
+$p = new html_p(array('class' => 'red'));
+$p->add("My Text");
+
+/* OR */
+$p = new html_p();
+$p->add("My Text");
+$p->attr('class', 'red');
+print $p;
+```
+
+All of the above examples will output:
+```html
+<p class="red">My Text</p>
+```
+
