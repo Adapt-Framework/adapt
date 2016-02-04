@@ -817,7 +817,7 @@ namespace first_web_application{
 
 Now when we visit a page we will see the header on every page and the content for the page we are viewing.
 
-Lets add a really simple header, such as:
+Lets add a really simple footer, such as:
 ```html
 <footer>
     <p>Copyright 2016</p>
@@ -902,7 +902,7 @@ namespace first_web_application{
 Viewing the site now will show a header and footer on every page with the correct content for the page.  We can add additional controllers to our site and all of them will automatically get the header and footer.
 
 ## Working with views
-So far we have look at how to use view controllers to map URL's and build pages, in this section we will look at views and how to use them.
+So far we have looked at how to use view controllers to map URL's and build pages, in this section we will look at views and how to use them.
 
 To start with lets look a little more at the `html` class hander.
 
@@ -923,19 +923,20 @@ Becomes:
 We can also specify parameters when constructing.  To add a class `red` to the p tag we can do one of the following:
 ```php
 print new html_p("My Text", array('class' => 'red));
-
-/* OR */
-
+```
+**OR**
+```php
 $p = new html_p("My Text");
 $p->attr('class', 'red');
 print $p;
-
-/* OR */
-
+```
+**OR**
+```php
 $p = new html_p(array('class' => 'red'));
 $p->add("My Text");
-
-/* OR */
+```
+**OR**
+```php
 $p = new html_p();
 $p->add("My Text");
 $p->attr('class', 'red');
@@ -946,4 +947,5 @@ All of the above examples will output:
 ```html
 <p class="red">My Text</p>
 ```
+
 
