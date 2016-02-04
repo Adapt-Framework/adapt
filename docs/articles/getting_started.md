@@ -211,7 +211,7 @@ $this->add_view(
         array(
             new html_li("Item 1"),
             new html_li("Item 2"),
-            new html_li(array("Item ", new html_strong("3")));
+            new html_li(array("Item ", new html_strong("3")))
         )
     )
 );
@@ -248,4 +248,7 @@ namespace first_web_application{
 
 }
 ```
+
+### Routing URL's
+The above example is great if you have only a single page, so lets extend our first_web_application to include addition URL mapping.
 
