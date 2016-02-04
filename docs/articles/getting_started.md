@@ -106,3 +106,15 @@ Element         | Description
 **namespace**   | The namespace used by the bundle.
 **type**        | This tells Adapt what type of bundle this is.  The bundle we are building is a type of **application**, this means this bundle is responsible for controlling the website.  There are other types of bundles that can be used to add functionality to other bundles.  We will look more at types later.
 **description** | A nice human readable description of the bundle.
+
+
+Additionally you can include the following optional elements:
+
+Element         | Description
+----------------|-----------------
+**copyright**   | Who the copyright holder of this bundle is
+**license**     | License information about this bundle.
+**website**     | A link to the authors website
+**settings**    | A complex type allowing you to define new settings or over-ride existing settings.  See [Working with settings](/docs/articles/working_with_settings.md) for more information.
+**schema**      | A complex type allowing you to define the database schema or change an existing schema.  See [Working with databases](/docs/articles/working_with_databases.md) for more information.
+
