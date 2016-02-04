@@ -399,3 +399,110 @@ namespace first_web_application{
 
 }
 ```
+
+Instead of adding content to the page we want this function to pass control over to another controller, to do this we need to add the following to our **view_hello()** function:
+
+```php
+return $this->load_controller("controller_hello");
+```
+
+Which will make our controller_root look like this:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+        
+        public function view_about(){
+            $this->add_view(new html_h1("About"));
+            $this->add_view(new html_p("This is the about us page"));
+        }
+        
+        public function view_hello(){
+            return $this->load_controller("controller_hello");
+        }
+        
+    }
+
+}
+```
+
+We could have also used the following code:
+```php
+return new controller_hello();
+```
+
+However doing this will cause actions to fail, in Adapt the only offical way to load controllers is via the **load_controller()** method.
+
+Now we have mapped our new controller we can access the **view_default()** on the new controller by visiting www.example.com/hello.
+
+To access www.example.com/hello/world we need to create a new method called **view_world()** on the new controller named controller_hello, leaving it looking like:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_hello extends \adapt\controller{
+        
+        public function view_default(){
+            
+        }
+        
+        public function view_world(){
+        
+        }
+    }
+
+}
+```
+
+Let's go ahead and add the following to our **view_world** method:
+
+```php
+$this->add_view(new html_p("You are seeing this because you went to the URL /hello/world"));
+```
+
+So that controller_hello looks like this:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_hello extends \adapt\controller{
+        
+        public function view_default(){
+            
+        }
+        
+        public function view_world(){
+            $this->add_view(new html_p("You are seeing this because you went to the URL /hello/world"));
+        }
+    }
+
+}
+```
+
+This is a basic introduction to URL routing and view controller, for more advanced routing please see [URL Routing](/docs/articles/url_routing.md).
+
