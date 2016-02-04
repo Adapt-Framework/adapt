@@ -193,5 +193,59 @@ namespace first_web_application{
 }
 ```
 
-If you open up your brower and point it to your website address you'll Hello World inside a H1 tag.
+If you open up your brower and point it to your website address you'll see Hello World inside a H1 tag.
+
+In the above example we used a class called `html_h1` to generate our html, you may notice that this class doesn't exist anywhere in any namespace, this is because Adapt uses special classes call handlers, you can read more about handlers in the aricle [Working with class handlers](/docs/articles/working_with_class_handlers.md).
+
+Lets add some other simple content to the page to see class handlers in action, we will start by adding a paragraph with following code:
+
+```php
+$this->add_view(new html_p("This is a paragraph"));
+```
+
+And lets add something a little more complicated such as a list:
+
+```php
+$this->add_view(
+    new html_ul(
+        array(
+            new html_li("Item 1"),
+            new html_li("Item 2"),
+            new html_li(array("Item ", new html_strong("3")));
+        )
+    )
+);
+```
+
+
+Giving us a view controller that looks like:
+
+```php
+namespace first_web_application{
+    
+    defined('ADAPT_STARTED') or die;
+    
+    class controller_root extends \adapt\controller{
+        
+        public function view_default(){
+            
+            $this->add_view(new html_h1("Hello World"));
+            $this->add_view(new html_p("This is a paragraph"));
+            
+            $this->add_view(
+                new html_ul(
+                    array(
+                        new html_li("Item 1"),
+                        new html_li("Item 2"),
+                        new html_li(array("Item ", new html_strong("3")))
+                    )
+                )
+            );
+            
+        }
+        
+    }
+
+}
+```
 
