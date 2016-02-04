@@ -1416,3 +1416,79 @@ You can chain actions together by comma seperating them in the hidden action inp
 
 **IMPORTANT NOTE:** When routing views you can use relative paths by excluding the leading `/` in the same way you can in HTML. When routing actions the path is **always** absolute and it should never start with a leading `/`.  (Side note, you probably think this is silly and you're probably right.  If I'm honest until now I'd never thought about it.  This will probably change in the future).
 
+We need to do something in our action or it's a little pointless.  In PHP you can access form data with via `$_REQUEST`, while you can do this in Adapt, the prefered method is to use `$this->request`.  The `request` property is shared between all classes in Adapt, so calling it from within any object will give the same result.
+
+Add the following to **action_login**:
+```php
+$username = $this->request['username'];
+$password = $this->request['password'];
+```
+
+We need to check the username and password against something, like a database.  For the purpose of this example we are going to assume that a table exists called **user** and is has at the very least the following fields:
+* user_id
+* username
+* password
+* login_count
+
+In our example we are going to do this three way.  First in pure sql, then using a combination of sql and models and finally just with models.
+
+### Pure SQL
+In Adapt there are many ways to talk to the database, the lowest level is the data_source object. If you want to access the data_source you can use the `data_source` property that is shared between all class in Adapt.
+
+So the most primative way is:
+```php
+$username = $this->data_source->escape($username);
+$password = $this->data_source->escape($password);
+$sth = $this->data_source->select("select user_id from user where username=\"{$username}\" and password=\"{$password}\"");
+
+$results = array();
+
+while($row = $this->data_source->fetch_assoc($sth)){
+    $results = array();
+}
+```
+
+A cleaner way is to use the `sql` object, there are two ways to define a new `sql` object, the first is as simple as:
+```php
+$sql = new sql();
+```
+
+Or
+```php
+$sql = $this->data_source->sql;
+```
+
+The second is prefered because some bundles may use other data sources so this is the only way to know you are querying the correct one.
+
+So using the `sql` object we can query the database as follows:
+```php
+$username = $this->data_source->escape($username);
+$password = $this->data_source->escape($password);
+$sql = $this->data_source->sql("select user_id from user where username=\"{$username}\" and password=\"{$password}\"");
+$sql->execute();
+$results = $sql->results();
+```
+
+This is better, but what if our bundle is being used with a different database vendor than we were expecting, this could cause our query to fail.
+
+In Adapt the prefered way is this:
+```php
+
+$results = $this
+            ->data_source
+            ->sql
+            ->select('user_id')
+            ->from('user')
+            ->where(
+                new sql_and(
+                    new sql_cond('username', sql::EQUALS, sql::q($username)),
+                    new sql_cond('password', sql::EQUALS, sql::q($password))
+                )
+            )
+            ->execute()
+            ->results();
+            
+
+```
+This is the prefered way because it allows it to work with all database vendors regardless of vendor syntax differences.  See [working with SQL](/docs/articles/working_with_sql.md) for detailed information about the SQL object.
+
