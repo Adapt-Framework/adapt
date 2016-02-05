@@ -324,7 +324,169 @@ $sql->from('table_name', 'alias');
 $sql->from($this->data_source->select('*')->from->('car'), 'alias');
 ```
 
+#### Join
+```php
+/* Simple where the field name is the same in both tables */
+$sql->join('table_name', 'alias', 'common_field_name');
 
+/* Conditioned join, where the field name is different in both tables */
+$sql->join('table_name', 'alias', new sql_cond('some_field_name', sql::EQUALS, 'some_other_field'));
 
+/* Sub-SQL  */
+$sql->join($this->data_source->sql->select('*')->from('table'), 'alias', 'common_field_name');
+```
 
+#### Left join
+```php
+/* Simple where the field name is the same in both tables */
+$sql->left_join('table_name', 'alias', 'common_field_name');
+
+/* Conditioned join, where the field name is different in both tables */
+$sql->left_join('table_name', 'alias', new sql_cond('some_field_name', sql::EQUALS, 'some_other_field'));
+
+/* Sub-SQL  */
+$sql->left_join($this->data_source->sql->select('*')->from('table'), 'alias', 'common_field_name');
+```
+
+#### Right join
+```php
+/* Simple where the field name is the same in both tables */
+$sql->right_join('table_name', 'alias', 'common_field_name');
+
+/* Conditioned join, where the field name is different in both tables */
+$sql->right_join('table_name', 'alias', new sql_cond('some_field_name', sql::EQUALS, 'some_other_field'));
+
+/* Sub-SQL  */
+$sql->right_join($this->data_source->sql->select('*')->from('table'), 'alias', 'common_field_name');
+```
+
+#### Inner join
+```php
+/* Simple where the field name is the same in both tables */
+$sql->inner_join('table_name', 'alias', 'common_field_name');
+
+/* Conditioned join, where the field name is different in both tables */
+$sql->inner_join('table_name', 'alias', new sql_cond('some_field_name', sql::EQUALS, 'some_other_field'));
+
+/* Sub-SQL  */
+$sql->inner_join($this->data_source->sql->select('*')->from('table'), 'alias', 'common_field_name');
+```
+
+#### Outer join
+```php
+/* Simple where the field name is the same in both tables */
+$sql->outer_join('table_name', 'alias', 'common_field_name');
+
+/* Conditioned join, where the field name is different in both tables */
+$sql->outer_join('table_name', 'alias', new sql_cond('some_field_name', sql::EQUALS, 'some_other_field'));
+
+/* Sub-SQL  */
+$sql->outer_join($this->data_source->sql->select('*')->from('table'), 'alias', 'common_field_name');
+```
+
+#### Where
+```php
+/* Simple */
+$sql->where(new sql_cond('some_field', sql::EQUALS, sql::q("some value")));
+
+/* Written better */
+$sql->where(
+    new sql_cond('some_field', sql::EQUALS, sql::q("some value"))
+);
+
+/* More complex */
+$sql->where(
+    new sql_and(
+        new sql_cond('some_field', sql::EQUALS, sql::q("some value")),
+        new sql_cond('some_field', sql::EQUALS, sql::q("some value")),
+        new sql_or(
+            new sql_cond('some_field', sql::EQUALS, sql::q("some value")),
+            new sql_cond('some_field', sql::EQUALS, sql::q("some value"))
+        )
+    )
+);
+
+/* With sub SQL */
+$sql->where(
+    new sql_and(
+        new sql_cond('some_field', sql::EQUALS, $this->data_source->sql->select('*')->from('table')),
+        new sql_cond('some_field', sql::EQUALS, sql::q("some value")),
+        new sql_or(
+            new sql_cond('some_field', sql::EQUALS, sql::q("some value")),
+            new sql_cond('some_field', sql::EQUALS, sql::q("some value"))
+        )
+    )
+);
+```
+
+#### Group by
+```php
+/* Simple */
+$sql->group_by('field_name');
+
+/* Descending resules */
+$sql->group_by('field_name', false);
+
+/* Ascending with rollup */
+$sql->group_by('field_name', true, true);
+
+/* Multiple fields */
+$sql->group_by('field_name')->group_by('field_name');
+```
+
+#### Having
+```php
+/* Simple */
+$sql->having(new sql_cond('some_field', sql::EQUALS, sql::q("some value")));
+
+/* Written better */
+$sql->having(
+    new sql_cond('some_field', sql::EQUALS, sql::q("some value"))
+);
+
+/* More complex */
+$sql->having(
+    new sql_and(
+        new sql_cond('some_field', sql::EQUALS, sql::q("some value")),
+        new sql_cond('some_field', sql::EQUALS, sql::q("some value")),
+        new sql_or(
+            new sql_cond('some_field', sql::EQUALS, sql::q("some value")),
+            new sql_cond('some_field', sql::EQUALS, sql::q("some value"))
+        )
+    )
+);
+
+/* With sub SQL */
+$sql->having(
+    new sql_and(
+        new sql_cond('some_field', sql::EQUALS, $this->data_source->sql->select('*')->from('table')),
+        new sql_cond('some_field', sql::EQUALS, sql::q("some value")),
+        new sql_or(
+            new sql_cond('some_field', sql::EQUALS, sql::q("some value")),
+            new sql_cond('some_field', sql::EQUALS, sql::q("some value"))
+        )
+    )
+);
+```
+
+#### Order by
+```php
+/* Simple */
+$sql->order_by('field_name');
+
+/* Descending resules */
+$sql->order_by('field_name', false);
+
+/* Multiple fields */
+$sql->order_by('field_name')->order_by('field_name');
+```
+
+#### Limit
+```php
+/* Limit to the first 200 */
+$sql->limit(200);
+
+/* limit to the second 200 */
+$sql->limit(200, 2 * 200);
+```
 
