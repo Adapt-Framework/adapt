@@ -569,4 +569,42 @@ $this->data_source
     ->execute();
 ```
 
+You can update multiple tables by including them in an array:
+```php
+$this->data_source
+    ->sql
+    ->update(array('table 1', 'table 2'))
+    ->set('field_name', sql::EQUALS, sql::q("value"))
+    ->where(
+        new sql_cond('field_name', sql::EQUALS, sql::q("value"))
+    )
+    ->execute();
+```
+
+And alias the tables using a hash array:
+```php
+$this->data_source
+    ->sql
+    ->update(array('table_1' => 'alias_1', 'table_2' => 'alias_2'))
+    ->set('field_name', sql::EQUALS, sql::q("value"))
+    ->where(
+        new sql_cond('field_name', sql::EQUALS, sql::q("value"))
+    )
+    ->execute();
+```
+**IMPORTANT NOTE:** The `select()` function uses the hash array for aliasing the opposite way around to the `update()` function.  In a future release the `update()` function will be changed to work the same as the select.
+
+## Deleting
+
+As with the previous statements, deleting is just as easy.
+
+```php
+$this->data_source
+    ->sql
+    ->delete_from('table_1')
+    ->where(
+        new sql_cond('field_name', sql::EQUALS, sql::q("value"))
+    )
+    ->execute();
+```
 
