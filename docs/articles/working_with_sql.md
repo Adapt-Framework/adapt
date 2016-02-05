@@ -99,3 +99,24 @@ $results = $this->data_source->sql("select * from car")->execute(300)->results()
 ```
 
 ## Selecting
+In the previous examples we looked at how to run a simple select statement. This is ok but writing SQL that may not run on a different database platforms makes your code less portable. If you intend to publish your bundle to the Adapt respository then you need to ensure your code works with all the major database platforms, heres how.
+
+```php
+/* The bad way */
+$results = $this->data_source->sql("select * from car")->execute()->results();
+
+/* The best way */
+$results = $this->data_source->sql->select('*')->from('car')->execute()->results();
+```
+
+The `sql` object is printable, so if you need to see the statement you can just print the object which will print out the correct SQL for the current database connection.
+
+**NOTE:** You can't print the object once it has been executed
+```php
+print $this->data_source->sql->select('*')->from('car');
+```
+
+Prints out:
+```mysql
+SELECT * FROM car
+```
