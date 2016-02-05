@@ -82,3 +82,20 @@ $results = $this->data_source->sql("select * from car")->execute()->results();
 
 For obvious reasons the `results()` method isn't chainable.
 
+## Caching results
+The `sql` object generally handles caching on you behalf.  You can change this by providing a single param to the `execute()` method with the number of seconds to cache the statement.
+
+Providing the value `0` means do not cache.  Providing `null` means to use the system default defined in the setting **adapt.sql_cache_expires_after** which be default is set to the value `60`.
+
+```php
+/* Use the default cache time */
+$results = $this->data_source->sql("select * from car")->execute()->results();
+
+/* Do not cache results */
+$results = $this->data_source->sql("select * from car")->execute(0)->results();
+
+/* Cache the results for five minutes */
+$results = $this->data_source->sql("select * from car")->execute(300)->results();
+```
+
+## Selecting
