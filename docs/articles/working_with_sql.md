@@ -111,12 +111,88 @@ $results = $this->data_source->sql->select('*')->from('car')->execute()->results
 
 The `sql` object is printable, so if you need to see the statement you can just print the object which will print out the correct SQL for the current database connection.
 
-**NOTE:** You can't print the object once it has been executed
+**NOTE:** You can't print the object once it has been executed, well you can, it will just be very blank.
 ```php
-print $this->data_source->sql->select('*')->from('car');
+$sql = $this->data_source->sql->select('*')->from('car');
+print $sql;
 ```
 
 Prints out:
 ```sql
 SELECT * FROM car
+```
+
+### Making strings safe
+The `sql` object has a shortcut static function `q` used for quoting strings.
+```php
+print sql::q("Hello world");
+```
+Outputs
+```
+"Hello world"
+```
+
+### Class handling
+
+The `sql` objected a registered [class handler](/docs/articles/working_with_class_handlers.md) so it means we can create objects that have never been declared and have them translated to SQL on our behalf.
+
+In this example, the `sql_and` object doesn't exist yet it is converted into SQL just fine.
+```php
+print new sql_and(1, 2, 3);
+```
+
+Outputs:
+```sql
+(1 AND 2 AND 3)
+```
+
+Some more examples
+```php
+/* Logical */
+print new sql_or(1, 2, 3);
+print new sql_between('some_field_name', 50, 100);
+
+/* Nesting */
+print new sql_and(new sql_or(1, 2, 3), 4, 5);
+
+/* Keywords */
+print new sql_null();
+print new sql_true();
+
+/* String functions */
+print new sql_concat('some_field_name', sql::q('some string'));
+print new sql_trim(sql::q("  Oh my  "));
+
+/* Conditions */
+print new sql_cond('some_field', sql::EQUALS, sql::q('some value'));
+print new sql_condition('another_field', sql::NOT_EQUALS, sql::q('another value'));
+
+/* If statement */
+print new sql_if(new sql_cond('field', sql::GREATER_THAN, 50), sql::q("Foo"), sql::q("Bar"));
+
+```
+
+Becomes:
+```sql
+# Logical
+(1 OR 2 OR 3)
+(some_field_name BETWEEN 50 AND 100)
+
+# Nesting
+((1 OR 2 OR 3) AND 4 AND 5)
+
+# Keywords
+NULL
+TRUE
+
+# String functions
+CONCAT(some_field_name, "some string")
+TRIM("   Oh My   ")
+
+# Conditions
+some_field = "some value"
+another_field != "another value"
+
+# If statement
+IF ('field' > 50, "Foo", "Bar")
 ```
