@@ -196,3 +196,24 @@ another_field != "another value"
 # If statement
 IF ('field' > 50, "Foo", "Bar")
 ```
+
+Here is a list of fully supported functions:
+
+String functions    | Numeric functions     | Date & time functions
+--------------------|-----------------------|-----------------------
+ascii               | abs                   | current_date 
+char                | acos                  | current_time
+concat              | asin                  | current_timestamp
+format              | atan                  | now
+length              | atan2                 | 
+lower               | ceil                  |
+ltrim               | cos                   | 
+replace             | exp                   | 
+reverse             | floor                 | 
+rtrim               | power                 | 
+substr              | round                 | 
+trim                | sign                  |
+upper               | sin                   |
+                    | tan                   |
+
+
