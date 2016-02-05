@@ -117,6 +117,6 @@ print $this->data_source->sql->select('*')->from('car');
 ```
 
 Prints out:
-```mysql
+```sql
 SELECT * FROM car
 ```
