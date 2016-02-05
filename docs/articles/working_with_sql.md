@@ -556,4 +556,17 @@ $this->data_source->sql
     ->from('some_table');
 ```
 
+## Updating
+Updates are just as simple as:
+```php
+$this->data_source
+    ->sql
+    ->update('table_name')
+    ->set('field_name', sql::EQUALS, sql::q("value"))
+    ->where(
+        new sql_cond('field_name', sql::EQUALS, sql::q("value"))
+    )
+    ->execute();
+```
+
 
