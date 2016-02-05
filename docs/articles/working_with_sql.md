@@ -41,7 +41,7 @@ If you have installed the bundle adapt_sql_tutorial these tables will have been 
 ## Creating the sql object
 You can define the sql object as simply as:
 ```php
-$sql = sql();
+$sql = new sql(); //Namespace is irrelavent
 ```
 
 And in most cases this will work just fine, if however you are using multiple database connections you may not be querying the correct source.
@@ -489,4 +489,71 @@ $sql->limit(200);
 /* limit to the second 200 */
 $sql->limit(200, 2 * 200);
 ```
+
+## Inserting
+Inserting data is quite simple, you can do it record by record, or many records in one time.
+
+```php
+/* Simple */
+$this
+    ->data_source
+    ->sql
+    ->insert_into('car', array('name', 'date_created'))
+    ->values(sql::q("Capri", new sql_now()))
+    ->execute();
+
+/* Multiple */
+$this
+    ->data_source
+    ->sql
+    ->insert_into('car', array('name', 'date_created'))
+    ->values(sql::q("Capri", new sql_now()))
+    ->values(sql::q("Escort", new sql_now()))
+    ->values(sql::q("Focus", new sql_now()));
+    ->execute();
+```
+
+If we need to get the id of the last record we can do this:
+```php
+$id = $this
+    ->data_source
+    ->sql
+    ->insert_into('car', array('name', 'date_created'))
+    ->values(sql::q("Capri", new sql_now()))
+    ->execute()
+    ->id();
+```
+
+Using arrays:
+```php
+
+$data = array(
+    array(
+        'name' => sql::q('Capri'),
+        'date_created' => new sql_now()
+    ),
+    array(
+        'name' => sql::q('Escort'),
+        'date_created' => new sql_now()
+    ),
+    array(
+        'name' => sql::q('Focus'),
+        'date_created' => new sql_now()
+    )
+);
+
+$this->data_source->sql
+    ->insert_into('car', array_keys($data[0]))
+    ->values($data);
+
+```
+
+Combining with select statements:
+```php
+$this->data_source->sql
+    ->insert_into('car')
+    ->select('*')
+    ->from('some_table');
+```
+
 
