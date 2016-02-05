@@ -216,7 +216,7 @@ trim                | sign                  |
 upper               | sin                   |
                     | tan                   |
 
-## Putting everything together
+### Putting everything together
 We are going to write a statement to select all cars where the manufacturer is Ford and display the car name and the manufacturer name.
 
 ```php
@@ -245,7 +245,7 @@ Notice how we used a hash array in the select statement so that we could alias t
 print new \adapt\view_table($results);
 ```
 
-## Sub-SQL?
+### Sub-SQL?
 Yes, just embed a query in a query.
 
 Taking the previous example, we will change the join to a sub query.
@@ -267,6 +267,64 @@ $results = $this
     ->execute()
     ->results();
 ```
+
+### The full list of select features
+
+#### Select
+```php
+/* Using params */
+$sql->select('field_1', 'field_2', 'field_3');
+
+/* Using an array */
+$sql->select(array('field_1', 'field_2', 'field_3'));
+
+/* Aliasing with a hash array */
+$sql->select(array('alias1' => 'field_1', 'alias2' => 'field_2', 'alias3' => 'field_3'));
+
+/* Chaining */
+$sql->select('field_1')->select('field_2')->select(array('field_3', 'field_4', 'field_5'));
+
+/* Sub-SQL */
+$sql->select($this->data_source->sql->select('*')->from('car'));
+
+/* Sub-SQL with aliasing */
+$sql->select(array('alias' => $this->data_source->sql->select('*')->from('car')));
+```
+
+#### Select distinct
+```php
+/* Using params */
+$sql->select_distinct('field_1', 'field_2', 'field_3');
+
+/* Using an array */
+$sql->select_distinct(array('field_1', 'field_2', 'field_3'));
+
+/* Aliasing with a hash array */
+$sql->select_distinct(array('alias1' => 'field_1', 'alias2' => 'field_2', 'alias3' => 'field_3'));
+
+/* Chaining */
+$sql->select_distinct('field_1')->select('field_2')->select(array('field_3', 'field_4', 'field_5'));
+
+/* Sub-SQL */
+$sql->select_distinct($this->data_source->sql->select('*')->from('car'));
+
+/* Sub-SQL with aliasing */
+$sql->select_distinct(array('alias' => $this->data_source->sql->select('*')->from('car')));
+```
+
+#### From
+```php
+/* Simple */
+$sql->from('table_name');
+
+/* Aliasing */
+$sql->from('table_name', 'alias');
+
+/* Sub-SQL - Alias becomes mandatory */
+$sql->from($this->data_source->select('*')->from->('car'), 'alias');
+```
+
+
 
 
 
