@@ -216,4 +216,57 @@ trim                | sign                  |
 upper               | sin                   |
                     | tan                   |
 
+## Putting everything together
+We are going to write a statement to select all cars where the manufacturer is Ford and display the car name and the manufacturer name.
+
+```php
+$results = $this
+    ->data_source
+    ->sql
+    ->select(
+        array(
+            'Manufacturer' => 'm.name',
+            'Model' => 'c.name'
+        )
+    )
+    ->from('car', 'c')
+    ->join('manufacturer', 'm', 'manufacturer_id')
+    ->where(
+        new sql_cond('m.name', sql::EQUALS, sql::q("Ford"))
+    )
+    ->execute()
+    ->results();
+```
+
+Notice how we used a hash array in the select statement so that we could alias the name fields.
+
+**Helpful tip:** If you want to quickly see the output you can do this:
+```php
+print new \adapt\view_table($results);
+```
+
+## Sub-SQL?
+Yes, just embed a query in a query.
+
+Taking the previous example, we will change the join to a sub query.
+```php
+$results = $this
+    ->data_source
+    ->sql
+    ->select(
+        array(
+            'Manufacturer' => 'm.name',
+            'Model' => 'c.name'
+        )
+    )
+    ->from('car', 'c')
+    ->join($this->data_source->sql->select('*')->from('manufacturer'), 'm', 'manufacturer_id')
+    ->where(
+        new sql_cond('m.name', sql::EQUALS, sql::q("Ford"))
+    )
+    ->execute()
+    ->results();
+```
+
+
 
