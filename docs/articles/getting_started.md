@@ -92,6 +92,7 @@ The basic `bundle.xml` looks something like this:
         <namespace>\first_web_application</namespace>
         <type>application</type>
         <description>My first web application!</description>
+        <developer_mode>Yes</developer_mode>
     </bundle>
 </adapt_framework>
 ```
@@ -112,6 +113,7 @@ Additionally you can include the following optional elements:
 
 Element         | Description
 ----------------|-----------------
+**developer_mode** | Tells Adapt that this bundle is activilty being developed, this disables caching for this bundle.
 **copyright**   | Who the copyright holder of this bundle is
 **license**     | License information about this bundle.
 **website**     | A link to the authors website
