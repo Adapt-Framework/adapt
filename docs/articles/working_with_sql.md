@@ -608,3 +608,49 @@ $this->data_source
     ->execute();
 ```
 
+## Creating, dropping and altering
+So far we have looked at the ways of manipulating data in the database so now lets look at how we alter the database itself.
+
+For the most part this is relativily straight foward as you would expect, however creating or altering tables requires a little understanding of what Adapt is doing and the reason it's doing it.
+
+Adapt is a bundle within a bundle management system (It also happens to be the bundle management system), every bundle in the system is versioned and every bundle can specify the versions of child bundles it requires to work.
+
+Doing this allows bundles to create there own tables that are usable by other bundles inheriting from it.  For example, the user bundle depends on the session bundle, the session bundle creates a table called **session**, the user bundle uses this table because it knows the design of the table for a particular version of session.
+
+What this means is that you can't change your schema design at runtime because bundles depending on yours could break.
+
+So creating tables in Adapt is acheived by specifing them in your `bundle.xml` under the `schema` tag.
+
+That said, there many be times when you need to create tables for whatever reason so keep reading to see how.
+
+### Creating tables
+
+The syntax is pretty simple, to create a table the syntax is:
+```php
+$this->data_source
+    ->sql
+    ->create_table('table')
+    ->add('table_id', 'bigint')
+    ->add('name', 'varchar(64)')
+    ->primary_key('table')
+    ->execute();
+```
+Although the syntax is correct, this statement will fail.  In order for the `model` and `sql` class to function correctly they need to understand the schema, for Adapt to load the schema it needs to know the bundle name of the class creating the table.
+
+We can do this by setting the value of **adapt.installing_bundle** to our bundle name in the Adapt store before executing the statement.  It is important that we unset the value right execution.
+
+This will work:
+```php
+$this->store('adapt.installing_bundle', "my_bundle_name");
+
+$this->data_source
+    ->sql
+    ->create_table('table')
+    ->add('table_id', 'bigint')
+    ->add('name', 'varchar(64)')
+    ->primary_key('table')
+    ->execute();
+
+$this->remove_store('adapt.installing_bundle');
+```
+
