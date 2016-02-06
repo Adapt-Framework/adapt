@@ -670,5 +670,27 @@ boolean     | mediumblob    | datetime
 bool        | longblob      | timestamp
 float       | tinytext      |
 
+In addition to this you can create your own data type or use data types created in other bundles.
+
+If you need to validate and store email addresses you could install the **advanced_data_types** bundle and then create a table as follows:
+
+```php
+$this->store('adapt.installing_bundle', "my_bundle_name");
+
+$this->data_source
+    ->sql
+    ->create_table('table')
+    ->add('table_id', 'bigint')
+    ->add('name', 'varchar(64)')
+    ->add('email', 'email_address')
+    ->primary_key('table_id')
+    ->execute();
+
+$this->remove_store('adapt.installing_bundle');
+```
+Using `model` or `sql` to insert data into the `email` field will ensure it is validated correctly as an email address.
+
+The **locales_us** bundle provides data types for US phone numbers, zip codes, date and time formats, while **locales_uk** provides the same for the UK formats.
+
 
 
