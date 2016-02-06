@@ -736,5 +736,43 @@ $sql->primary_key('field_name');
 $sql->primary_key('field_name', false);
 ```
 
+#### Foreign keys
+```php
+/* Simple */
+$sql->foreign_key('field_name', 'referenced_table_name', 'referenced_field_name');
 
+/* On delete set null */
+$sql->foreign_key('field_name', 'referenced_table_name', 'referenced_field_name');
+/* OR */
+$sql->foreign_key('field_name', 'referenced_table_name', 'referenced_field_name', sql::ON_DELETE_SET_NULL);
+
+/* On delete cascade */
+$sql->foreign_key('field_name', 'referenced_table_name', 'referenced_field_name', sql::ON_DELETE_CASCADE);
+```
+
+#### Indexes
+```php
+/* Without specifing the index size */
+$sql->index('field_name');
+
+/* When specifing the index size */
+$sql->index('field_name', 32);
+```
+
+### Altering tables
+As with creating tables Adapt must be informed of the bundle making the change to the schema.
+
+The basic syntax of altering tables is:
+```php
+$this->store('adapt.installing_bundle', "my_bundle_name");
+
+$this->data_source
+    ->sql
+    ->alter_table('table')
+    ->change('name', 'name', 'varchar(128)')
+    ->add('description', 'text')
+    ->execute();
+
+$this->remove_store('adapt.installing_bundle');
+```
 
