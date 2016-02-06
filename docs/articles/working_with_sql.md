@@ -692,5 +692,49 @@ Using `model` or `sql` to insert data into the `email` field will ensure it is v
 
 The **locales_us** bundle provides data types for US phone numbers, zip codes, date and time formats, while **locales_uk** provides the same for the UK formats.
 
+Adapt installs a table called `data_type` which contains a list of all the data types currently installed.
+
+### Full create table syntax
+
+#### Create table
+```php
+$sql->create_table('table_name');
+```
+
+#### Add
+```php
+
+/* Minimum required */
+$sql->add('field_name', 'field_type');
+
+/* Can it be null? (Defaults to true) */
+$sql->add('field_name', 'field_type', false);
+
+/* With a default value */
+$sql->add('field_name', 'field_type', false, 'default_value');
+
+/*
+ * Should the value of this field be unique within the table?
+ * Defaults to false
+ */
+$sql->add('field_name', 'field_type', false, 'default_value', true);
+
+/*
+ * Should the field be signed?
+ * Numeric data types only
+ * Defaults to true
+ */
+$sql->add('field_name', 'bigint', true, null, false);
+```
+
+#### Primary key
+```php
+/* Single auto incrementing primary key */
+$sql->primary_key('field_name');
+
+/* Primary key without it auto incrementing */
+$sql->primary_key('field_name', false);
+```
+
 
 
