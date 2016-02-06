@@ -632,12 +632,12 @@ $this->data_source
     ->create_table('table')
     ->add('table_id', 'bigint')
     ->add('name', 'varchar(64)')
-    ->primary_key('table')
+    ->primary_key('table_id')
     ->execute();
 ```
 Although the syntax is correct, this statement will fail.  In order for the `model` and `sql` class to function correctly they need to understand the schema, for Adapt to load the schema it needs to know the bundle name of the class creating the table.
 
-We can do this by setting the value of **adapt.installing_bundle** to our bundle name in the Adapt store before executing the statement.  It is important that we unset the value right execution.
+We can do this by setting the value of **adapt.installing_bundle** to our bundle name in the Adapt store before executing the statement.  It is important that we unset the value right after execution.
 
 This will work:
 ```php
@@ -648,9 +648,27 @@ $this->data_source
     ->create_table('table')
     ->add('table_id', 'bigint')
     ->add('name', 'varchar(64)')
-    ->primary_key('table')
+    ->primary_key('table_id')
     ->execute();
 
 $this->remove_store('adapt.installing_bundle');
 ```
+
+The data types listed in the example above, `bigint` and `varchar` may or may not exist for the current database platform, it doesn't matter, Adapt abstracts the data type, the following is a list of the data types supported by Adapt:
+
+Name        | Name          | Name
+------------|---------------|-------------
+tinyint     | double        | text
+smallint    | decimal       | mediumtext
+mediumint   | char          | longtext
+int         | binary        | enum
+integer     | varchar       | set
+bigint      | varbinary     | year
+serial      | tinyblob      | date
+bit         | blob          | time
+boolean     | mediumblob    | datetime
+bool        | longblob      | timestamp
+float       | tinytext      |
+
+
 
