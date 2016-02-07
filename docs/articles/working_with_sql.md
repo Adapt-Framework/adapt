@@ -769,10 +769,110 @@ $this->store('adapt.installing_bundle', "my_bundle_name");
 $this->data_source
     ->sql
     ->alter_table('table')
-    ->change('name', 'name', 'varchar(128)')
+    ->change('old_field_name', 'new_field_name', 'varchar(128)')
     ->add('description', 'text')
+    ->drop('some_field')
     ->execute();
 
 $this->remove_store('adapt.installing_bundle');
 ```
+
+### Full alter table syntax
+
+#### Alter table
+```php
+/* Only one way */
+$sql->alter_table('table_name');
+```
+
+#### Add
+```php
+/* Minimum required */
+$sql->add('field_name', 'field_type');
+
+/* Can it be null? (Defaults to true) */
+$sql->add('field_name', 'field_type', false);
+
+/* With a default value */
+$sql->add('field_name', 'field_type', false, 'default_value');
+
+/*
+ * Should the value of this field be unique within the table?
+ * Defaults to false
+ */
+$sql->add('field_name', 'field_type', false, 'default_value', true);
+
+/*
+ * Should the field be signed?
+ * Numeric data types only
+ * Defaults to true
+ */
+$sql->add('field_name', 'bigint', true, null, false);
+
+/*
+ * What field should the new field be added *after*
+ */
+$sql->add('field_name', 'bigint', true, null, false, 'add_after_field_name');
+```
+
+#### Add
+```php
+/* Minimum required */
+$sql->change('old_field_name', 'new_field_name', 'field_type');
+
+/* Can it be null? (Defaults to true) */
+$sql->change('old_field_name', 'new_field_name', 'field_type', false);
+
+/* With a default value */
+$sql->change('old_field_name', 'new_field_name', 'field_type', false, 'default_value');
+
+/*
+ * Should the value of this field be unique within the table?
+ * Defaults to false
+ */
+$sql->change('old_field_name', 'new_field_name', 'field_type', false, 'default_value', true);
+
+/*
+ * Should the field be signed?
+ * Numeric data types only
+ * Defaults to true
+ */
+$sql->change('old_field_name', 'new_field_name', 'bigint', true, null, false);
+
+/*
+ * What field should the change field be moved added *after*
+ */
+$sql->change('old_field_name', 'new_field_name', 'bigint', true, null, false, 'add_after_field_name');
+```
+
+#### Drop
+```php
+/* Simple */
+$sql->drop('field_name_to_drop');
+```
+
+#### Foreign keys
+```php
+/* Simple */
+$sql->foreign_key('field_name', 'referenced_table_name', 'referenced_field_name');
+
+/* On delete set null */
+$sql->foreign_key('field_name', 'referenced_table_name', 'referenced_field_name');
+/* OR */
+$sql->foreign_key('field_name', 'referenced_table_name', 'referenced_field_name', sql::ON_DELETE_SET_NULL);
+
+/* On delete cascade */
+$sql->foreign_key('field_name', 'referenced_table_name', 'referenced_field_name', sql::ON_DELETE_CASCADE);
+```
+
+#### Indexes
+```php
+/* Without specifing the index size */
+$sql->index('field_name');
+
+/* When specifing the index size */
+$sql->index('field_name', 32);
+```
+
+
 
