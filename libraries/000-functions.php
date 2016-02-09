@@ -75,8 +75,8 @@ function mb_trim($string, $trim_chars = '\s'){
 function q($string){
     if (is_string($string)){
         $adapt = $GLOBALS['adapt'];
-        if ($adapt && $adapt instanceof \frameworks\adapt\base){
-            if (isset($adapt->data_source) && $adapt->data_source instanceof \frameworks\adapt\data_source_sql){
+        if ($adapt && $adapt instanceof \adapt\base){
+            if (isset($adapt->data_source) && $adapt->data_source instanceof \adapt\data_source_sql){
                 return "\"" . $adapt->data_source->escape($string) . "\"";
             }else{
                 return "\"" . addcslashes($string, "\"") . "\"";

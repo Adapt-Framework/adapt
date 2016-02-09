@@ -60,10 +60,16 @@ namespace adapt{
             return null;
         }
         
+        public function get_sql($key){
+            return $this->get("adapt/sql/" . md5($sql));
+        }
+        
         public function get_content_type($key){
             $key = $this->_get_key($key);
             return $this->file_store->get_content_type($key);
         }
+        
+        
         
         public function set($key, $data, $expires = 300, $content_type = null, $public = false){
             if (strtolower($this->setting('adapt.disable_caching')) != 'yes'){
@@ -83,6 +89,7 @@ namespace adapt{
         }
         
         public function sql($key, $sql_results = array(), $expires = null){
+            $key = "adapt/sql/" . md5($key);
             if (is_null($expires)){
                 $expires = $this->setting('adapt.sql_cache_expires_after');
             }

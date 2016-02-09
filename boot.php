@@ -60,9 +60,10 @@ $adapt->bundles = new \adapt\bundles();
 
 
 /*
- * Register the adapt namespace manually
+ * Register the adapt namespaces manually
  */
 $adapt->bundles->register_namespace("\\adapt", 'adapt', ADAPT_VERSION);
+$adapt->bundles->register_namespace("\\adapt\\interfaces", 'adapt', ADAPT_VERSION);
 
 /*
  * Load configuration
@@ -83,6 +84,7 @@ if (is_dir(ADAPT_PATH . "adapt/adapt-" . ADAPT_VERSION . "/config")){
 $adapt->add_handler("\\adapt\\xml");
 $adapt->add_handler("\\adapt\\html");
 $adapt->add_handler("\\adapt\\model");
+$adapt->add_handler("\\adapt\\sql");
 $adapt->add_handler("\\adapt\\bundle");
 
 
@@ -122,6 +124,7 @@ if (!isset($adapt->request['actions'])){
         }
     }
 }
+
 
 /*
  * Boot the system

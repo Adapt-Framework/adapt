@@ -71,7 +71,11 @@ namespace adapt{
         //}
         
         public function is_key_valid($key){
-            return preg_match("/[0-9a-zA-Z]+(\/?[.-_A-Za-z0-9]+)*/", $key);
+            if (!strpos($key, "..")){
+                return preg_match("/[0-9a-zA-Z]+(\/?[.-_A-Za-z0-9]+)*/", $key);
+            }
+            
+            return false;
         }
         
         public function get_new_key(){

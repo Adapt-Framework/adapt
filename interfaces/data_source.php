@@ -35,8 +35,8 @@ namespace adapt\interfaces{
         /*
          * Properties
          */
-        public function aget_schema();
-        public function aset_schema($schema);
+        public function pget_schema();
+        public function pset_schema($schema);
         
         /*
          * Get the number of datasets in this source

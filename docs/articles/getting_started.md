@@ -101,9 +101,9 @@ The mandatory elements of the bundle are as follows:
 
 Element         | Description
 ----------------|-----------------
-**name**        | The name of the bundle. If this bundle is published in the Adapt repository then the name must be unique.
-**version**     | The version of the bundle.  This must always be in the format X.X.X
-**label**       | A label for the bundle.  Think of **name** as the internal name and the label as the public facing name.
+**name**        | The name of the bundle. Please do not include the version in the name.
+**version**     | The version of the bundle.  This must always be in the format X.X.X. The version must be compliant with [semantic versioning](http://semver.org/).
+**label**       | A label for the bundle.  Think of **name** as the internal name and the label as you would like others to see it.
 **namespace**   | The namespace used by the bundle.
 **type**        | This tells Adapt what type of bundle this is.  The bundle we are building is a type of **application**, this means this bundle is responsible for controlling the website.  There are other types of bundles that can be used to add functionality to other bundles.  We will look more at types later.
 **description** | A nice human readable description of the bundle.
@@ -292,7 +292,7 @@ namespace first_web_application{
 }
 ```
 
-Whenever anyone vists www.example.com/about this function will be called, lets add something simple to method to make it display something. Go ahead add the following to the method:
+Whenever anyone vists www.example.com/about this function will be called, lets add something simple to the method to make it display something. Go ahead add the following to the method:
 
 ```php
 $this->add_view(new html_h1("About"));
@@ -510,11 +510,11 @@ This is a basic introduction to URL routing, for more advanced routing please se
 
 ### Building content with view controllers
 
-In the above examples we used controller to do some basic routing, we can also use controllers to build our page step by step. Lets say you want a common header and footer on each page, you can add this to the controller_root and every page on the site will then have the same header and footer.  This allows you to write everything only once.
+In the above examples we used controllers to do some basic routing, we can also use controllers to build our page step by step. Lets say you want a common header and footer on each page, you can add this to the controller_root and every page on the site will then have the same header and footer.  This allows you to write everything only once.
 
-Lets update our first_web_application to add a custom page header and footer to the site.  When we access www.example.com/ www.example/about www.example.com/hello or www.example.com/hello/world we will see the header and footer.
+Lets update our first_web_application to add a custom page header and footer to the site.  When we access www.example.com/, www.example/about, www.example.com/hello, and www.example.com/hello/world we will see the header and footer.
 
-The first thing we need to do is create a new property on our controller_root so that we can store main page content, not the header and footer.
+The first thing we need to do is create a new property on our controller_root so that we can store the main page content.
 
 Add a protected property called `$_content` to your controller_root, like so:
 

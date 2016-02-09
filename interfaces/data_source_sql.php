@@ -37,7 +37,7 @@ namespace adapt\interfaces{
         /*
          * Properties
          */
-        public function aget_schema();
+        public function pget_schema();
         
         /*
          * SQL Execution
@@ -59,7 +59,7 @@ namespace adapt\interfaces{
         /*
          * SQL Rendering
          */
-        public function render_sql(\frameworks\adapt\sql $sql);
+        public function render_sql(\adapt\sql $sql);
         
         /*
          * Escaping values

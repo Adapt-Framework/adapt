@@ -59,8 +59,12 @@ A rich description that will appear next to your bundle in respository.
 This is the version of the bundle, this should be in the form of xx.xx.xx following the rules of [http://semver.org/](http://semver.org/).
 
 #### type
-This defines the type of bundle, there are four types which are:
-- **application** These are web apps that can be installed on a web server.
+This defines the type of bundle, think of this as a category that can be used to search for bundles.
+- **application** These are web apps that can be installed on a web server.  All applications must use this type.
+- **data_source_driver** Use this if your bundle provides additional database functionality.
+- **locale** Use this if you are extending the locales bundle to provide additional locales information.
+- **data_type** Use this if you are providing additional data types.
+- **form_field** Use this if you are extending the form bundle to provide additional form fields.
 - **extension** These are bundles that provide functionallity.
 - **frameworks** These are bundles that provide the foundations for other bundles, **Adapt** is a framework.
 - **templates** These are not currently available.

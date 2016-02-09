@@ -72,11 +72,11 @@ namespace adapt{
             }
         }
         
-        public function aset_elements($elements){
+        public function pset_elements($elements){
             $this->_elements = $elements;
         }
         
-        public function aget_elements(){
+        public function pget_elements(){
             return $this->_elements;
         }
         

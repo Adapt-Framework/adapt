@@ -39,6 +39,7 @@ namespace adapt{
         public function query($sql, $write = false){
             $host = $this->get_host($write);
             //print new html_pre(print_r($host, true));
+            //print "<pre>Executing: {$sql}</pre>";
             if (!is_null($host) && isset($host['handle'])){
                 if (mysqli_real_query($host['handle'], $sql)){
                     $this->trigger(self::EVENT_QUERY, array('sql' => $sql, 'host' => $host));
@@ -106,12 +107,28 @@ namespace adapt{
          */
         public function connect($host){
             //$mysql = new mysqli($host['host'], $host['username'], $host['password'], $host['schema']);
-            $mysql = mysqli_connect($host['host'], $host['username'], $host['password'], $host['schema']);
-            if (mysqli_connect_error($mysql)){
-                //TODO: Append mysql error
-                $this->error("Unable to connect to {$host['host']}");
+            $mysql = mysqli_connect($host['host'], $host['username'], $host['password'], $host['schema']/*, $host['port']*/);
+            if ($error = mysqli_connect_error($mysql)){
+                
+                if ($error == "Unknown database '{$host['schema']}'"){
+                    /* Try and create it */
+                    $mysql = mysqli_connect($host['host'], $host['username'], $host['password'], ""/*, $host['port']*/);
+                    if ($error = mysqli_connect_error($mysql)){
+                        /* Still unable to connect so we are going to bail */
+                    }else{
+                        /* Connected, can we create a database? */
+                        if (mysqli_real_query($mysql, "create database {$host['schema']};") && mysqli_real_query("use {$host['schema']};")){
+                            /* We did it! */
+                            $this->trigger(self::EVENT_HOST_CONNECT, array('host' => $host));
+                            return $mysql;
+                        }
+                    }
+                }
+                
+                $this->error("Unable to connect to {$host['host']}: {$error}");
                 return false;
             }
+            
             
             $this->trigger(self::EVENT_HOST_CONNECT, array('host' => $host));
             return $mysql;
@@ -139,17 +156,17 @@ namespace adapt{
         /*
          * SQL Rendering
          */
-        public function render_sql(\frameworks\adapt\sql $sql){
+        public function render_sql(\adapt\sql $sql){
             $statement = "";
             
-            if ($sql instanceof \frameworks\adapt\sql_function){
+            /*if ($sql instanceof \adapt\sql_function){
                 
                 $statement .= $sql;
                 return $statement;
                 
             }
             
-            if ($sql instanceof \frameworks\adapt\sql_condition){
+            if ($sql instanceof \adapt\sql_condition){
                 
                 if ($sql->value_1 instanceof sql){
                     $statement .= $this->render_sql($sql->value_1);
@@ -170,7 +187,7 @@ namespace adapt{
                 return $statement;
             }
             
-            if ($sql instanceof \frameworks\adapt\sql_or){
+            if ($sql instanceof \adapt\sql_or){
                 $statement .= "(";
                 for($i = 0; $i < count($sql->conditions); $i++){
                     if ($i > 0) $statement .= " OR ";
@@ -186,12 +203,12 @@ namespace adapt{
                 return $statement;
             }
             
-            if ($sql instanceof \frameworks\adapt\sql_and){
+            if ($sql instanceof \adapt\sql_and){
                 $statement .= "(";
                 for($i = 0; $i < count($sql->conditions); $i++){
                     if ($i > 0) $statement .= " AND ";
                     $condition = $sql->conditions[$i];
-                    if ($condition instanceof \frameworks\adapt\sql){
+                    if ($condition instanceof \adapt\sql){
                         $statement .= $this->render_sql($condition);
                     }elseif(is_string($condition)){
                         $statement .= $condition;
@@ -202,9 +219,9 @@ namespace adapt{
                 return $statement;
             }
             
-            if ($sql instanceof \frameworks\adapt\sql_if){
+            if ($sql instanceof \adapt\sql_if){
                 $statement .= "IF (";
-                if ($sql->condition instanceof \frameworks\adapt\sql){
+                if ($sql->condition instanceof \adapt\sql){
                     $statement .= $this->render_sql($sql->condition);
                 }elseif(is_string($sql->condition)){
                     $statement .= $sql->condition;
@@ -212,7 +229,7 @@ namespace adapt{
                 
                 $statement .= ", ";
                 
-                if ($sql->if_true instanceof \frameworks\adapt\sql){
+                if ($sql->if_true instanceof \adapt\sql){
                     $statement .= $this->render_sql($sql->if_true);
                 }elseif(is_string($sql->if_true)){
                     $statement .= "\"" . $sql->if_true . "\"";
@@ -220,7 +237,7 @@ namespace adapt{
                 
                 $statement .= ", ";
                 
-                if ($sql->if_false instanceof \frameworks\adapt\sql){
+                if ($sql->if_false instanceof \adapt\sql){
                     $statement .= $this->render_sql($sql->if_false);
                 }elseif(is_string($sql->if_false)){
                     $statement .= "\"" . $sql->if_false . "\"";
@@ -229,9 +246,9 @@ namespace adapt{
                 $statement .= ")";
                 
                 return $statement;
-            }
+            }*/
             
-            if ($sql instanceof \frameworks\adapt\sql){
+            if ($sql instanceof \adapt\sql){
                 if (!is_null($sql->statement)){
                     if ($statement == ""){
                         $statement = $sql->statement;
@@ -242,10 +259,125 @@ namespace adapt{
                     return $statement;
                 }
                 
+                if (is_array($sql->functions) && count($sql->functions)){
+                    $keys = array_keys($sql->functions);
+                    $function_name = $keys[0];
+                    $params = $sql->functions[$function_name];
+                    
+                    switch($function_name){
+                    case "and":
+                    case "or":
+                        foreach($params as $param){
+                            
+                            if ($param instanceof sql){
+                                $param = $param->render();
+                            }
+                            
+                            if ($statement == ""){
+                                $statement .= "(";
+                                $statement .= $param;
+                            }else{
+                                $statement .= " " . strtoupper($function_name) . " ";
+                                $statement .= $param;
+                            }
+                            
+                        }
+                        
+                        $statement .= ")";
+                        break;
+                    case "between":
+                        if (count($params) == 3){
+                            if ($params[0] instanceof sql) $params[0] = $params[0]->render();
+                            if ($params[1] instanceof sql) $params[1] = $params[1]->render();
+                            if ($params[2] instanceof sql) $params[2] = $params[2]->render();
+                            
+                            $statement .= "({$params[0]} BETWEEN {$params[1]} AND {$params[2]})";
+                        }
+                        break;
+                    case "condition":
+                    case "cond":
+                        if (count($params) == 3){
+                            if ($params[0] instanceof sql) $params[0] = $params[0]->render();
+                            if ($params[1] instanceof sql) $params[1] = $params[1]->render();
+                            if ($params[2] instanceof sql) $params[2] = $params[2]->render();
+                            
+                            $statement .= "{$params[0]} {$params[1]} {$params[2]}";
+                        }
+                        break;
+                    case "if":
+                        if (count($params) == 3){
+                            if ($params[0] instanceof sql) $params[0] = $params[0]->render();
+                            if ($params[1] instanceof sql) $params[1] = $params[1]->render();
+                            if ($params[2] instanceof sql) $params[2] = $params[2]->render();
+                            
+                            $statement .= "IF ({$params[0]}, {$params[1]}, {$params[2]})";
+                        }
+                        break;
+                    case "abs":
+                    case "acos":
+                    case "asin":
+                    case "atan":
+                    case "atan2":
+                    case "ceil":
+                    case "cos":
+                    case "exp":
+                    case "floor":
+                    case "log":
+                    case "power":
+                    case "round":
+                    case "sign":
+                    case "sin":
+                    case "tan":
+                    case "ascii":
+                    case "char":
+                    case "concat":
+                    case "format":
+                    case "length":
+                    case "lower":
+                    case "ltrim":
+                    case "replace":
+                    case "reverse":
+                    case "rtrim":
+                    case "substring":
+                    case "trim":
+                    case "upper":
+                    case "current_date":
+                    case "current_time":
+                    case "current_datetime":
+                    case "now":
+                        $statement = strtoupper($function_name) . "(";
+                        $first = true;
+                        foreach($params as $param){
+                            if ($param instanceof sql){
+                                $param = $param->render();
+                            }
+                            
+                            if ($first){
+                                $statement .=  $param;
+                                $first = false;
+                            }else{
+                                $statement .= ", " . $param;
+                            }
+                        }
+                        
+                        $statement .= ")";
+                        return $statement;
+                        break;
+                    case "null":
+                    case "true":
+                    case "false":
+                        return strtoupper($function_name);
+                    }
+                    
+                    
+                    
+                    return $statement;
+                }
+                
                 /* Insert statement */
                 if(!is_null($sql->insert_into_table_name)){
                     /* Insert statement */
-                    if (in_array($sql->insert_into_table_name, array_merge(array('data_type'), $this->get_dataset_list()))){
+                    if (in_array($sql->insert_into_table_name, array_merge(array('data_type', 'field'), $this->get_dataset_list()))){
                         $statement = "INSERT INTO `{$sql->insert_into_table_name}`\n";
                         $insert_fields = $sql->insert_into_fields;
                         if (is_array($insert_fields)){
@@ -279,7 +411,7 @@ namespace adapt{
                                 $keys = $insert_fields;
                             }else{
                                 //Get the fields for this table
-                                $keys = array_keys($schema);
+                                $keys = array_keys($schema); //BUG: $schema is not defined!
                             }
                             
                             //print new html_pre('Keys: ' . print_r($keys, true));
@@ -306,7 +438,7 @@ namespace adapt{
                                         
                                         if ($i > 0) $statement .= ", ";
                                         
-                                        if ($value instanceof \frameworks\adapt\sql){
+                                        if ($value instanceof \adapt\sql){
                                             $statement .= $this->render_sql($value);
                                         }elseif(is_string($value) || is_numeric($value)){
                                             /* Unformat the value */
@@ -347,7 +479,7 @@ namespace adapt{
                         }
                     }else{
                         //TODO: Error: Invalid table name
-                        $this->errors("Unable to insert data into non-existant table '{$sql->insert_into_table_name}'");
+                        $this->error("Unable to insert data into non-existant table '{$sql->insert_into_table_name}'");
                         return null;
                     }
                 }
@@ -364,7 +496,7 @@ namespace adapt{
                         if (isset($pair['alias'])) $alias = $pair['alias'];
                         
                         if (!$first) $statement .= ",\n";
-                        if ($field instanceof \frameworks\adapt\sql){
+                        if ($field instanceof \adapt\sql){
                             $statement .= $this->render_sql($field);
                         }else{
                             //$field = $this->escape($field);
@@ -373,7 +505,7 @@ namespace adapt{
                         }
                         
                         if (!is_null($alias) && (!is_string($field) || $field != $alias)){
-                            $statement .= " AS " . q($alias);
+                            $statement .= " AS " . sql::q($alias);
                         }
                         
                         $first = false;
@@ -388,7 +520,7 @@ namespace adapt{
                             $keys = array_keys($from);
                             $statement .= "FROM ";
                             $value = $from[$keys[0]];
-                            if ($value instanceof \frameworks\adapt\sql){
+                            if ($value instanceof \adapt\sql){
                                 $statement .= "(" . $this->render_sql($value) . ")";
                             }else{
                                 $statement .= $value;
@@ -405,24 +537,24 @@ namespace adapt{
                     if (is_array($joins) && count($joins)){
                         foreach($joins as $join){
                             switch($join['type']){
-                            case \frameworks\adapt\sql::LEFT_JOIN:
+                            case \adapt\sql::LEFT_JOIN:
                                 $statement .= "LEFT JOIN ";
                                 break;
-                            case \frameworks\adapt\sql::RIGHT_JOIN:
+                            case \adapt\sql::RIGHT_JOIN:
                                 $statement .= "RIGHT JOIN ";
                                 break;
-                            case \frameworks\adapt\sql::INNER_JOIN:
+                            case \adapt\sql::INNER_JOIN:
                                 $statement .= "INNER JOIN ";
                                 break;
-                            case \frameworks\adapt\sql::OUTER_JOIN:
+                            case \adapt\sql::OUTER_JOIN:
                                 $statement .= "OUTER JOIN ";
                                 break;
-                            case \frameworks\adapt\sql::JOIN:
+                            case \adapt\sql::JOIN:
                             default:
                                 $statement .= "JOIN ";
                             }
                             
-                            if ($join['table'] instanceof \frameworks\adapt\sql){
+                            if ($join['table'] instanceof \adapt\sql){
                                 $statement .= "(" . $this->render_sql($join['table']) . ")";
                             }else{
                                 $statement .= $join['table'];
@@ -432,8 +564,8 @@ namespace adapt{
                                 $statement .= " AS {$join['alias']}\n";
                             }
                             
-                            if ($join['condition'] instanceof \frameworks\adapt\sql){
-                                $statement .= "ON (" . $this->render_sql($join['condition']) . ")\n";
+                            if ($join['condition'] instanceof \adapt\sql){
+                                $statement .= "ON " . $this->render_sql($join['condition']) . "\n";
                             }elseif(is_string($join['condition']) && $join['condition'] != ""){
                                 $statement .= "USING({$join['condition']})\n";
                             }
@@ -445,7 +577,7 @@ namespace adapt{
                     if (isset($where) && count($where)){
                         $statement .= "WHERE ";
                         foreach($where as $item){
-                            if ($item instanceof \frameworks\adapt\sql){
+                            if ($item instanceof sql){
                                 $statement .= $this->render_sql($item);
                             }else{
                                 $statement .= $item;
@@ -461,7 +593,7 @@ namespace adapt{
                         $first = true;
                         foreach($grouping as $group){
                             if (!$first) $statement .= ",\n";
-                            if ($group['field'] instanceof \frameworks\adapt\sql){
+                            if ($group['field'] instanceof sql){
                                 $statement .= $this->render_sql($group['field']);
                             }else{
                                 $statement .= $group['field'];
@@ -488,7 +620,7 @@ namespace adapt{
                     if (isset($having) && count($having)){
                         $statement .= "HAVING ";
                         foreach($having as $item){
-                            if ($item instanceof \frameworks\adapt\sql){
+                            if ($item instanceof sql){
                                 $statement .= $this->render_sql($item);
                             }else{
                                 $statement .= $item;
@@ -504,7 +636,7 @@ namespace adapt{
                         $first = true;
                         foreach($ordering as $order){
                             if (!$first) $statement .= ",\n";
-                            if ($order['field'] instanceof \frameworks\adapt\sql){
+                            if ($order['field'] instanceof sql){
                                 $statement .= $this->render_sql($order['field']);
                             }else{
                                 $statement .= $order['field'];
@@ -578,9 +710,11 @@ namespace adapt{
                         if ($value instanceof sql){
                             $statement .= $this->render_sql($value);
                         }else{
-                            $value = $this->escape($value);
-                            $statement .= "\"{$value}\"";
+                            //$value = $this->escape($value);
+                            $statement .= "{$value}";
                         }
+                        
+                        $first = false;
                     }
                     $statement .= "\n";
                     
@@ -589,20 +723,38 @@ namespace adapt{
                     if (isset($where) && count($where)){
                         $statement .= "WHERE ";
                         foreach($where as $item){
-                            if ($item instanceof \frameworks\adapt\sql){
+                            if ($item instanceof sql){
                                 $statement .= $this->render_sql($item);
                             }else{
                                 $statement .= $item;
                             }
                         }
                     }
-                    $statement .= "\n";
+                    $statement .= ";\n";
                     
                     return $statement;
                 }
                 
                 /* Delete statement */
-                //TODO:
+                if (count($sql->delete_from_tables)){
+                    $statement = "DELETE FROM `" . implode("`, `", $sql->delete_from_tables) . "`\n";
+                    
+                    /* Where */
+                    $where = $sql->where_conditions;
+                    if (isset($where) && count($where)){
+                        $statement .= "WHERE ";
+                        foreach($where as $item){
+                            if ($item instanceof sql){
+                                $statement .= $this->render_sql($item);
+                            }else{
+                                $statement .= $item;
+                            }
+                        }
+                    }
+                    $statement .= ";\n";
+                    
+                    return $statement;
+                }
                 
                 /* Create database */
                 if(!is_null($sql->create_database_name)){
@@ -610,6 +762,24 @@ namespace adapt{
                      * Create database
                      */
                     $statement = "CREATE DATABASE " . $this->escape($sql->create_database_name) . ";\n";
+                    return $statement;
+                }
+                
+                /* Drop database */
+                if(!is_null($sql->drop_database_name)){
+                    /*
+                     * Create database
+                     */
+                    $statement = "DROP DATABASE " . $this->escape($sql->drop_database_name) . ";\n";
+                    return $statement;
+                }
+                
+                /* Drop table */
+                if(!is_null($sql->drop_table_name)){
+                    /*
+                     * Create database
+                     */
+                    $statement = "DROP TABLE " . $this->escape($sql->drop_table_name) . ";\n";
                     return $statement;
                 }
                 
@@ -699,13 +869,13 @@ namespace adapt{
                             $statement .= "ADD " . $field['field_name'] . " " . $this->convert_data_type($field['data_type'], $field['signed']);
                             if ($field['nullable'] === false) $statement .= " NOT NULL";
                             if (!is_null($field['default_value'])) $statement .= " DEFAULT \"" . $this->escape($field['default_value']) . "\"";
-                            if (!is_null($field['_after'])) $statement .= " AFTER {$field['after']}";
+                            if (!is_null($field['_after'])) $statement .= " AFTER {$field['_after']}";
                             break;
                         case "change":
-                            $statement .= "CHANGE {$field['old_field_name']}" . $field['field_name'] . " " . $this->convert_data_type($field['data_type'], $field['signed']);
+                            $statement .= "CHANGE {$field['old_field_name']} " . $field['field_name'] . " " . $this->convert_data_type($field['data_type'], $field['signed']);
                             if ($field['nullable'] === false) $statement .= " NOT NULL";
                             if (!is_null($field['default_value'])) $statement .= " DEFAULT \"" . $this->escape($field['default_value']) . "\"";
-                            if (!is_null($field['_after'])) $statement .= " AFTER {$field['after']}";
+                            if (!is_null($field['_after'])) $statement .= " AFTER {$field['_after']}";
                             break;
                         case "drop":
                             $statement .= "DROP " . $field['field_name'];

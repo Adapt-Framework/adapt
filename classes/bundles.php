@@ -10,6 +10,9 @@ namespace adapt{
         protected $_bundle_cache;
         protected $_bundle_cache_changed = false;
         
+        protected $_data_source_bundle_cache;
+        protected $_data_source_bundle_cache_changed = false;
+        
         protected $_bundle_class_paths;
         
         protected $_global_settings;
@@ -228,14 +231,15 @@ namespace adapt{
                     return false;
                 }else{
                     /* Connect any data sources we have */
-                    $drivers = $this->get_global_setting('data_source.driver');
-                    $hosts = $this->get_global_setting('data_source.host');
-                    $posts = $this->get_global_setting('data_source.port');
-                    $usernames = $this->get_global_setting('data_source.username');
-                    $passwords = $this->get_global_setting('data_source.password');
-                    $schemas = $this->get_global_setting('data_source.schema');
-                    $writables = $this->get_global_setting('data_source.writable');
-                    
+                    $drivers = $this->get_global_setting('datasource.driver');
+                    $hosts = $this->get_global_setting('datasource.host');
+                    $posts = $this->get_global_setting('datasource.port');
+                    $usernames = $this->get_global_setting('datasource.username');
+                    $passwords = $this->get_global_setting('datasource.password');
+                    $schemas = $this->get_global_setting('datasource.schema');
+                    $writables = $this->get_global_setting('datasource.writable');
+                    //print_r($drivers);
+                    //print_r($hosts);
                     if (is_array($drivers) && is_array($hosts) && is_array($schemas)
                         && is_array($usernames) && is_array($passwords) && is_array($writables)
                         && count($drivers) == count($hosts) && count($drivers) == count($schemas)
@@ -245,19 +249,30 @@ namespace adapt{
                         for($i = 0; $i < count($drivers); $i++){
                             if (class_exists($drivers[$i])){
                                 if (isset($this->data_source)){
+                                    //print "Adding host";
                                     /* Connect a new host */
                                     if ($this->data_source instanceof $drivers[$i]){
                                         $this->data_source->add($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
                                     }
                                 }else{
+                                    //print "Creating datasource";
                                     /* Create a new data source */
                                     $driver = $drivers[$i];
+                                    //print "<pre>Using driver{$driver}</pre>";
                                     $this->data_source = new $driver($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+                                    if (!$this->data_source instanceof $driver){
+                                        $errors = $this->data_source->errors(true);
+                                        
+                                        foreach($errors as $error) $this->error("Database error: {$error}");
+                                        
+                                        //print "<pre>Database driver not set set</pre>";
+                                    }
                                 }
                             }
                         }
                         
                     }else{
+                        //print "No data source";
                         $this->error('Unable to connect to the database, the data source settings in settings.xml are not valid.');
                     }
                     
@@ -345,6 +360,110 @@ namespace adapt{
         /*
          * Local bundle management
          */
+        public function set_bundle_installed($bundle_name, $bundle_version){
+            if ($this->data_source && $this->data_source instanceof data_source_sql){
+                
+                if (!is_array($this->_data_source_bundle_cache)){
+                    $cache = $this->cache->get("adapt/data_source/bundle.cache");
+                    
+                    if (is_array($cache)) $this->_data_source_bundle_cache = $cache;
+                }
+                
+                if (!is_array($this->_data_source_bundle_cache)){
+                    $this->_data_source_bundle_cache = array();
+                    
+                    $results = $this
+                        ->data_source
+                        ->sql
+                        ->select('*')
+                        ->from('bundle_version')
+                        ->where(
+                            new sql_and(
+                                new sql_cond('date_deleted', sql::IS, new sql_null()),
+                                new sql_cond('installed', sql::EQUALS, sql::q('Yes'))
+                            )
+                        )
+                        ->execute(0)
+                        ->results();
+                    
+                    $this->_data_source_bundle_cache = $results;
+                    
+                    $this->_data_source_bundle_cache_changed = true;
+                }
+                
+                if (is_array($this->_data_source_bundle_cache)){
+                    foreach($this->_data_source_bundle_cache as $bundle){
+                        if ($bundle['name'] == $bundle_name && $bundle['version'] == $bundle_version){
+                            return true;
+                        }
+                    }
+                    
+                    $this->_data_source_bundle_cache[] = array('name' => $bundle_name, 'version' => $bundle_version);
+                    $this->_data_source_bundle_cache_changed = true;
+                    $this->_bundle_cache_changed = true; //Because the the bundle->_is_installed has changed
+                    
+                    return true;
+                }
+                
+                
+            }
+            
+            return false;
+        }
+        
+        public function is_bundle_installed($bundle_name, $bundle_version){
+            //print "<pre>DS: " . print_r($this->data_source, true) . "</pre>";
+            print "<pre>Checking if {$bundle_name}-{$bundle_version} is installed... ";
+            if ($this->data_source && $this->data_source instanceof data_source_sql){
+                
+                if (!is_array($this->_data_source_bundle_cache)){
+                    $cache = $this->cache->get("adapt/data_source/bundle.cache");
+                    
+                    if (is_array($cache)) $this->_data_source_bundle_cache = $cache;
+                }
+                
+                if (!is_array($this->_data_source_bundle_cache)){
+                    $this->_data_source_bundle_cache = array();
+                    
+                    $results = $this
+                        ->data_source
+                        ->sql
+                        ->select('*')
+                        ->from('bundle_version')
+                        ->where(
+                            new sql_and(
+                                new sql_cond('date_deleted', sql::IS, new sql_null()),
+                                new sql_cond('installed', sql::EQUALS, sql::q('Yes'))
+                            )
+                        )
+                        ->execute(0)
+                        ->results();
+                    
+                    
+                    $this->_data_source_bundle_cache = $results;
+                    
+                    $this->_data_source_bundle_cache_changed = true;
+                }
+                
+                if (is_array($this->_data_source_bundle_cache)){
+                    foreach($this->_data_source_bundle_cache as $bundle){
+                        if ($bundle['name'] == $bundle_name && $bundle['version'] == $bundle_version){
+                            print "Intalled</pre>";
+                            return true;
+                        }
+                    }
+                    
+                }
+                
+                print "Not intalled</pre>";
+                return false;
+                //print "<pre>Data source connected in bundles::is_bundle_installed</pre>";
+            }
+            
+            print "Unknown - assuming not.</pre>";
+            return false;
+        }
+        
         public function has_bundle($bundle_name, $bundle_version = null){
             if (in_array($bundle_name, $this->list_bundles())){
                 if (is_null($bundle_version)){
@@ -409,7 +528,13 @@ namespace adapt{
         }
         
         public function get_dependency_list($bundle_name, $bundle_version){
-            $list = $this->cache->get("adapt/dependency.list.{$bundle_name}-{$bundle_version}");
+            //print "<pre>get_dependency_list($bundle_name, $bundle_version)</pre>";
+            $cache_key = "adapt/dependency.list.{$bundle_name}-{$bundle_version}";
+            if (is_null($bundle_version) || $bundle_version == ""){
+                $cache_key = "adapt/dependency.list.{$bundle_name}";
+            }
+            
+            $list = $this->cache->get($cache_key);
             
             if (!is_array($list)){
                 $list = array();
@@ -422,7 +547,6 @@ namespace adapt{
                         $dependencies = $bundle->depends_on;
                         
                         foreach($dependencies as $name => $versions){
-                            //print "<strong>{$name}</strong>";
                             
                             $version = self::get_newest_version($versions);
                             
@@ -470,14 +594,14 @@ namespace adapt{
                         $final = array_reverse($final);
                         $list = array();
                         
-                        foreach($final as $bundle_name => $versions){
+                        foreach($final as $bname => $versions){
                             $list[] = array(
-                                'name' => $bundle_name,
+                                'name' => $bname,
                                 'version' => self::get_newest_version($versions)
                             );
                         }
                         
-                        $this->cache->serialize("adapt/dependency.list.{$bundle_name}-{$bundle_version}", $list, 60 * 60 * 24 * 7);
+                        $this->cache->serialize($cache_key, $list, 60 * 60 * 24 * 7);
                         
                     }else{
                         $this->error("Unable to load bundle {$bundle_name}-{$bundle_version}");
@@ -574,9 +698,11 @@ namespace adapt{
                 $bundle_path = ADAPT_PATH . "{$bundle_name}/{$bundle_name}-{$selected_version}/bundle.xml";
                 
                 $bundle_data = file_get_contents($bundle_path);
-                    
+                
                 if ($bundle_data && xml::is_xml($bundle_data)){
+                    
                     $data = xml::parse($bundle_data);
+                    
                     $namespace = $data->find('bundle')->find('namespace')->get(0);
                     if ($namespace instanceof xml) $namespace = $namespace->get(0);
                     
@@ -618,6 +744,11 @@ namespace adapt{
                 $this->_bundle_cache_changed = false;
                 //$this->cache->serialize("adapt/namespaces", $this->store('adapt.namespaces'), 60 * 60 * 24 * 5);
                 $this->cache->serialize("adapt/bundle_objects", array('paths' => $this->_bundle_class_paths, 'objects' => serialize($this->_bundle_cache)), 60 * 60 * 24 * 5);
+            }
+            
+            if ($this->_data_source_bundle_cache_changed){
+                $this->_data_source_bundle_cache_changed = false;
+                $this->cache->serialize("adapt/data_source/bundle.cache", $this->_data_source_bundle_cache, 60 * 60 * 24 * 3);
             }
         }
         

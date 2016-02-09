@@ -3,8 +3,9 @@
 /*
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
+ * Copyright (c) 2016 Matt Bruton
  * Authored by Matt Bruton (matt@adaptframework.com)
+ * http://www.adaptframework.com
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -93,7 +94,7 @@ namespace adapt{
                 
                 foreach($this->schema as $field){
                     if ($field['timestamp'] == "Yes" || $field['field_name'] == 'date_created'){
-                        $this->_data[$field['field_name']] = new sql('now()');
+                        $this->_data[$field['field_name']] = new sql_now();
                     }else{
                         $this->_data[$field['field_name']] = $field['default_value'];
                     }
@@ -110,7 +111,7 @@ namespace adapt{
                 return $this->_data_source;
             }
             
-            return parent::aget_data_source();
+            return parent::pget_data_source();
         }
         
         public function pget_schema(){
@@ -137,7 +138,8 @@ namespace adapt{
                 foreach($schema as $data){
                     $name = $data['field_name'];
                     if ($data['nullable'] == 'No'){
-                        if (is_null($this->_data[$name]) || ($this->_data[$name] instanceof sql && $this->_data['name']->render() == $this->data_source->sql('null')->render())){
+                        $null = new sql_null();
+                        if (is_null($this->_data[$name]) || ($this->_data[$name] instanceof sql && $this->_data['name']->render() == $null->render())){
                             $label = $name;
                             if (!is_null($data['label'])) $label = $data['label'];
                             $this->error("{$label} cannot be null");
@@ -282,7 +284,7 @@ namespace adapt{
                     $this->trigger(self::EVENT_ON_ADD, array('added_item' => $data));
                     return true;
                 }else{
-                    $this->error('Unable to add item, item must be an instance of \\frameworks\\adapt\\base');
+                    $this->error('Unable to add item, item must be an instance of \\adapt\\base');
                 }
             }
             
@@ -343,7 +345,7 @@ namespace adapt{
             foreach($children as $child){
                 if ($child instanceof base){
                     /* The child may not be an instance of model but
-                     * we can still use it if its and instance of \frameworks\adapt\base
+                     * we can still use it if its and instance of \adapt\base
                      * because the error code is compatible.
                      */
                     $errors = array_merge($errors, $child->errors($clear));
@@ -424,31 +426,35 @@ namespace adapt{
                     $sql = $this->data_source->sql; //Taken from the data_source to ensure it queries the correct data_source
                     //$sql = new sql(); //This does not guarentee the query will run against the correct source
                     
-                    $sql->select(new sql('*'))
-                        ->from($this->_table_name);
+                    //$sql->select(new sql('*'))
+                    //    ->from($this->_table_name);
+                    $sql->select("*")->from($this->_table_name);
                     
                     
                     /* If there are multiple keys we need to use a sql_and */
-                    $where_sql = null;
+                    $where = array();
                     
                     if (count($keys) > 1){
-                        $where_sql = new sql_and();
                         for($i = 0; $i < count($keys); $i++){
-                            $where_sql->add(new sql_condition(new sql($keys[$i]), '=', $id[$i]));
+                            $where[] = new sql_cond($keys[$i], sql::EQUALS, sql::q($id[$i]));
+                            //$where_sql->add(new sql_condition(new sql($keys[$i]), '=', $id[$i]));
                         }
                         
+                        
                     }else{
-                        $where_sql = new sql_condition(new sql($keys[0]), '=', $id[0]);
+                        //$where_sql = new sql_condition(new sql($keys[0]), '=', $id[0]);
+                        $where[] = new sql_cond($keys[0], sql::EQUALS, sql::q($id[0]));
                     }
                     
                     /* Do we have a date_deleted field? */
                     if (in_array('date_deleted', $fields)){
                         /* We need to add the date deleted field */
-                        $where_sql = new sql_and($where_sql, new sql_condition(new sql('date_deleted'), 'is', new sql('null')));
+                        //$where_sql = new sql_and($where_sql, new sql_condition(new sql('date_deleted'), 'is', new sql('null')));
+                        $where[] = new sql_cond('date_deleted', sql::IS, new sql_null());
                     }
                     
                     /* Add the where clause */
-                    $sql->where($where_sql);
+                    $sql->where(new sql_and($where));
                     
                     /* Execute the query and get the results */
                     $results = $sql->execute()->results();
@@ -500,14 +506,14 @@ namespace adapt{
                     /* Do we have a date_deleted field? */
                     if (in_array('date_deleted', $fields)){
                         
-                        $name_condition = new sql_condition(new sql('name'), '=', $name);
-                        $date_deleted_condition = new sql_condition(new sql('date_deleted'), 'is', new sql('null'));
+                        $name_condition = new sql_cond('name', sql::EQUALS, sql::q($name));
+                        $date_deleted_condition = new sql_cond('date_deleted', sql::IS, new sql_null());
                         
                         $sql->where(new sql_and($name_condition, $date_deleted_condition));
                         
                     }else{
                         
-                        $sql->where(new sql_condition(new sql('name'), '=', $name));
+                        $sql->where(new sql_cond('name', sql::EQUALS, sql::q($name)));
                     }
                     
                     /* Get the results */
@@ -577,10 +583,10 @@ namespace adapt{
                         
                         if (is_array($relationship)){
                             $field_key = $relationship['field1'];
-                            $where_sql = new sql_condition(new sql("{$relationship['field2']}"), ' = ', $this->$field_key);
+                            $where_sql = new sql_cond($relationship['field2'], sql::EQUALS, sql::q($this->$field_key));
                         }else{
                             $key = $keys[0];
-                            $where_sql = new sql_condition(new sql($key), ' = ', $this->$key);
+                            $where_sql = new sql_cond($key, sql::EQUALS, sql::q($this->$key));
                         }
                         
                         /* Do we have a date_deleted field? */
@@ -589,7 +595,7 @@ namespace adapt{
                         if (is_array($date_deleted) && count($date_deleted) > 0){
                             
                             /* We need to add the date deleted field */
-                            $where_sql = new sql_and($where_sql, new sql_condition(new sql('date_deleted'), 'is', new sql('null')));
+                            $where_sql = new sql_and($where_sql, new sql_cond('date_deleted', sql::IS, new sql_null()));
                         }
                         
                         $sql->where($where_sql);
@@ -599,7 +605,7 @@ namespace adapt{
                         
                         if (is_array($priority) && count($priority) > 0){
                             
-                            $sql->order_by(new sql('priority'));
+                            $sql->order_by('priority');
                         }
                         
                         
@@ -613,7 +619,7 @@ namespace adapt{
                                 $model = "model_" . $table;
                                 if (class_exists($model)){
                                     $model = new $model();
-                                    if ($model instanceof \frameworks\adapt\model){
+                                    if ($model instanceof model){
                                         if ($model->load_by_data($result)){
                                             /* Add the child */
                                             $this->add($model);
@@ -766,13 +772,13 @@ namespace adapt{
                             if (count($keys) > 1){
                                 $and = new sql_and();
                                 for($i = 0; $i < count($keys); $i++){
-                                    $and->add(new sql_condition(new sql($keys[$i]), '=', $ids[$i]));
+                                    $and->add(new sql_cond($keys[$i], sql::EQUALS, sql::q($ids[$i])));
                                 }
                                 
                                 $where_sql = $and;
                                 
                             }else{
-                                $where_sql = new sql_condition(new sql($keys[0]), '=', $ids[0][0]);
+                                $where_sql = new sql_cond($keys[0], sql::EQUALS, sql::q($ids[0][0]));
                             }
                             
                         }
@@ -789,11 +795,11 @@ namespace adapt{
                             if (count($id) == count($keys)){
                                 
                                 if (count($keys) == 1){
-                                    $where_sql->add(new sql_condition(new sql($keys[0]), '=', $id[0]));
+                                    $where_sql->add(new sql_cond($keys[0], sql::EQUALS, sql::q($id[0])));
                                 }else{
                                     $and = new sql_and();
                                     for($i = 0; $i < count($keys); $i++){
-                                        $and->add(new sql_condition(new sql($keys[$i]), '=', $id[$i]));
+                                        $and->add(new sql_cond($keys[$i], sql::EQUALS, sql::q($id[$i])));
                                     }
                                     
                                     $where_sql->add($and);
@@ -810,7 +816,7 @@ namespace adapt{
                     if (is_array($date_deleted) && count($date_deleted) > 0){
                         
                         /* We need to add the date deleted field */
-                        $where_sql = new sql_and($where_sql, new sql_condition(new sql('date_deleted'), 'is', new sql('null')));
+                        $where_sql = new sql_and($where_sql, new sql_cond('date_deleted', sql::IS, new sql_null()));
                     }
                     
                     /* Add the where clause */
@@ -897,7 +903,7 @@ namespace adapt{
                         
                         /* Does this table have a date_modified field? */
                         if (in_array('date_modified', $fields)){
-                            $this->_data['date_modified'] = new sql('now()');
+                            $this->_data['date_modified'] = new sql_now();
                         }
                         
                         $data_to_write = array();
@@ -916,8 +922,9 @@ namespace adapt{
                              */
                             
                             /* Check our primary keys are set */
+                            $null = new sql_null();
                             foreach($keys as $key){
-                                if (is_null($this->_data[$key]) || $this->_data[$key] == "" || ($this->_data[$key] instanceof sql && $this->_data[$key]->render() == $this->data_source->sql('null')->render())){
+                                if (is_null($this->_data[$key]) || $this->_data[$key] == "" || ($this->_data[$key] instanceof sql && $this->_data[$key]->render() == $null->render())){
                                     $this->error("Failed to save, missing primary key ({$key})");
                                     $return = false;
                                 }
@@ -934,11 +941,11 @@ namespace adapt{
                                     }
                                     
                                     if (count($keys) == 1){
-                                        $sql->where(new sql_condition(new sql($keys[0]), '=', $this->_data[$keys[0]]));
+                                        $sql->where(new sql_cond($keys[0], sql::EQUALS, sql::q($this->_data[$keys[0]])));
                                     }elseif(count($keys) > 1){
                                         $where = new sql_and();
                                         foreach($keys as $key){
-                                            $where->add(new sql_condition(new sql($key), '=', $this->_data[$key]));
+                                            $where->add(new sql_cond($key, sql::EQUALS, sql::q($this->_data[$key])));
                                         }
                                         
                                         $sql->where($where);
@@ -1076,7 +1083,7 @@ namespace adapt{
         
         public function delete(){
             if ($this->is_loaded){
-                $this->date_deleted = new sql('now()');
+                $this->date_deleted = new sql_now();
                 $this->save();
                 $this->initialise();
             }
@@ -1091,7 +1098,7 @@ namespace adapt{
             
             foreach($this->_data as $key => $value){
                 if ($value instanceof sql){
-                    $sql = new sql('null', $this->data_source);
+                    $sql = new sql_null();
                     if ($sql->render() == $value->render()){
                         $hash[$key] = null;
                     }

@@ -340,44 +340,44 @@ namespace adapt{
         /*
          * Platform datasource property
          */
-        public function aget_data_source(){
+        public function pget_data_source(){
             return $this->store('adapt.data_source');
         }
         
-        public function aset_data_source($data_source){
+        public function pset_data_source($data_source){
             $this->store('adapt.data_source', $data_source);
         }
         
         /*
          * Platform file storage property
          */
-        public function aget_file_store(){
+        public function pget_file_store(){
             return $this->store('adapt.file_store');
         }
         
-        public function aset_file_store($store){
+        public function pset_file_store($store){
             $this->store('adapt.file_store', $store);
         }
         
         /*
          * Get the cache object
          */
-        public function aget_cache(){
+        public function pget_cache(){
             return $this->store('adapt.cache');
         }
         
-        public function aset_cache($cache){
+        public function pset_cache($cache){
             $this->store('adapt.cache', $cache);
         }
         
         /*
          * Get the bundles object
          */
-        public function aget_bundles(){
+        public function pget_bundles(){
             return $this->store('adapt._bundles');
         }
         
-        public function aset_bundles($bundles){
+        public function pset_bundles($bundles){
             $this->store('adapt._bundles', $bundles);
         }
         
@@ -415,7 +415,7 @@ namespace adapt{
         /*
          * Request property
          */
-        public function aget_request(){
+        public function pget_request(){
             $request = $this->store('adapt.request');
             if (is_null($request)){
                 $request = &$_REQUEST;
@@ -443,7 +443,7 @@ namespace adapt{
         /*
          * Response
          */
-        public function aget_response(){
+        public function pget_response(){
             $responses = $this->store('adapt.response');
             if (is_array($responses)){
                 return $responses;
@@ -473,7 +473,7 @@ namespace adapt{
         /*
          * Files property
          */
-        public function aget_files(){
+        public function pget_files(){
             $files = $this->store('adapt.files');
             if (is_null($files)){
                 $files = &$_FILES;
@@ -500,7 +500,7 @@ namespace adapt{
         /*
          * Global sanitizer property
          */
-        public function aget_sanitize(){
+        public function pget_sanitize(){
             $sanitizer = $this->store('adapt.sanitizer');
             if (is_null($sanitizer)){
                 $sanitizer = new sanitizer();

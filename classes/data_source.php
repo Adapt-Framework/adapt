@@ -53,19 +53,19 @@ namespace adapt{
         /*
          * Properties
          */
-        public function aget_schema(){
+        public function pget_schema(){
             return $this->_schema;
         }
         
-        public function aset_schema($schema){
+        public function pset_schema($schema){
             $this->_schema = $schema;
         }
         
-        public function aget_data_types(){
+        public function pget_data_types(){
             return $this->_data_types;
         }
         
-        public function aset_data_types($data_types){
+        public function pset_data_types($data_types){
             $this->_data_types = $data_types;
         }
         

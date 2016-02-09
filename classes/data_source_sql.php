@@ -71,23 +71,23 @@ namespace adapt{
         /*
          * Properties
          */
-        public function aget_schema(){
+        public function pget_schema(){
             if (!is_array($this->_schema)){
                 $this->load_schema();
             }
             
-            return parent::aget_schema();
+            return parent::pget_schema();
         }
         
-        public function aget_data_types(){
+        public function pget_data_types(){
             if (!is_array($this->_data_types)){
                 $this->load_schema();
             }
             
-            return parent::aget_data_types();
+            return parent::pget_data_types();
         }
         
-        public function aget_sql(){
+        public function pget_sql(){
             return new sql(null, $this);
         }
         
@@ -102,9 +102,13 @@ namespace adapt{
             $table_schema = $this->get_row_structure($table_name);
             if (!is_null($table_schema)){
                 $sql = new sql(null, $this);
-                $sql->select(new sql('count(*)'), 'c')->from($table_name);
+                
+                $sql->select(array('c' => 'count(*)'))->from($table_name);
+                
+                //$sql->select(new sql('count(*)'), 'c')->from($table_name);
                 if (isset($table_schema['date_deleted'])){
-                    $sql->where(new sql_condition('date_deleted', 'is not', new sql('null')));
+                    //$sql->where(new sql_condition('date_deleted', 'is not', new sql('null')));
+                    $sql->where(new sql_cond('date_deleted', sql::IS, 'null'));
                 }
                 
                 $results = $sql->execute()->results();
@@ -119,10 +123,14 @@ namespace adapt{
             $table_schema = $this->get_row_structure($table_name);
             if (!is_null($table_schema)){
                 $sql = new sql(null, $this);
-                $sql->select(new sql('*'))->from($table_name)->limit($number_of_rows, $row_offset);
+                //$sql->select(new sql('*'))->from($table_name)->limit($number_of_rows, $row_offset);
                 //if (isset($table_schema['date_deleted'])){
+                
+                $sql->select("*")->from($table_name)->limit($number_of_rows, $row_offset);
+                
                 if (!is_null($this->get_field_structure($table_name, 'date_deleted'))){
-                    $sql->where(new sql_condition('date_deleted', 'is not', new sql('null')));
+                    //$sql->where(new sql_condition('date_deleted', 'is not', new sql('null')));
+                    $sql->where(new sql_cond('date_deleted', sql::IS, 'null'));
                 }
                 
                 return $sql->execute()->results();
@@ -187,6 +195,7 @@ namespace adapt{
                 'schema' => $schema,
                 'read_only' => $read_only
             );
+            
         }
         
         public function connect($host){
@@ -234,7 +243,7 @@ namespace adapt{
         /*
          * SQL Rendering
          */
-        public function render_sql(\frameworks\adapt\sql $sql){
+        public function render_sql(sql $sql){
             
         }
         
@@ -439,24 +448,105 @@ namespace adapt{
         }
         
         /*
-         * Schema loading
-         */
+         * Schema handling
+         */ 
+        public function register_table($table_array){
+            $allowed_keys = array(
+                'bundle_name', 'table_name', 'field_name', 'referenced_table_name',
+                'referenced_field_name', 'label', 'placeholder_label', 'description',
+                'data_type_id', 'primary_key', 'signed', 'nullable', 'auto_increment',
+                'timestamp', 'max_length', 'default_value', 'allowed_values',
+                'lookup_table', 'depends_on_table_name', 'depends_on_field_name',
+                'depends_on_value', 'date_created'
+            );
+            
+            if (is_array($table_array) && !is_assoc($table_array)){
+                foreach($table_array as $field_array){
+                    if (is_array($field_array) && is_assoc($field_array)){
+                        $field_keys = array_keys($field_array);
+                        
+                        foreach($field_keys as $field_key){
+                            if (!in_array($field_key, $allowed_keys)){
+                                //print "<pre>register_table failed 1</pre>";
+                                return false;
+                            }
+                        }
+                    }else{
+                        //print "<pre>register_table failed 2</pre>";
+                        return false;
+                    }
+                }
+            }else{
+                //print "<pre>register_table failed 3</pre>";
+                return false;
+            }
+            //print "<pre>Proceeding to register</pre>";
+            
+            $sql = $this->sql;
+            $sql->insert_into('field', $allowed_keys);
+            $schema = array();
+            
+            foreach($table_array as $field_array){
+                $record = array();
+                
+                foreach($allowed_keys as $key){
+                    if (isset($field_array[$key])){
+                        $record[$key] = $field_array[$key];
+                    }else{
+                        $record[$key] = null;
+                    }
+                }
+                $record['date_created'] = new sql_now();
+                //print "<pre>" . print_r(array_values($record), true) . "</pre>";
+                $sql->values(array_values($record));
+                $schema[] = $record;
+            }
+            
+            print "<pre>INSERT SQL: {$sql}</pre>\n";
+            
+            if ($sql->execute()){
+                $this->schema = array_merge($this->schema, $schema);
+                return true;
+            }
+            
+            return false;
+        }
+        
         public function load_schema(){
             $this->schema = $this->sql
+                ->select("*")
+                ->from('field')
+                ->where(
+                    new sql_cond('date_deleted', sql::IS, new sql_null())
+                )
+                ->execute(0)
+                ->results();
+            
+            /*$this->schema = $this->sql
                 ->select(new sql('*'))
                 ->from('field')
                 ->where(new sql_condition(new sql('date_deleted'), 'is', new sql('null')))
                 ->execute(0)
                 ->results();
+            */
             
             $this->data_types = $this->sql
+                ->select("*")
+                ->from('data_type')
+                ->where(
+                    new sql_cond('date_deleted', sql::IS, new sql_null())
+                )
+                ->execute(0)
+                ->results();
+            
+            /*$this->data_types = $this->sql
                 ->select(new sql('*'))
                 ->from('data_type')
                 ->where(new sql_condition(new sql('date_deleted'), 'is', new sql('null')))
                 ->execute(0)
                 ->results();
-            
-            
+            print "<pre>Loading schema</pre>";
+            */
             return;
             ///*
             // * Cretae a new sql object
