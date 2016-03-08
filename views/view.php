@@ -33,7 +33,11 @@ namespace adapt{
     
     class view extends html{
         
+        /* Basic variable swapout */
+        protected $_variables;
+        
         public function __construct($tag = 'div', $data = null, $attributes = array()){
+            $this->_variables = array();
             parent::__construct($tag, $data, $attributes);
             $this->add_class('view');
             $class_name = array_pop(explode("\\", get_class($this)));
@@ -41,6 +45,26 @@ namespace adapt{
             $class_name = str_replace("_", "-", $class_name);
             $this->add_class($class_name);
             //$this->set_id();
+        }
+        
+        public function set_variables($vars){
+            $this->_variables = $vars;
+        }
+        
+        public function render($not_req_1 = null, $not_req_2 = null, $depth = 0){
+            $output = parent::render($not_req_1, $not_req_2, $depth);
+            
+            if (is_array($this->_variables) && count($this->_variables)){
+                foreach($this->_variables as $key => $value){
+                    //print $value;
+                    //print "{{" . $key . "}}";
+                    $output = str_replace("{{" . $key . "}}", $value, $output);
+                }
+            }
+            
+            //$output = preg_replace("/{{[^}]+}}/", "", $output);
+            
+            return $output;
         }
         
     }

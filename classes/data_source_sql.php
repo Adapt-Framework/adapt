@@ -491,7 +491,23 @@ namespace adapt{
                 
                 foreach($allowed_keys as $key){
                     if (isset($field_array[$key])){
-                        $record[$key] = $field_array[$key];
+                        $value = $field_array[$key];
+                        if (is_array($value)){
+                            if (isset($value['_lookup_table'])){
+                                $result = $this->data_source->sql
+                                    ->select($value['_lookup_table'] . '_id')
+                                    ->from($value['_lookup_table'])
+                                    ->where(
+                                        new sql_and(
+                                            new sql_cond('date_deleted', sql::IS, new sql_null()),
+                                            new sql_cond('name', sql::EQUALS, sql::q($value['_lookup_name']))
+                                        )
+                                    )->execute()
+                                    ->results(60 * 60 * 24 * 5); //Cache for 5 days
+                                $value = $result[0][$value['_lookup_table'] . "_id"];
+                            }
+                        }
+                        $record[$key] = $value;
                     }else{
                         $record[$key] = null;
                     }
@@ -502,7 +518,7 @@ namespace adapt{
                 $schema[] = $record;
             }
             
-            print "<pre>INSERT SQL: {$sql}</pre>\n";
+            //print "<pre>INSERT SQL: {$sql}</pre>\n";
             
             if ($sql->execute()){
                 $this->schema = array_merge($this->schema, $schema);
@@ -513,6 +529,7 @@ namespace adapt{
         }
         
         public function load_schema(){
+            
             $this->schema = $this->sql
                 ->select("*")
                 ->from('field')

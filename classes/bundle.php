@@ -26,7 +26,12 @@ namespace adapt{
         protected $_is_loaded;
         protected $_is_installed;
         
+        protected $_local_config_handlers;
+        protected $_local_install_handlers;
+        
         public function __construct($name, $data){
+            $this->_local_config_handlers = array();
+            $this->_local_install_handlers = array();
             $this->_has_changed = false;
             $this->_is_loaded = false;
             $this->load($name, $data);
@@ -203,6 +208,28 @@ namespace adapt{
         }
         
         /*
+         * Serialization
+         */
+        public function __wakeup(){
+            $handlers = $this->_local_config_handlers;
+            $this->_local_config_handlers = array();
+            
+            foreach($handlers as $tag => $handler){
+                $this->register_config_handler($handler['bundle_name'], $tag, $handler['function']);
+            }
+            
+            $handlers = $this->_local_install_handlers;
+            $this->_local_install_handlers = array();
+            
+            foreach($handlers as $target => $handler_array){
+                foreach($handler_array as $handler){
+                    $this->register_install_handler($handler['bundle_name'], $target, $handler['function']);
+                }
+            }
+            
+        }
+        
+        /*
          * Bundle.xml control
          */
         public function load($bundle_name, $data){
@@ -214,7 +241,9 @@ namespace adapt{
                 for($i = 0; $i < $children->count(); $i++){
                     $child = $children->get($i);
                     //print "<pre>{$child->tag}</pre>";
+                    
                     if ($child instanceof xml){
+                        
                         switch ($child->tag){
                         case "name":
                             $this->_name = $child->get(0);
@@ -370,6 +399,9 @@ namespace adapt{
                                                             }
                                                             
                                                             $attributes = $child->get();
+                                                            
+                                                            
+                                                            
                                                             foreach($attributes as $attr){
                                                                 if ($attr instanceof xml){
                                                                     /*switch($attr->tag){
@@ -391,6 +423,8 @@ namespace adapt{
                                                             
                                                             if ($child->attr('key') == 'primary'){
                                                                 $fields_to_add[$table_name][$field_name]['primary_key'] = "Yes";
+                                                            }else{
+                                                                $fields_to_add[$table_name][$field_name]['primary_key'] = "No";
                                                             }
                                                             
                                                             if ($child->attr('key') == 'foreign'){
@@ -400,14 +434,48 @@ namespace adapt{
                                                             
                                                             if ($child->attr('auto-increment') == 'Yes'){
                                                                 $fields_to_add[$table_name][$field_name]['auto_increment'] = "Yes";
+                                                            }else{
+                                                                $fields_to_add[$table_name][$field_name]['auto_increment'] = "No";
                                                             }
                                                             
                                                             if ($child->attr('index') == 'Yes'){
                                                                 $fields_to_add[$table_name][$field_name]['index'] = "Yes";
+                                                            }else{
+                                                                $fields_to_add[$table_name][$field_name]['index'] = "No";
                                                             }
                                                             
                                                             if ($child->attr('index-size')){
                                                                 $fields_to_add[$table_name][$field_name]['index_size'] = $child->attr('index-size');
+                                                            }
+                                                            
+                                                            $keys = array(
+                                                                'label' => 'label',
+                                                                'placeholder_label' => 'placeholder-label',
+                                                                'description' => 'description',
+                                                                'data_type' => 'data-type',
+                                                                'signed' => 'signed',
+                                                                'nullable' => 'nullable',
+                                                                'timestamp' => 'timestamp',
+                                                                'max_length' => 'max-length',
+                                                                'default_value' => 'default-value',
+                                                                'allowed_values' => 'allowed-values',
+                                                                'lookup_table' => 'lookup-table'
+                                                            );
+                                                            
+                                                            $yes_no_fields = array(
+                                                                'signed' => 'No', 'nullable' => 'Yes', 'timestamp' => 'No'
+                                                            );
+                                                            
+                                                            foreach($keys as $key => $value){
+                                                                if (!isset($fields_to_add[$table_name][$field_name][$key])){
+                                                                    $fields_to_add[$table_name][$field_name][$key] = $child->attr($value);
+                                                                    
+                                                                    if (in_array($key, array_keys($yes_no_fields))){
+                                                                        if (is_null($fields_to_add[$table_name][$field_name][$key]) || $fields_to_add[$table_name][$field_name][$key] == ""){
+                                                                            $fields_to_add[$table_name][$field_name][$key] = $yes_no_fields[$key];
+                                                                        }
+                                                                    }
+                                                                }
                                                             }
                                                             
                                                             break;
@@ -483,7 +551,26 @@ namespace adapt{
                             break;
                         default:
                             /* Do we have a handler to handle the tag? */
+                            $handlers = $this->store("adapt.config_handlers");
+                            
+                            if (is_array($handlers) && isset($handlers[$child->tag])){
+                                
+                                $handler = $handlers[$child->tag];
+                                
+                                $bundle = $this->bundles->load_bundle($handler['bundle_name']);
+                                if ($bundle instanceof bundle && $bundle->name == $handler['bundle_name']){
+                                    $function = $handler['function'];
+                                    
+                                    if (method_exists($bundle, $function)){
+                                        $bundle->$function($this, $child);
+                                    }
+                                    
+                                }
+                            }
+                            break;
                         }
+                        
+                        
                         
                     }
                 }
@@ -497,9 +584,53 @@ namespace adapt{
             
         }
         
-        public function register_config_handler($tag_name, $function){
+        public function register_config_handler($bundle_name, $tag_name, $function_name){
             
+            $handler = array(
+                'bundle_name' => $bundle_name,
+                'function' => $function_name
+            );
+            
+            $this->_local_config_handlers[$tag_name] = $handler;
+            
+            $handlers = $this->store("adapt.config_handlers");
+            if (is_array($handlers)){
+                $handlers[$tag_name] = $handler;
+            }else{
+                $handlers = array($tag_name => $handler);
+            }
+            
+            $this->store("adapt.config_handlers", $handlers);
         }
+        
+        public function register_install_handler($bundle_name, $target_bundle, $function_name){
+            
+            $handler = array(
+                'bundle_name' => $bundle_name,
+                'function' => $function_name
+            );
+            
+            if (!is_array($this->_local_install_handlers[$target_bundle])){
+                $this->_local_install_handlers[$target_bundle] = array();
+            }
+            $this->_local_install_handlers[$target_bundle][] = $handler;
+            
+            $handlers = $this->store("adapt.install_handlers");
+            if (is_array($handlers)){
+                if (is_array($handlers[$target_bundle])){
+                    $handlers[$target_bundle][] = $handler;
+                }else{
+                    $handlers[$target_bundle] = array($handler);
+                }
+                //$handlers[$target_bundle] = $handler;
+            }else{
+                $handlers = array($target_bundle => array($handler));
+            }
+            //print "<pre>" . print_r($handlers, true) . "</pre>";
+            $this->store("adapt.install_handlers", $handlers);
+        }
+        
+        
         
         public function apply_settings(){
             /*
@@ -507,6 +638,7 @@ namespace adapt{
              * then we need to re-apply the global settings
              * so they take priority.
              */
+            
             if (is_array($this->_settings_hash)){
                 /* Get a hash of the settings currently in affect */
                 $current_settings = $this->get_settings();
@@ -565,6 +697,7 @@ namespace adapt{
                         return false;
                     }
                 }
+                
             }
             
             if (!$this->is_installed()){
@@ -890,13 +1023,17 @@ namespace adapt{
                                                                 new sql_cond('name', sql::EQUALS, sql::q($value['_lookup_name']))
                                                             )
                                                         )->execute()
-                                                        ->results();
+                                                        ->results(60 * 60 * 24 * 5); //Cache for 5 days
                                                     $value = $result[0][$value['_lookup_table'] . "_id"];
                                                 }
                                             }
                                             
                                             if ($field_name == 'date_created' || $field_name == 'date_modified'){
                                                 $value = new sql_now();
+                                            }
+                                            
+                                            if ($field_name == "bundle_name"){
+                                                $value = $this->name;
                                             }
                                             
                                             $values[] = $value;
@@ -951,6 +1088,21 @@ namespace adapt{
                     print "<pre>Saved {$this->name}-{$this->version}</pre>";
                     $this->_is_installed = true;
                     $this->bundles->set_bundle_installed($this->name, $this->version);
+                    
+                    /* Process install handlers */
+                    $handlers = $this->store('adapt.install_handlers');
+                    //print "<pre>Handlers: " . print_r($handlers, true) . "</pre>";
+                    if (is_array($handlers) && is_array($handlers[$this->name])){
+                        foreach($handlers[$this->name] as $handler){
+                            $bundle = $this->bundles->load_bundle($handler['bundle_name']);
+                            if ($bundle instanceof bundle){
+                                $function = $handler['function'];
+                                if (method_exists($bundle, $function)){
+                                    $bundle->$function($this);
+                                }
+                            }
+                        }
+                    }
                     
                     return true;
                 }else{

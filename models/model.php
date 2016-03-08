@@ -139,7 +139,7 @@ namespace adapt{
                     $name = $data['field_name'];
                     if ($data['nullable'] == 'No'){
                         $null = new sql_null();
-                        if (is_null($this->_data[$name]) || ($this->_data[$name] instanceof sql && $this->_data['name']->render() == $null->render())){
+                        if (is_null($this->_data[$name]) || ($this->_data[$name] instanceof sql && $this->_data[$name]->render() == $null->render())){
                             $label = $name;
                             if (!is_null($data['label'])) $label = $data['label'];
                             $this->error("{$label} cannot be null");
@@ -432,29 +432,29 @@ namespace adapt{
                     
                     
                     /* If there are multiple keys we need to use a sql_and */
-                    $where = array();
+                    $where = new sql_and();
                     
                     if (count($keys) > 1){
                         for($i = 0; $i < count($keys); $i++){
-                            $where[] = new sql_cond($keys[$i], sql::EQUALS, sql::q($id[$i]));
+                            $where->add(new sql_cond($keys[$i], sql::EQUALS, sql::q($id[$i])));
                             //$where_sql->add(new sql_condition(new sql($keys[$i]), '=', $id[$i]));
                         }
                         
                         
                     }else{
                         //$where_sql = new sql_condition(new sql($keys[0]), '=', $id[0]);
-                        $where[] = new sql_cond($keys[0], sql::EQUALS, sql::q($id[0]));
+                        $where->add(new sql_cond($keys[0], sql::EQUALS, sql::q($id[0])));
                     }
                     
                     /* Do we have a date_deleted field? */
                     if (in_array('date_deleted', $fields)){
                         /* We need to add the date deleted field */
                         //$where_sql = new sql_and($where_sql, new sql_condition(new sql('date_deleted'), 'is', new sql('null')));
-                        $where[] = new sql_cond('date_deleted', sql::IS, new sql_null());
+                        $where->add(new sql_cond('date_deleted', sql::IS, new sql_null()));
                     }
                     
                     /* Add the where clause */
-                    $sql->where(new sql_and($where));
+                    $sql->where($where);
                     
                     /* Execute the query and get the results */
                     $results = $sql->execute()->results();
@@ -617,6 +617,7 @@ namespace adapt{
                             /* Load the models */
                             foreach($results as $result){
                                 $model = "model_" . $table;
+                                //print "<pre>{$model}</pre>";
                                 if (class_exists($model)){
                                     $model = new $model();
                                     if ($model instanceof model){
@@ -937,7 +938,7 @@ namespace adapt{
                                     $sql->update($this->table_name);
                                     
                                     foreach($data_to_write as $key => $value){
-                                        $sql->set($key, $value);
+                                        $sql->set($key, sql::q($value));
                                     }
                                     
                                     if (count($keys) == 1){
@@ -1113,7 +1114,7 @@ namespace adapt{
             foreach($class->getMethods(\ReflectionMethod::IS_PUBLIC) as $method){
                 $name = $method->name;
                 if (substr($name, 0, 5) == "mget_"){
-                    $key = "{$this->table_name}-" . substr($name, 5);
+                    $key = substr($name, 5);
                     $hash[$key] = $this->$name();
                 }
             }

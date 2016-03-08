@@ -534,9 +534,9 @@ namespace adapt{
                 if (!isset($extension[$class_name])){
                     $extension[$class_name] = array();
                 }
-                if (!isset($extension[$class_name][$name])){
+                //if (!isset($extension[$class_name][$name])){
                     $extension[$class_name][$name] = $function;
-                }
+                //}
                 
                 $GLOBALS['adapt']->store("adapt.extensions", $extension);
             }

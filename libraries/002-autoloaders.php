@@ -147,19 +147,21 @@ function voodoo($class){
      * declared in another bundle, so lets check.
      */
     if ($class_loaded == false && substr($class_name, 0, 5) == 'model'){
-        if (is_array($registered_namespaces) && count($registered_namespaces) && count($namespaces)){
-            $requested_namespace = "\\" . implode("\\", $namespaces);
-            
-            foreach($registered_namespaces as $registered_namespace){
-                $path = ADAPT_PATH . "{$registered_namespaces[$registered_namespace]['bundle_name']}/{$registered_namespaces[$registered_namespace]['bundle_name']}-{$registered_namespaces[$registered_namespace]['bundle_version']}/models/{$class_name}.php";
-                
+        if (is_array($registered_namespaces) && count($registered_namespaces)/* && count($namespaces)*/){
+            $requested_namespace = implode("\\", $namespaces);
+            //print "<pre>Requested namespace: {$requested_namespace}</pre>";
+            //print "<pre>" . print_r(array_values($registered_namespaces), true) . "</pre>";
+            foreach($registered_namespaces as $nskey => $registered_namespace){
+                $path = ADAPT_PATH . "{$registered_namespace['bundle_name']}/{$registered_namespace['bundle_name']}-{$registered_namespace['bundle_version']}/models/{$class_name}.php";
+                //print "<pre>{$path}</pre>";
                 if (file_exists($path)){
-                    $class_def = "class {$class_name} extends \\{$registered_namespace}\\{$class_name}{}";
+                    $class_def = "class {$class_name} extends {$nskey}\\{$class_name}{}";
                     if ($requested_namespace != ""){
                         $class_def = "namespace {$requested_namespace}{{$class_def}}";
                     }
                     
                     eval($class_def);
+                    //print $class_def;
                     $class_loaded = true;
                 }
             }

@@ -269,8 +269,9 @@ namespace adapt{
                     case "or":
                         foreach($params as $param){
                             
-                            if ($param instanceof sql){
-                                $param = $param->render();
+                            if ($param instanceof \adapt\sql){
+                                $param = $this->render_sql($param);
+                                //$param = $param->render();
                             }
                             
                             if ($statement == ""){
@@ -287,9 +288,9 @@ namespace adapt{
                         break;
                     case "between":
                         if (count($params) == 3){
-                            if ($params[0] instanceof sql) $params[0] = $params[0]->render();
-                            if ($params[1] instanceof sql) $params[1] = $params[1]->render();
-                            if ($params[2] instanceof sql) $params[2] = $params[2]->render();
+                            if ($params[0] instanceof sql) $params[0] = $params[0] = $this->render_sql($params[0]);
+                            if ($params[1] instanceof sql) $params[1] = $params[1] = $this->render_sql($params[1]);
+                            if ($params[2] instanceof sql) $params[2] = $params[2] = $this->render_sql($params[2]);
                             
                             $statement .= "({$params[0]} BETWEEN {$params[1]} AND {$params[2]})";
                         }
@@ -297,18 +298,18 @@ namespace adapt{
                     case "condition":
                     case "cond":
                         if (count($params) == 3){
-                            if ($params[0] instanceof sql) $params[0] = $params[0]->render();
-                            if ($params[1] instanceof sql) $params[1] = $params[1]->render();
-                            if ($params[2] instanceof sql) $params[2] = $params[2]->render();
+                            if ($params[0] instanceof sql) $params[0] = $params[0] = $this->render_sql($params[0]);
+                            if ($params[1] instanceof sql) $params[1] = $params[1] = $this->render_sql($params[1]);
+                            if ($params[2] instanceof sql) $params[2] = $params[2] = $this->render_sql($params[2]);
                             
                             $statement .= "{$params[0]} {$params[1]} {$params[2]}";
                         }
                         break;
                     case "if":
                         if (count($params) == 3){
-                            if ($params[0] instanceof sql) $params[0] = $params[0]->render();
-                            if ($params[1] instanceof sql) $params[1] = $params[1]->render();
-                            if ($params[2] instanceof sql) $params[2] = $params[2]->render();
+                            if ($params[0] instanceof sql) $params[0] = $params[0] = $this->render_sql($params[0]);
+                            if ($params[1] instanceof sql) $params[1] = $params[1] = $this->render_sql($params[1]);
+                            if ($params[2] instanceof sql) $params[2] = $params[2] = $this->render_sql($params[2]);
                             
                             $statement .= "IF ({$params[0]}, {$params[1]}, {$params[2]})";
                         }
@@ -349,7 +350,7 @@ namespace adapt{
                         $first = true;
                         foreach($params as $param){
                             if ($param instanceof sql){
-                                $param = $param->render();
+                                $param = $param = $this->render_sql($param);
                             }
                             
                             if ($first){
