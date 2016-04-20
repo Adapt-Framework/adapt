@@ -272,8 +272,10 @@ namespace adapt{
             $valid = true;
             
             $field = $this->get_field_structure($table_name, $field_name);
+            
             if (is_array($field) && is_assoc($field)){
                 $data_type = $this->get_data_type($field['data_type_id']);
+                
                 if (is_array($data_type)){
                     $validator = $data_type['validator'];
                     $formatter = $data_type['formatter'];

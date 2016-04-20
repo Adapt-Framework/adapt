@@ -778,8 +778,9 @@ namespace adapt{
                 case "h":
                     $match = array();
                     if (preg_match("/^([0-9]{1,2})/", $value, $match)){
+                        $len = strlen($match[0]);
                         $val = intval($match[0]);
-                        $value = substr($value, strlen($val));
+                        $value = substr($value, $len);
                         
                         if (!is_null($date['hour'])){
                             $val += $date['hour'];
@@ -794,8 +795,9 @@ namespace adapt{
                 case "H":
                     $match = array();
                     if (preg_match("/^([0-9]{1,2})/", $value, $match)){
+                        $len = strlen($match[0]);
                         $val = intval($match[0]);
-                        $value = substr($value, strlen($val));
+                        $value = substr($value, $len);
                         
                         $date['hour'] = $val;
                     }
@@ -803,8 +805,9 @@ namespace adapt{
                 case "i":
                     $match = array();
                     if (preg_match("/^([0-9]{1,2})/", $value, $match)){
+                        $len = strlen($match[0]);
                         $val = intval($match[0]);
-                        $value = substr($value, strlen($val));
+                        $value = substr($value, $len);
                         
                         $date['minutes'] = $val;
                     }
@@ -812,8 +815,9 @@ namespace adapt{
                 case "s":
                     $match = array();
                     if (preg_match("/^([0-9]{1,2})/", $value, $match)){
+                        $len = strlen($match[0]);
                         $val = intval($match[0]);
-                        $value = substr($value, strlen($val));
+                        $value = substr($value, $len);
                         
                         $date['seconds'] = $val;
                     }

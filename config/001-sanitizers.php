@@ -66,7 +66,7 @@ namespace adapt{
         function($value){
             $adapt = $GLOBALS['adapt'];
             list($year, $month, $day) = explode("-", $value);
-            return \checkdate($month, $day, $year);
+            return checkdate($month, $day, $year);
         },
         "function(value){
             console.log('Validating (date): ' + value);
@@ -111,7 +111,7 @@ namespace adapt{
         "
     );
     
-    $adapt->sanitize->add_validator('time', "^([0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$");
+    $adapt->sanitize->add_validator('time', "^(0?[0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$");
     
     $adapt->sanitize->add_validator(
         'datetime',

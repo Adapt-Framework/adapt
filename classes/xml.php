@@ -416,7 +416,7 @@ namespace adapt{
                 
                 if ($string_value != ""){
                     $xml = new xml((string)$child->getName());
-                    $xml->add($string_value);
+                    $xml->_add($string_value, false);
                     $xml_node->add($xml);
                 }else{
                     $xml = new xml((string)$child->getName());
