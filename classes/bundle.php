@@ -730,9 +730,112 @@ namespace adapt{
                                     $schema = $this->data_source->get_row_structure($table_name);
                                     if (is_array($schema)){
                                         /* Alter existing table */
-                                        //print "Altering";
+                                        $field_registrations = array();
+                                        
+                                        $sql = $this->data_source->sql;
+                                        
+                                        $sql->alter_table($table_name);
+                                        
+                                        $last_field = null;
+                                        foreach($schema as $f){
+                                            if ($f['field_name'] == 'date_created') break;
+                                            $last_field = $f['field_name'];
+                                        }
+                                        
+                                        foreach($fields as $field_name => $attributes){
+                                            $data_type = $attributes['data_type'];
+                                            if ($data_type == 'varchar'){
+                                                $data_type .= "({$attributes['max_length']})";
+                                            }elseif(substr($data_type, 0, 4) == "enum"){
+                                                $values = explode("(", $data_type);
+                                                $values = explode(")", $values[1]);
+                                                $values = $values[0];
+                                                
+                                                $values = explode(",", $values);
+                                                
+                                                for($i = 0; $i < count($values); $i++){
+                                                    $values[$i] = preg_replace("/'|\"/", "", $values[$i]);
+                                                    $values[$i] = sql::q(trim($values[$i]));
+                                                    //$values[$i] = sql::q(trim(trim($values[$i], "'"), "\""));
+                                                }
+                                                
+                                                $values = implode(", ", $values);
+                                                $attributes['allowed_values'] = "[" . $values . "]";
+                                                $attributes['data_type'] = "enum";
+                                            }
+                                            
+                                            $nullable = true;
+                                            if (isset($attributes['nullable']) && $attributes['nullable'] == 'No') $nullable = false;
+                                            
+                                            $default_value = null;
+                                            if (isset($attributes['default_value'])) $default_value = $attributes['default_value'];
+                                            
+                                            $sql->add($field_name, $data_type, $nullable, $default_value, false, false, $last_field);
+                                            $last_field = $field_name;
+                                            
+                                            if (isset($attributes['primary_key']) && $attributes['primary_key'] == 'Yes'){
+                                                $auto_increment = true;
+                                                
+                                                if (isset($attributes['auto_increment']) && $attributes['auto_increment'] == 'No'){
+                                                    $auto_increment = false;
+                                                }
+                                                $sql->primary_key($field_name, $auto_increment);
+                                            }
+                                            
+                                            if (isset($attributes['index']) && $attributes['index'] == 'Yes'){
+                                                $index_size = null;
+                                                
+                                                if (isset($attributes['index_size'])){
+                                                    $index_size = $attributes['index_size'];
+                                                }
+                                                $sql->index($field_name, $index_size);
+                                            }
+                                            
+                                            if (isset($attributes['referenced_table_name']) && isset($attributes['referenced_field_name'])){
+                                                $sql->foreign_key($field_name, $attributes['referenced_table_name'], $attributes['referenced_field_name']);
+                                            }
+                                            
+                                            $field_registration = array(
+                                                'bundle_name' => $this->name,
+                                                'table_name' => $table_name,
+                                                'field_name' => $field_name,
+                                                'referenced_table_name' => $attributes['referenced_table_name'],
+                                                'referenced_field_name' => $attributes['referenced_field_name'],
+                                                'label' => $attributes['label'],
+                                                'placeholder_label' => $attributes['placeholder_label'],
+                                                'description' => $attributes['description'],
+                                                'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_name' => $attributes['data_type']),
+                                                'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
+                                                'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
+                                                'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",
+                                                'auto_increment' => $attributes['auto_increment'] == "Yes" ? "Yes" : "No",
+                                                'timestamp' => $attributes['timestamp'] == "Yes" ? "Yes" : "No",
+                                                'max_length' => $attributes['max_length'],
+                                                'default_value' => $attributes['default_value'],
+                                                'allowed_values' => $attributes['allowed_values'],
+                                                'lookup_table' => $attributes['lookup_table'],
+                                                'depends_on_table_name' => $attributes['depends_on_table_name'],
+                                                'depends_on_field_name' => $attributes['depends_on_field_name'],
+                                                'depends_on_value' => $attributes['depends_on_value']
+                                            );
+                                            
+                                            $field_registrations[] = $field_registration;
+                                        }
+                                        
+                                        /* We need to make our bundle name available to the sql object
+                                         * so the table can be properly registered.
+                                         */
+                                        $this->store('adapt.installing_bundle', $this->name);
+                                        
+                                        /* Write the table */
+                                        $sql->execute();
+                                        
+                                        /* Register the table */
+                                        $this->data_source->register_table($field_registrations);
+                                        $this->remove_store('adapt.installing_bundle');
+                                        
                                     }else{
-                                        print "Creating";
+                                        //print "Creating";
                                         /* Create new table */
                                         $field_registrations = array();
                                         
@@ -905,7 +1008,7 @@ namespace adapt{
                                          * so the table can be properly registered.
                                          */
                                         $this->store('adapt.installing_bundle', $this->name);
-                                        print "<pre>{$sql}</pre>";
+                                        //print "<pre>{$sql}</pre>";
                                         //print "<pre>Registrations: " . print_r($field_registrations, true) . "</pre>";
                                         /* Write the table */
                                         $sql->execute();
