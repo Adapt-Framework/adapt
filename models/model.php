@@ -204,28 +204,39 @@ namespace adapt{
                 if (in_array($key, $fields)){
                     $return = true;
                     
-                    /* Unformat the value */
-                    $value = $this->data_source->unformat($this->table_name, $key, $value);
-                    
-                    /* Has the value changed? */
-                    if ($this->_data[$key] != $value){
+                    if ($value instanceof sql){
+                        $this->_has_changed = true;
+                        $this->_changed_fields[$key] = array(
+                            'old_value' => $this->_data[$key],
+                            'new_value' => $value
+                        );
                         
-                        /* Is the new value valid? */
-                        if ($this->data_source->validate($this->_table_name, $key, $value)){
-                            $this->_has_changed = true;
-                            $this->_changed_fields[$key] = array(
-                                'old_value' => $this->_data[$key],
-                                'new_value' => $value
-                            );
+                        $this->_data[$key] = $value;
+                    }else{
+                        /* Unformat the value */
+                        $value = $this->data_source->unformat($this->table_name, $key, $value);
+                        
+                        /* Has the value changed? */
+                        if ($this->_data[$key] != $value){
                             
-                            $this->_data[$key] = $value;
+                            /* Is the new value valid? */
+                            if ($this->data_source->validate($this->_table_name, $key, $value)){
+                                $this->_has_changed = true;
+                                $this->_changed_fields[$key] = array(
+                                    'old_value' => $this->_data[$key],
+                                    'new_value' => $value
+                                );
+                                
+                                $this->_data[$key] = $value;
+                                
+                            }else{
+                                $errors = $this->data_source->errors(true);
+                                foreach($errors as $error) $this->error($error);
+                            }
                             
-                        }else{
-                            $errors = $this->data_source->errors(true);
-                            foreach($errors as $error) $this->error($error);
                         }
-                        
                     }
+                    
                     
                 }
             }
@@ -938,7 +949,11 @@ namespace adapt{
                                     $sql->update($this->table_name);
                                     
                                     foreach($data_to_write as $key => $value){
-                                        $sql->set($key, sql::q($value));
+                                        if ($value instanceof sql){
+                                            $sql->set($key, $value);
+                                        }else{
+                                            $sql->set($key, sql::q($value));
+                                        }
                                     }
                                     
                                     if (count($keys) == 1){

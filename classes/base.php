@@ -391,7 +391,7 @@ namespace adapt{
                 $response = $this->store('adapt.response');
                 if (is_array($response)){
                     $response['request'] = $this->request;
-                    $url = $url . '?adapt.response=' . urlencode(json_encode($response));
+                    $url = $url . '?adapt_response=' . urlencode(json_encode($response));
                 }
             }
             
@@ -445,6 +445,7 @@ namespace adapt{
          */
         public function pget_response(){
             $responses = $this->store('adapt.response');
+            
             if (is_array($responses)){
                 return $responses;
             }elseif(isset($this->request['adapt_response'])){
