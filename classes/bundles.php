@@ -758,7 +758,7 @@ namespace adapt{
             $bundles = scandir(ADAPT_PATH);
             
             foreach($bundles as $bundle){
-                if (substr($bundle, 0, 1) != ".") $output[] = $bundle;
+                if (substr($bundle, 0, 1) != "." && $bundle != "store" && $bundle != "settings.xml") $output[] = $bundle;
             }
             
             return $output;

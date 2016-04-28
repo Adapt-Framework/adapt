@@ -232,6 +232,10 @@ namespace adapt{
         /*
          * Bundle.xml control
          */
+        public function get_bundle_settings(){
+            return $this->_settings;
+        }
+        
         public function load($bundle_name, $data){
             if ($data instanceof xml){
                 $this->_data = $data;

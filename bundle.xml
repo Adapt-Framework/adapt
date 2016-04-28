@@ -70,31 +70,31 @@
       </category>
       <category name="Database connecton">
         <setting>
-          <name>data_source.driver</name>
+          <name>datasource.driver</name>
           <label>Driver</label>
         </setting>
         <setting>
-          <name>data_source.host</name>
+          <name>datasource.host</name>
           <label>Host</label>
         </setting>
         <setting>
-          <name>data_source.port</name>
+          <name>datasource.port</name>
           <label>Port</label>
         </setting>
         <setting>
-          <name>data_source.schema</name>
+          <name>datasource.schema</name>
           <label>Schema</label>
         </setting>
         <setting>
-          <name>data_source.username</name>
+          <name>datasource.username</name>
           <label>Username</label>
         </setting>
         <setting>
-          <name>data_source.password</name>
+          <name>datasource.password</name>
           <label>Password</label>
         </setting>
         <setting>
-          <name>data_source.writable</name>
+          <name>datasource.writable</name>
           <label>Writable?</label>
         </setting>
       </category>

@@ -283,6 +283,14 @@ namespace adapt{
             return $this->_data;
         }
         
+        //public function data($key, $value = null){
+        //    if (is_null($value)){
+        //        return $this->_data[$key];
+        //    }else{
+        //        $this->_data[$key] = $value;
+        //    }
+        //}
+        
         /*
          * Child functions
          */
@@ -1186,27 +1194,30 @@ namespace adapt{
             $output = array();
             $hash = $this->to_hash();
             
-            foreach($hash as $table_name => $field){
-                foreach($field as $field_name => $values){
-                    if (is_array($values)){
-                        foreach($values as $value){
-                            $key = "{$table_name}[{$field_name}][]";
-                            $output[] = array('key' => $key, 'value' => $value);
-                        }
-                    }else{
-                        $key = "{$table_name}[{$field_name}]";
-                        $output[] = array('key' => $key, 'value' => $values);
-                        //$output["{$table_name}[{$field_name}]"] = $values;
+            //foreach($hash as $table_name => $field){
+            //    foreach($field as $field_name => $values){
+            //        if (is_array($values)){
+            //            foreach($values as $value){
+            //                $key = "{$table_name}[{$field_name}][]";
+            //                $output[] = array('key' => $key, 'value' => $value);
+            //            }
+            //        }else{
+            //            $key = "{$table_name}[{$field_name}]";
+            //            $output[] = array('key' => $key, 'value' => $values);
+            //            //$output["{$table_name}[{$field_name}]"] = $values;
+            //        }
+            //    }
+            //}
+            //return $output;
+            foreach($hash as $table => $values){
+                
+                foreach($values as $field => $value){
+                    $key = "{$table}[$field]";
+                    if (is_array($value)){
+                        $key .= "[]";
                     }
-                }
-            }
-            return $output;
-            foreach($hash as $key => $values){
-                for($i = 0; $i < count($values); $i++){
-                    foreach($values[$i] as $field => $value){
-                        $new_key = "{$key}[{$i}][{$field}]";
-                        $output[$new_key] = $value;
-                    }
+                    
+                    $output[$key] = $value;
                 }
             }
             
