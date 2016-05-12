@@ -407,7 +407,6 @@ namespace adapt{
                             $statement .= "VALUES\n";
                             
                             //print new html_pre($statement);
-                            
                             if (is_array($insert_fields)){
                                 $keys = $insert_fields;
                             }else{

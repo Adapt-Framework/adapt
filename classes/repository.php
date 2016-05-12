@@ -51,7 +51,7 @@ namespace adapt{
             $response = array(
                 'status' => 200,
                 /*'content' => file_get_contents("http://repo.adaptframework.com/adapt/bundles/{$bundle_name}.bundle")*/
-                'content' => file_get_contents("https://matt:MP1lnadn54@hyperion.matt.wales/files/Projects/adapt_framework/bundled/{$bundle_name}.bundle")
+                'content' => file_get_contents("https://matt:poo@hyperion.matt.wales/files/Projects/adapt_framework/bundled/{$bundle_name}.bundle")
             );
             
             if ($response['status'] == 200){

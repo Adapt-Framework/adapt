@@ -70,6 +70,8 @@ namespace adapt{
         const RIGHT_SHIFT = ">>";
         const MULTIPLICATION = "*";
         const LOGICAL_XOR = "XOR";
+        const IN = "IN";
+        const NOT_IN = "NOT IN";
         
         protected $_data_source;
         protected $_is_write = false;
@@ -549,6 +551,23 @@ namespace adapt{
         }
         
         public function values(){
+            //$args = func_get_args();
+            //
+            //if (count($args) == 1 && is_array($args[0])){
+            //    
+            //    if (is_assoc($args[0])){
+            //        $this->_values[] = $args[0];
+            //    }else{
+            //        $this->_values = $args[0];
+            //    }
+            //    
+            //}elseif(count($args) > 1){
+            //    $this->_values[] = $args;
+            //}
+            //
+            ////print_r($this->_values);
+            //
+            //return $this;
             $args = func_get_args();
             
             if (count($args) == 1 && is_array($args[0])){
@@ -556,7 +575,7 @@ namespace adapt{
             }else{
                 $this->_values[] = func_get_args();
             }
-            
+            //print new html_pre(print_r($this->_values, true));
             return $this;
         }
         

@@ -178,6 +178,7 @@ namespace adapt{
         
         public function set_global_settings($hash){
             $this->_global_settings = $hash;
+            $this->_global_settings_changed = true;
         }
         
         /*
@@ -193,8 +194,8 @@ namespace adapt{
             
             if (is_null($application_name)){
                 /* Do we have an application listed in settings? */
-                $name = $this->get_global_setting('adapt.default.application');
-                $version = $this->get_global_setting('adapt.default.application.version');
+                $name = $this->get_global_setting('adapt.default_application_name');
+                $version = $this->get_global_setting('adapt.default_application_version');
                 
                 if (isset($name) && strlen($name) > 0){
                     $application_name = $name;
@@ -214,8 +215,8 @@ namespace adapt{
                                 $application_version = $version;
                                 
                                 /* Store in global settings */
-                                $this->set_global_setting("adapt.default.application", $application_name);
-                                $this->set_global_setting("adapt.default.application.version", $application_verion);
+                                $this->set_global_setting("adapt.default_application_name", $application_name);
+                                $this->set_global_setting("adapt.default_application_version", $application_version);
                                 break;
                             }
                         }
