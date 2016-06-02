@@ -33,8 +33,23 @@ namespace adapt{
     
     class cache extends base{
         
+        protected $_file_store;
+        
         public function __construct(){
             parent::__construct();
+        }
+        
+        
+        public function pget_file_store(){
+            $parent_store = parent::pget_file_store();
+            if ($parent_store instanceof storage_file_system){
+                return $parent_store;
+            }elseif(isset($this->_file_store)){
+                return $this->_file_store;
+            }else{
+                $this->_file_store = new storage_file_system();
+                return $this->_file_store;
+            }
         }
         
         

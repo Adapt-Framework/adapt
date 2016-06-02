@@ -237,6 +237,7 @@ namespace adapt{
         }
         
         public function load($bundle_name, $data){
+            //print "<pre>Loading: {$bundle_name}</pre>";
             if ($data instanceof xml){
                 $this->_data = $data;
                 
@@ -556,7 +557,7 @@ namespace adapt{
                         default:
                             /* Do we have a handler to handle the tag? */
                             $handlers = $this->store("adapt.config_handlers");
-                            
+                            print "<pre>CONFIG HANDLERS: " . print_r($handlers, true) . "</pre>";
                             if (is_array($handlers) && isset($handlers[$child->tag])){
                                 
                                 $handler = $handlers[$child->tag];
@@ -603,7 +604,7 @@ namespace adapt{
             }else{
                 $handlers = array($tag_name => $handler);
             }
-            
+            //print "<pre>register_config_handler: " . print_r($handlers, true) . "</pre>";
             $this->store("adapt.config_handlers", $handlers);
         }
         
@@ -630,7 +631,7 @@ namespace adapt{
             }else{
                 $handlers = array($target_bundle => array($handler));
             }
-            //print "<pre>" . print_r($handlers, true) . "</pre>";
+            //print "<pre>register_config_handler: " . print_r($handlers, true) . "</pre>";
             $this->store("adapt.install_handlers", $handlers);
         }
         

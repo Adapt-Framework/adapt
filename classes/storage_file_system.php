@@ -28,6 +28,9 @@
 
 namespace adapt{
     
+    /* Prevent Direct Access */
+    defined('ADAPT_STARTED') or die;
+    
     class storage_file_system extends base{
         
         protected $_store_path;
@@ -226,7 +229,7 @@ namespace adapt{
                             fwrite($fp, $this->get($key));
                             fclose($fp);
                             
-                            return $path;
+                            return true;
                         }else{
                             $this->error("Unable to write_to_file, could not write to " . $path);
                         }
@@ -258,12 +261,16 @@ namespace adapt{
                     if (file_exists($this->_store_path . "private/" . $key . ".meta")){
                         unlink($this->_store_path . "private/" . $key . ".meta");
                     }
+                    
+                    return true;
                 }else{
                     $this->error("Invalid file storage key '{$key}'");
                 }
             }else{
                 $this->error("Unable to delete the file, storage unavailable");
             }
+            
+            return false;
         }
         
         public function get_size($key){
