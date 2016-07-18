@@ -35,9 +35,10 @@ namespace adapt{
             if ($this->_repository && $this->_repository instanceof repository){
                 return $this->_repository;
             }else{
-                $username = $this->settings('repository.username');
-                $password = $this->settings('repository.password');
-                $this->_repository = new repository($username, $password);
+                $url = $this->setting('repository.url');
+                $username = $this->setting('repository.username');
+                $password = $this->setting('repository.password');
+                $this->_repository = new repository($url, $username, $password);
                 
                 return $this->_repository;
             }
@@ -54,7 +55,7 @@ namespace adapt{
                 $this->_global_settings = array();
                 
                 $settings_path = ADAPT_PATH . "settings.xml";
-                
+                //print "Settings path: " . $settings_path;
                 if (file_exists($settings_path)){
                     $settings_data = file_get_contents($settings_path);
                     
@@ -414,7 +415,7 @@ namespace adapt{
         
         public function is_bundle_installed($bundle_name, $bundle_version){
             //print "<pre>DS: " . print_r($this->data_source, true) . "</pre>";
-            print "<pre>Checking if {$bundle_name}-{$bundle_version} is installed... ";
+            //print "<pre>Checking if {$bundle_name}-{$bundle_version} is installed... ";
             if ($this->data_source && $this->data_source instanceof data_source_sql){
                 
                 if (!is_array($this->_data_source_bundle_cache)){
@@ -449,19 +450,19 @@ namespace adapt{
                 if (is_array($this->_data_source_bundle_cache)){
                     foreach($this->_data_source_bundle_cache as $bundle){
                         if ($bundle['name'] == $bundle_name && $bundle['version'] == $bundle_version){
-                            print "Intalled</pre>";
+                            //print "Intalled</pre>";
                             return true;
                         }
                     }
                     
                 }
                 
-                print "Not intalled</pre>";
+                //print "Not intalled</pre>";
                 return false;
                 //print "<pre>Data source connected in bundles::is_bundle_installed</pre>";
             }
             
-            print "Unknown - assuming not.</pre>";
+            //print "Unknown - assuming not.</pre>";
             return false;
         }
         
@@ -720,7 +721,6 @@ namespace adapt{
                     
                     $object = new $class($data);
                     //$object = new bundle($bundle_name, $data);
-                    
                     if ($object && $object instanceof bundle){
                         $this->_bundle_cache[$bundle_name][$selected_version] = $object;
                         $this->_bundle_cache_changed = true;

@@ -557,7 +557,7 @@ namespace adapt{
                         default:
                             /* Do we have a handler to handle the tag? */
                             $handlers = $this->store("adapt.config_handlers");
-                            print "<pre>CONFIG HANDLERS: " . print_r($handlers, true) . "</pre>";
+                            //print "<pre>CONFIG HANDLERS: " . print_r($handlers, true) . "</pre>";
                             if (is_array($handlers) && isset($handlers[$child->tag])){
                                 
                                 $handler = $handlers[$child->tag];
@@ -643,7 +643,6 @@ namespace adapt{
              * then we need to re-apply the global settings
              * so they take priority.
              */
-            
             if (is_array($this->_settings_hash)){
                 /* Get a hash of the settings currently in affect */
                 $current_settings = $this->get_settings();
@@ -660,7 +659,6 @@ namespace adapt{
                 /* Override the current settings with our updated copy */
                 $this->set_settings($current_settings);
             }
-            
         }
         
         public function boot(){
@@ -681,6 +679,7 @@ namespace adapt{
                         foreach($dependency_list as $bundle_data){
                             //print "<pre>Loading {$bundle_data['name']} {$bundle_data['version']}</pre>";
                             //print "<pre>" . print_r($this->store('adapt.namespaces'), true) . "</pre>";
+                            
                             $bundle = $this->bundles->load_bundle($bundle_data['name'], $bundle_data['version']);
                             if ($bundle instanceof bundle && $bundle->is_loaded){
                                 //print "<pre>Loaded {$bundle->name} {$bundle->version} (" . get_class($bundle) . ")</pre>";
@@ -693,7 +692,7 @@ namespace adapt{
                                 return false;
                             }
                         }
-                    
+                        
                         $this->booted = true;
                     }else{
                         $errors = $this->bundles->errors(true);
@@ -713,7 +712,11 @@ namespace adapt{
         }
         
         public function install(){
-            if (!$this->is_installed()){
+            if (!$this->is_installed() && !$this->is_installing()){
+                
+                /* Mark as installing */
+                $this->file_store->set("adapt/installation/{$this->name}-{$this->version}", "true", "text/plain");
+                
                 if (is_array($this->_schema) && $this->data_source instanceof data_source_sql){
                     /*
                      * We have a schema
@@ -1176,50 +1179,53 @@ namespace adapt{
                 }
                 
                 //print "<pre>" . print_r($this->_schema, true) . "</pre>";
-                
-                /* Add the bundle to bundle_version if it isn't already */
-                $model = new model_bundle_version();
-                if (!$model->load_by_name_and_version($this->name, $this->version)){
-                    $errors = $model->errors(true);
-                    print "<pre>" . print_r($errors, true) . "</pre>";
-                    foreach($errors as $error) $this->error("Model 'bundle_version' return the error \"{$error}\"");
-                }
-                
-                $model->name = $this->name;
-                $model->type = $this->type;
-                $model->version = $this->version;
-                $model->local = "Yes";
-                $model->installed = "Yes";
-                if ($model->save()){
-                    $errors = $model->errors(true);
-                    print "<pre>" . print_r($errors, true) . "</pre>";
-                    print "<pre>Saved {$this->name}-{$this->version}</pre>";
-                    $this->_is_installed = true;
-                    $this->bundles->set_bundle_installed($this->name, $this->version);
+                if ($this->data_source && $this->data_source instanceof data_source_sql){   
+                    /* Add the bundle to bundle_version if it isn't already */
+                    $model = new model_bundle_version();
+                    if (!$model->load_by_name_and_version($this->name, $this->version)){
+                        $errors = $model->errors(true);
+                        //print "<pre>" . print_r($errors, true) . "</pre>";
+                        foreach($errors as $error) $this->error("Model 'bundle_version' return the error \"{$error}\"");
+                    }
                     
-                    /* Process install handlers */
-                    $handlers = $this->store('adapt.install_handlers');
-                    //print "<pre>Handlers: " . print_r($handlers, true) . "</pre>";
-                    if (is_array($handlers) && is_array($handlers[$this->name])){
-                        foreach($handlers[$this->name] as $handler){
-                            $bundle = $this->bundles->load_bundle($handler['bundle_name']);
-                            if ($bundle instanceof bundle){
-                                $function = $handler['function'];
-                                if (method_exists($bundle, $function)){
-                                    $bundle->$function($this);
+                    $model->name = $this->name;
+                    $model->type = $this->type;
+                    $model->version = $this->version;
+                    $model->local = "Yes";
+                    $model->installed = "Yes";
+                    if ($model->save()){
+                        $errors = $model->errors(true);
+                        print "<pre>" . print_r($errors, true) . "</pre>";
+                        print "<pre>Saved {$this->name}-{$this->version}</pre>";
+                        $this->_is_installed = true;
+                        $this->bundles->set_bundle_installed($this->name, $this->version);
+                        
+                        /* Process install handlers */
+                        $handlers = $this->store('adapt.install_handlers');
+                        //print "<pre>Handlers: " . print_r($handlers, true) . "</pre>";
+                        if (is_array($handlers) && is_array($handlers[$this->name])){
+                            foreach($handlers[$this->name] as $handler){
+                                $bundle = $this->bundles->load_bundle($handler['bundle_name']);
+                                if ($bundle instanceof bundle){
+                                    $function = $handler['function'];
+                                    if (method_exists($bundle, $function)){
+                                        $bundle->$function($this);
+                                    }
                                 }
                             }
                         }
+                        
+                        return true;
+                    }else{
+                        $errors = $model->errors(true);
+                        //print "<pre>" . print_r($errors, true) . "</pre>";
+                        foreach($errors as $error) $this->error("Model 'bundle_version' returned the error \"{$error}\"");
+                        return false;
                     }
-                    
-                    return true;
-                }else{
-                    $errors = $model->errors(true);
-                    //print "<pre>" . print_r($errors, true) . "</pre>";
-                    foreach($errors as $error) $this->error("Model 'bundle_version' returned the error \"{$error}\"");
-                    return false;
                 }
                 
+                /* Remove installation mark */
+                $this->file_store->delete("adapt/installation/{$this->name}-{$this->version}");
             }
         }
         
@@ -1238,6 +1244,14 @@ namespace adapt{
             }
             
             return $this->_is_installed;
+        }
+        
+        public function is_installing(){
+            if ($this->file_store->get("adapt/installation/{$this->name}-{$this->version}") == "true"){
+                return true;
+            }
+            
+            return false;
         }
         
     }

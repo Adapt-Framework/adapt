@@ -11,15 +11,34 @@ namespace adapt{
         
         protected $_url;
         protected $_session_token;
+        protected $_http;
         
         public function __construct($url, $username = null, $password = null){
             parent::__construct();
             
+            $this->_http = new http();
             $this->_url = $url;
-            
             if (isset($username) && isset($password)){
                 $this->login($username, $password);
             }
+        }
+        
+        public function request($uri){
+            $response =  $this->_http->get($this->_url . $uri);
+            
+            if ($response['status'] == 200 && $response['headers']['content-type'] == "application/xml"){
+                $content = xml::parse($response['content']);
+                if ($content instanceof xml){
+                    if (!isset($this->_session_token)){
+                        $this->_session_token = $content->find('repository')->attr('session-key');
+                        //print new html_pre("Using session: " . $this->_session_token);
+                    }
+                    
+                    return $content;
+                }
+            }
+            
+            return false;
         }
         
         public function login($username, $password){
@@ -34,17 +53,131 @@ namespace adapt{
             
         }
         
-        public function has($bundle_name, $bundle_versions = array()){
-            return true;
+        public function has($bundle_name, $bundle_version = null){
+            if (preg_match("/^[a-zA-Z]+[-_a-zA-Z0-9]+[a-zA-Z0-9]+$/", $bundle_name)){
+                
+                $uri = "/bundles/{$bundle_name}";
+                if ($bundle_version){
+                    if (preg_match("/^[0-9]+(\.[0-9]+){0,2}$/", $bundle_version)){
+                        $uri .= "/{$bundle_version}";
+                    }else{
+                        $this->error("Invalid bundle version '{$bundle_version}'");
+                        return false;
+                    }
+                }else{
+                    $uri .= "/latest";
+                }
+                
+                $response = $this->request($uri);
+                //print $response->find('bundles > bundle > version')->get(0)->get(0);
+                return $response->find('bundles > bundle > version')->get(0)->get(0);
+                
+                
+            }else{
+                $this->error("Invalid bundle name '{$bundle_name}'");
+                return false;
+            }
+            
+            return false;
+            
+            $uri = "/bundles/{$bundle_name}";
+            
+            if ($content = $this->request($uri)){
+                return true;
+            }
+            
+            return false;
+        }
+        
+        public function get_bundle_types(){
+            $bundle_types = $this->cache->get("adapt/repository/bundle_types");
+            
+            if (!is_array($bundle_types)){
+                $bundle_types = [];
+                $uri = "/bundle-types";
+                
+                $data = $this->request($uri);
+                
+                if ($data instanceof xml){
+                    $type_nodes = $data->find('bundle_type')->get();
+                    foreach($type_nodes as $node){
+                        $bundle_type = [];
+                        
+                        $children = $node->get();
+                        foreach($children as $child){
+                            if ($child instanceof xml){
+                                switch($child->tag){
+                                case "name":
+                                case "label":
+                                case "description":
+                                    $bundle_type[$child->tag] = $child->get(0);
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (isset($bundle_type['name']) && isset($bundle_type['label'])){
+                            $bundle_types[] = $bundle_type;
+                        }
+                    }
+                    
+                    if (count($bundle_types)){
+                        /* Cache the result for the future */
+                        $this->cache->serialize("adapt/repository/bundle_types", $bundle_types, 60 * 60 * 24 * 7);
+                    }
+                }
+            }
+            
+            return $bundle_types;
         }
         
         public function get($bundle_name, $bundle_version = null){
+            
+            if ($version = $this->has($bundle_name, $bundle_version)){
+                /* Download the bundle */
+                $uri = $this->_url . "/bundles/{$bundle_name}/{$version}/download";
+                print $uri;
+                /* We need to use the HTTP object because this is non-standard output */
+                $response = $this->_http->get($uri);
+                
+                if (is_array($response) && $response['status'] == 200){
+                    /* Store the bundle */
+                    $key = "adapt/repository/{$bundle_name}-{$version}.bundle";
+                    $this->file_store->set($key, $response['content'], "application/octet-stream");
+                    
+                    $path = $this->file_store->get_file_path($key);
+                    
+                    if ($path !== false){
+                        /* Lets unbundle the bundle */
+                        $this->unbundle($path);
+                    }else{
+                        $this->error("Unable to store bundle '{$bundle_name}' version '{$version}'");
+                    }
+                    
+                }else{
+                    $this->error("Failed to download bundle '{$bundle_name}' version '{$version}'");
+                }
+            }
+            
+            return false;
+            
             /*
              * This code is to access the temp repo until the
              * real repo is build. Had to do it, couldn't continue
              * building the framework without repo support, couldn't
              * build the repo with out the framework :/ What can you do?
              */
+            
+            $output = "output";
+            
+            $repo = $this->setting('repository.url');
+            $url = $repo[0];
+            
+            $http = new http();
+            $response = $http->get($url . "/bundles/{$bundle_name}/{$bundle_version}");
+            $output = print_r($response, true);
+            
+            return $output;
             
             //$http = new http();
             //$response = $http->get($url . "/adapt/bundles/{$bundle_name}.bundle");
@@ -87,6 +220,108 @@ namespace adapt{
                 break;
             }else{
                 $this->error("Received {$response['status']} from the repository.");
+            }
+            
+            return false;
+        }
+        
+        public function unbundle($bundle_file_path){
+            /*
+             * We need to extract the manifest
+             * to get the type and name.
+             */
+            $fp = fopen($bundle_file_path, "r");
+            if ($fp){
+                $raw_index = fgets($fp);
+                $bundle_index = json_decode($raw_index, true);
+                $offset = strlen($raw_index);
+                
+                if (is_array($bundle_index) && count($bundle_index)){
+                    foreach($bundle_index as $file){
+                        if ($file['name'] == 'bundle.xml'){
+                            fseek($fp, $offset);
+                            $manifest = fread($fp, $file['length']);
+                        }
+                        $offset += $file['length'];
+                    }
+                    
+                    if (xml::is_xml($manifest)){
+                        $manifest = xml::parse($manifest);
+                        $name = $manifest->find('name');
+                        $type = $manifest->find('type');
+                        $version = $manifest->find('version');
+                        $name = trim($name->get(0)->text);
+                        $type = trim($type->get(0)->text);
+                        $version = trim($version->get(0)->text);
+                        //list($major, $minor, $revision) = explode(".", $version);
+                        
+                        //if (in_array(strtolower($type), array('application', 'extension', 'framework'))){
+                            /* Is this bundle already installed? */
+                            if ($this->bundles->has_bundle($name, $version) === false){
+                                /*
+                                 * The bundle isn't installed so we are going
+                                 * to unbundle it
+                                 */
+                                $path = ADAPT_PATH;
+                                /*switch($type){
+                                case 'application':
+                                    $path = APPLICATION_PATH;
+                                    break;
+                                case 'extension':
+                                    $path = EXTENSION_PATH;
+                                    break;
+                                case 'framework':
+                                    $path = FRAMEWORK_PATH;
+                                    break;
+                                }*/
+                                
+                                mkdir($path . $name);
+                                $path .= $name . '/';
+                                
+                                mkdir($path . $name . "-" . $version);
+                                $path .= $name . '-' . $version . '/';
+                                
+                                /* Reset the bundle file point back to the start of the body */
+                                fseek($fp, strlen($raw_index));
+                                
+                                /* Lets extract the bundle */
+                                foreach($bundle_index as $file){
+                                    $path_parts = explode('/', trim(dirname($file['name']), '/'));
+                                    $new_path = $path;
+                                    foreach($path_parts as $p){
+                                        $new_path .= "/{$p}";
+                                        if (!is_dir($new_path)){
+                                            mkdir($new_path);
+                                        }
+                                    }
+                                    
+                                    $ofp = fopen($path . $file['name'], "w");
+                                    
+                                    if ($ofp){
+                                        fwrite($ofp, fread($fp, $file['length']));
+                                        fclose($ofp);
+                                    }
+                                }
+                                
+                                fclose($fp);
+                                return $name;
+                            }else{
+                                return $name;
+                            }
+                        //}
+                        
+                        
+                    }else{
+                        $this->error("Error unbundling {$bundle_file_path}, unable to read the manifest.");
+                    }
+                    
+                }else{
+                    $this->error("Error unbundling {$bundle_file_path}, unable to find the bundle index.");
+                }
+                
+                fclose($fp);
+            }else{
+                $this->error("Error unbundling {$bundle_file_path}, unable to read the file.");
             }
             
             return false;

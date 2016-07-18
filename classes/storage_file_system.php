@@ -68,6 +68,20 @@ namespace adapt{
             return $this->_store_available;
         }
         
+        public function get_file_path($key){
+            if ($this->is_key_valid($key)){
+                $path = $this->_store_path . 'private/' . $key;
+                if (file_exists($path)){
+                    return $path;
+                }
+                
+            }else{
+                $this->error('Invalid file key');
+            }
+            
+            return false;
+        }
+        
         //public function get_url($key){
         //    $path = substr($this->_store_path, strlen($_SERVER['DOCUMENT_ROOT']));
         //    return $path . $key;
@@ -159,14 +173,53 @@ namespace adapt{
         }
         
         
-        public function set_by_file($key, $path, $content_type = null, $public = false){
+        public function set_by_file($key, $file_path, $content_type = null, $public = false){
+            if ($this->available){
+                if ($this->is_key_valid($key)){
+                    $path = $this->_store_path . ($public ? "public/" : "private/");
+                    $namespaces = explode("/", $key);
+                    
+                    if (count($namespaces) > 1){
+                        for($i = 0; $i < count($namespaces) - 1; $i++){
+                            $path .= $namespaces[$i] . "/";
+                            if (!file_exists($path)){
+                                mkdir($path);
+                            }
+                        }
+                        
+                        $path .= $namespaces[count($namespaces) - 1];
+                    }else{
+                        $path .= $namespaces[0];
+                    }
+                    
+                    $fp = fopen($path, "w");
+                    if ($fp){
+                        fwrite($fp, file_get_contents($file_path));
+                        fclose($fp);
+                        
+                        if (!is_null($content_type)) $this->set_content_type($key, $content_type);
+                        
+                        return true;
+                    }else{
+                        $this->error("Unable to write file {$this->_store_path}{$key}");
+                    }
+                    
+                }else{
+                    $this->error("The key '{$key}' is not valid.");
+                }
+            }else{
+                $this->error("File system file storage is unavailable.");
+            }
+            
+            return;
             //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
+            print "<pre>KEY: {$key}</pre>";
             if ($this->available){
                 
                 if ($this->is_key_valid($key)){
                     if (file_exists($path)){
                         $store_path = $this->_store_path . ($public ? "public/" : "private/");
-                        $fp = fopen($store_path, "w");
+                        $fp = fopen($store_path . $key, "w");
                         if ($fp){
                             fwrite($fp, file_get_contents($path));
                             fclose($fp);
@@ -224,12 +277,13 @@ namespace adapt{
                 
                 if (file_exists($this->_store_path . "private/" . $key) || file_exists($this->_store_path . "public/" . $key)){
                     if (is_writable(dirname($path))){
-                        $fp = fopen($path, "r");
+                        $fp = fopen($path, "w");
+                        
                         if ($fp){
                             fwrite($fp, $this->get($key));
                             fclose($fp);
                             
-                            return true;
+                            return $path;
                         }else{
                             $this->error("Unable to write_to_file, could not write to " . $path);
                         }

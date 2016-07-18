@@ -1,10 +1,12 @@
 <?php
 
-/*
+/**
+ * Adapt Framework
+ *
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2016 Matt Bruton
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,14 +25,40 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *  
+ *
+ * @package     adapt
+ * @author      Matt Bruton <matt.bruton@gmail.com>
+ * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
+ * @license     https://opensource.org/licenses/MIT     MIT License
+ * @link        http://www.adpatframework.com
+ *
  */
 
 namespace adapt{
 
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
-
+    
+    /**
+     * aquery is jQuery for Adapt, allowing rapid manipulation of the DOM before it's sent to the browser.
+     *
+     * The jQuery documentation is much more detailed than this, you can use the jQuery documentation as
+     * a reference but you should be aware of:
+     *
+     * aquery uses underscores instead of camel case, so addClass in jQuery becomes add_class
+     * in aquery.
+     * 
+     * jQuery's empty() function has been replaced with clear() because 'empty' is a keyword in PHP.
+     * 
+     * The following jQuery functions are not supported:
+     * * wrapAll()
+     * * map()
+     * * replaceAll()
+     * * contents()
+     * * untilNext()
+     * * parentsUntil()
+     * * prevUntil()
+     */
     class aquery extends base{
         
         protected $_root;
