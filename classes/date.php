@@ -1,10 +1,12 @@
 <?php
 
-/*
+/**
+ * Adapt Framework
+ *
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2016 Matt Bruton
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +25,12 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *  
+ *
+ * @package     adapt
+ * @author      Matt Bruton <matt.bruton@gmail.com>
+ * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
+ * @license     https://opensource.org/licenses/MIT     MIT License
+ * @link        http://www.adpatframework.com
  */
 
 namespace adapt{
@@ -31,6 +38,22 @@ namespace adapt{
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
     
+    /**
+     * Date object for manipulting dates and times.
+     *
+     * @property integer $year
+     * The year
+     * @property integer $month
+     * The month
+     * @property integer $day
+     * The day of the month
+     * @property integer $hour
+     * The hour
+     * @property integer $minute
+     * The minutes
+     * @property integer $second
+     * The seconds
+     */
     class date extends base{
         
         const SUNDAY = 0;
@@ -41,13 +64,32 @@ namespace adapt{
         const FRIDAY = 5;
         const SATURDAY = 6;
         
+        /** @ignore */
         protected $_year;
+        
+        /** @ignore */
         protected $_month;
+        
+        /** @ignore */
         protected $_day;
+        
+        /** @ignore */
         protected $_hour;
+        
+        /** @ignore */
         protected $_minute;
+        
+        /** @ignore */
         protected $_second;
         
+        /**
+         * Constructing
+         *
+         * @see self::set_date
+         * @access public
+         * @param string
+         * A string representing the date.
+         */
         public function __construct($date = null){
             parent::__construct();
             
@@ -57,56 +99,83 @@ namespace adapt{
         /*
          * Properties
          */
+        /** @ignore */
         public function aget_year(){
             return $this->_year;
         }
         
+        /** @ignore */
         public function aget_month(){
             return $this->_months;
         }
         
+        /** @ignore */
         public function aget_day(){
             return $this->_day;
         }
         
+        /** @ignore */
         public function aget_hour(){
             return $this->_hour;
         }
         
+        /** @ignore */
         public function aget_minute(){
             return $this->_minute;
         }
         
+        /** @ignore */
         public function aget_second(){
             return $this->_second;
         }
         
+        /** @ignore */
         public function aset_year($year){
             $this->_year = $year;
         }
         
+        /** @ignore */
         public function aset_month($month){
             $this->_month = $month;
         }
         
+        /** @ignore */
         public function aset_day($day){
             $this->_day = $day;
         }
         
+        /** @ignore */
         public function aset_hour($hour){
             $this->_hour = $hour;
         }
         
+        /** @ignore */
         public function aset_minute($minute){
             $this->_minute = $minute;
         }
         
+        /** @ignore */
         public function aset_second($second){
             $this->_second = $second;
         }
         
-        /*
-         * Setting functions
+        /**
+         * Set the date and or time
+         *
+         * When both params are missing this object is set to the current
+         * date time.
+         *
+         * When the second param is missing the format of $date is
+         * guessed.  For simple dates such as '2016-07-21' this function
+         * will work just fine.  In the case of '09/08/2016' the month and day
+         * could be either way around, m/d for US dates and d/m for UK dates, for
+         * this reason the second param should be provided.
+         *
+         * @access public
+         * @param string
+         * The date to use.
+         * @param string
+         * The pattern of the date, eg, 'Y-m-d H:i:s'
          */
         public function set_date($date = null, $pattern = null){
             $this->_year = 0;
@@ -140,8 +209,14 @@ namespace adapt{
             }
         }
         
-        /*
-         * Getter functions
+        /**
+         * Returns the date/time of this object
+         *
+         * @access public
+         * @param string
+         * Optional. The pattern the returned date should conform to.
+         * @return string
+         * The date and or time.
          */
         public function date($pattern = null){
             $time = mktime($this->_hour, $this->_minute, $this->_second, $this->_month, $this->_day, $this->_year);
@@ -153,8 +228,13 @@ namespace adapt{
             return $time;
         }
         
-        /*
-         * Test functions
+        /**
+         * Is the current date in the past?
+         *
+         * @access public
+         * @param boolean
+         * Should the time be taken into account?
+         * @return boolean
          */
         public function is_past($include_time = false){
             $now = null;
@@ -171,6 +251,14 @@ namespace adapt{
             return ($this->date('U') < \date('U', $now));
         }
         
+        /**
+         * Is the current date in the future?
+         *
+         * @access public
+         * @param boolean
+         * Should the time be taken into account?
+         * @return boolean
+         */
         public function is_future($include_time = false){
             $now = null;
             $date = null;
@@ -186,28 +274,62 @@ namespace adapt{
             return ($this->date('U') > \date('U', $now));
         }
         
+        /**
+         * Is the current date today?
+         *
+         * @access public
+         * @return boolean
+         */
         public function is_today(){
             return ($this->date('Ymd') == \date('Ymd'));
         }
         
+        /**
+         * Is the current day a working day?
+         *
+         * @access public
+         * @return boolean
+         */
         public function is_working_day(){
             return $this->is_weekday();
         }
         
+        /**
+         * Is the current date a weekend?
+         *
+         * @access public
+         * @return boolean
+         */
         public function is_weekend(){
             return in_array($this->date('w'), array(self::SUNDAY, self::SATURDAY));
         }
         
+        /**
+         * Is the current date a weekday?
+         *
+         * @access public
+         * @return boolean
+         */
         public function is_weekday(){
             return in_array($this->date('w'), array(self::MONDAY, self::TUESDAY, self::WEDNESDAY, self::THURSDAY, self::FRIDAY));
         }
         
+        /**
+         * Is the current year a leap year?
+         *
+         * @access public
+         * @return boolean
+         */
         public function is_leap_year(){
             return checkdate(2, 29, $this->_year);
         }
         
-        /*
-         * Helper functions
+        /**
+         * Returns an array containing the days in each month for
+         * the current year.
+         *
+         * @access public
+         * @return array
          */
         public function days_in_month(){
             $months = array(
@@ -228,6 +350,12 @@ namespace adapt{
             return $months[$this->_month];
         }
         
+        /**
+         * How many working days are in the current month?
+         *
+         * @access publi
+         * @return boolean
+         */
         public function working_days_in_month(){
             $c = new \adapt\date($this->date());
             $count = 0;
@@ -239,8 +367,13 @@ namespace adapt{
             return $count;
         }
         
-        /*
-         * Movement functions
+        /**
+         * Go to the first day of the month
+         *
+         * @access public
+         * @param integer
+         * When specified the date is moved to the first $day of the month.
+         * 0 = Sunday, 6 = Saturday
          */
         public function goto_first_day($day = null){
             $this->_day = 1;
@@ -252,6 +385,14 @@ namespace adapt{
             }
         }
         
+        /**
+         * Go to the last day of the month
+         *
+         * @access public
+         * @param integer
+         * When specified the date is moved to the last $day of the month.
+         * 0 = Sunday, 6 = Saturday
+         */
         public function goto_last_day($day = null){
             $this->_day = $this->days_in_month();
             
@@ -262,18 +403,41 @@ namespace adapt{
             }
         }
         
+        /**
+         * Go to the first working day of the month
+         *
+         * @access public
+         * @param integer
+         * When specified the date is moved to the first working $day of the month.
+         * 0 = Sunday, 6 = Saturday
+         */
         public function goto_first_working_day($day = null){
             $this->goto_first_day($day);
             
             while(!$this->is_working_day()) $this->goto_tomorrow();
         }
         
+        /**
+         * Go to the last working day of the month
+         *
+         * @access public
+         * @param integer
+         * When specified the date is moved to the last working $day of the month.
+         * 0 = Sunday, 6 = Saturday
+         */
         public function goto_last_working_day($day = null){
             $this->goto_last_day($day);
             
             while(!$this->is_working_day()) $this->goto_yesterday();
         }
         
+        /**
+         * Go to the next $day_of_week
+         *
+         * @access public
+         * @param integer
+         * 0 = Sunday, 6 = Saturday
+         */
         public function goto_next_day($day_of_week){
             $this->goto_tomorrow();
             if (($day_of_week >= self::SUNDAY) && ($day_of_week <= self::SATURDAY)){
@@ -289,16 +453,37 @@ namespace adapt{
             }
         }
         
+        /**
+         * Go to the second $day_of_week of the month
+         *
+         * @access public
+         * @param integer
+         * 0 = Sunday, 6 = Saturday
+         */
         public function goto_second_day($day_of_week){
             $this->goto_first_day($day_of_week);
             $this->goto_next_day($day_of_week);
         }
         
+        /**
+         * Go to the third $day_of_week of the month
+         *
+         * @access public
+         * @param integer
+         * 0 = Sunday, 6 = Saturday
+         */
         public function goto_third_day($day_of_week){
             $this->goto_second_day($day_of_week);
             $this->goto_next_day($day_of_week);
         }
         
+        /**
+         * Go to the second working $day_of_week of the month
+         *
+         * @access public
+         * @param integer
+         * 0 = Sunday, 6 = Saturday
+         */
         public function goto_second_working_day($day_of_week){
             $this->goto_second_day($day_of_week);
             while(!$this->is_working_day()){
@@ -306,6 +491,13 @@ namespace adapt{
             }
         }
         
+        /**
+         * Go to the third working $day_of_week of the month
+         *
+         * @access public
+         * @param integer
+         * 0 = Sunday, 6 = Saturday
+         */
         public function goto_third_working_day($day_of_week){
             $this->goto_third_day($day_of_week);
             while(!$this->is_working_day()){
@@ -313,6 +505,14 @@ namespace adapt{
             }
         }
         
+        /**
+         * Move forward or backward the number of $days
+         *
+         * @access public
+         * @param integer
+         * When positive moves forward by the number of $days,
+         * when negative moves backwords by the number of $days
+         */
         public function goto_days($days){
             if ($days < 0){
                 for($i = $days; $i < 0; $i++){
@@ -325,7 +525,14 @@ namespace adapt{
             }
         }
         
-        
+        /**
+         * Move forward or backward the number of working $days
+         *
+         * @access public
+         * @param integer
+         * When positive moves forward by the number of working $days,
+         * when negative moves backwords by the number of working $days
+         */
         public function goto_working_days($days){
             if ($days < 0){
                 while ($days != 0){
@@ -340,6 +547,14 @@ namespace adapt{
             }
         }
         
+        /**
+         * Move forward or backward the number of $months
+         *
+         * @access public
+         * @param integer
+         * When positive moves forward by the number of $months,
+         * when negative moves backwords by the number of $months
+         */
         public function goto_months($months){
             if ($months < 0){
                 for($i = $months; $i < 0; $i++){
@@ -360,6 +575,14 @@ namespace adapt{
             }
         }
         
+        /**
+         * Move forward or backward the number of $years
+         *
+         * @access public
+         * @param integer
+         * When positive moves forward by the number of $years,
+         * when negative moves backwords by the number of $years
+         */
         public function goto_years($years){
             if ($years < 0){
                 for($i = $years; $i < 0; $i++){
@@ -372,6 +595,11 @@ namespace adapt{
             }
         }
         
+        /**
+         * Move forward one day
+         *
+         * @access public
+         */
         public function goto_tomorrow(){
             $this->_day++;
             if ($this->_day > $this->days_in_month()){
@@ -384,6 +612,12 @@ namespace adapt{
             }
         }
         
+        
+        /**
+         * Move backwards one day
+         *
+         * @access public
+         */
         public function goto_yesterday(){
             $this->day--;
             if ($this->_day < 1){
@@ -396,6 +630,11 @@ namespace adapt{
             }
         }
         
+        /**
+         * Move forward one month
+         *
+         * @access public
+         */
         public function goto_next_month(){
             $this->_month++;
             if ($this->_month > 12){
@@ -404,6 +643,12 @@ namespace adapt{
             }
         }
         
+        
+        /**
+         * Move backwards one month
+         *
+         * @access public
+         */
         public function goto_last_month(){
             $this->_month--;
             if ($this->_month < 1){
@@ -412,19 +657,42 @@ namespace adapt{
             }
         }
         
+        /**
+         * Move forward one year
+         *
+         * @access public
+         */
         public function goto_next_year(){
             $this->_year++;
         }
         
+        /**
+         * Move backwards one year
+         *
+         * @access public
+         */
         public function goto_last_year(){
             $this->_year--;
         }
         
+        /**
+         * Move forward one working day
+         *
+         * @access public
+         */
         public function goto_next_working_day(){
             $this->goto_tomorrow();
             while (!$this->is_working_day()) $this->goto_tomorrow();
         }
         
+        /**
+         * Move forward or backward the number of $hours
+         *
+         * @access public
+         * @param integer
+         * When positive moves forward by the number of $hours,
+         * when negative moves backwords by the number of $hours
+         */
         public function goto_hours($hours){
             if ($hours < 0){
                 if ($hours < -23){
@@ -455,6 +723,14 @@ namespace adapt{
             }
         }
         
+        /**
+         * Move forward or backward the number of $minutes
+         *
+         * @access public
+         * @param integer
+         * When positive moves forward by the number of $minutes,
+         * when negative moves backwords by the number of $minutes
+         */
         public function goto_minutes($minutes){
             if ($minutes < 0){
                 if ($minutes < -59){
@@ -485,6 +761,14 @@ namespace adapt{
             }
         }
         
+        /**
+         * Move forward or backward the number of $seconds
+         *
+         * @access public
+         * @param integer
+         * When positive moves forward by the number of $seconds,
+         * when negative moves backwords by the number of $seconds
+         */
         public function goto_seconds($seconds){
             if ($seconds < 0){
                 if ($seconds < -59){
@@ -515,8 +799,17 @@ namespace adapt{
             }
         }
         
-        /*
-         * Static functions
+        /**
+         * Makes a pattern for a specified datetime.
+         *
+         * Providing the value **2016-07-21 17:11:17** would return
+         * **Y-m-d H:i:s**
+         * 
+         * @access public
+         * @param string
+         * The date and or time to make a pattern from.
+         * @return string
+         * The generated pattern.
          */
         public static function make_pattern($string_datetime){ //TODO: Test
             $pattern = $string_datetime;
@@ -591,6 +884,17 @@ namespace adapt{
             return $pattern;
         }
         
+        /**
+         * Converts a date from one format to another.
+         *
+         * @access public
+         * @param string
+         * The input pattern
+         * @param string
+         * The output pattern
+         * @return string
+         * The converted date and or time.
+         */
         public static function convert_date($input_pattern, $output_pattern, $value){
             $chars = str_split($input_pattern);
             $date = array(
@@ -836,12 +1140,13 @@ namespace adapt{
             return date($output_pattern, mktime($date['hour'], $date['minutes'], $date['seconds'], $date['month'], $date['day_of_month'], $date['year']));
         }
         
+        /** @ignore */
         public static function convert_format($format_name){
             /*
              * TO BE REMOVED
              * The data types have been updated to carry
              * the pattern directly within them, so I guess
-             * this function is obsolte
+             * this function is obsolete
              */
             /*
              * Takes a format name such as uk_datetime

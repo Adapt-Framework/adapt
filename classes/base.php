@@ -48,8 +48,26 @@ namespace adapt{
      * Many properties of this class are shared between all
      * instances of this class, allowing easy data sharing
      * as well as keeping resources to a minimum.
-     * 
      *
+     * @property-read integer $instance_id
+     * A unique instance ID
+     * @property string|xml|html|view|page $dom
+     * Shared property allowing access to the DOM.
+     * @property data_source $data_source
+     * Shared property allow access to the data source.
+     * @property storage_file_system $file_store
+     * Shared property allowing access to file storage.
+     * @property cache $cache
+     * Shared property providing access to the cache
+     * @property bundles $bundles
+     * Shared property giving access to the bundle management system.
+     * @property-read array $request
+     * Shared property, equivilant to $_REQUEST
+     * @property-read array $response
+     * Shared property giving access to the response.  Think of this as the opposite
+     * to $_REQUEST.
+     * @property sanitizer $sanitize
+     * Shared property giving access to the sanitizer.
      */
     class base{
         
