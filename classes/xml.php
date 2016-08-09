@@ -429,12 +429,12 @@ namespace adapt{
             if (is_string($data) && self::is_xml($data)){
                 
                 /* We are going to use SimpleXML to parse the data */
-                //$sxml = simplexml_load_string($data);
-                //$xml = new xml((string)$sxml->getName());
+                $sxml = simplexml_load_string($data);
+                $xml = new xml((string)$sxml->getName());
                 
-                //self::SimpleXML2xml($xml, $sxml);
+                self::SimpleXML2xml($xml, $sxml);
                 
-                //return $xml;
+                return $xml;
             }
             
             
