@@ -68,11 +68,11 @@ namespace adapt{
         /*
          * Properties
          */
-        public function aget_tag(){
+        public function pget_tag(){
             return $this->_tag;
         }
         
-        public function aset_tag($tag){
+        public function pset_tag($tag){
             if (!is_null($tag) && is_string($tag) && mb_trim($tag) != ""){
                 if (mb_strpos($tag, ":")){
                     list($this->_namespace, $this->_tag) = explode(":", $tag);
@@ -82,27 +82,27 @@ namespace adapt{
             }
         }
         
-        public function aget_namespace(){
+        public function pget_namespace(){
             return $this->_namespace;
         }
         
-        public function aset_namespace($namespace){
+        public function pset_namespace($namespace){
             $this->_namespace = $namespace;
         }
         
-        public function aget_parent(){
+        public function pget_parent(){
             return $this->_parent;
         }
         
-        public function aset_parent($parent){
+        public function pset_parent($parent){
             $this->_parent = $parent;
         }
         
-        public function aget_text(){
+        public function pget_text(){
             return $this->value();
         }
         
-        public function aget_attributes(){
+        public function pget_attributes(){
             return $this->_attributes;
         }
         
@@ -429,12 +429,12 @@ namespace adapt{
             if (is_string($data) && self::is_xml($data)){
                 
                 /* We are going to use SimpleXML to parse the data */
-                $sxml = simplexml_load_string($data);
-                $xml = new xml((string)$sxml->getName());
+                //$sxml = simplexml_load_string($data);
+                //$xml = new xml((string)$sxml->getName());
                 
-                self::SimpleXML2xml($xml, $sxml);
+                //self::SimpleXML2xml($xml, $sxml);
                 
-                return $xml;
+                //return $xml;
             }
             
             

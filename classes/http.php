@@ -269,9 +269,13 @@ namespace adapt{
                         
                         if ($correct_domain && $correct_path){
                             /* Check the exipry time */
-                            $date = new date($cookie['expires']);
-                            
-                            if ($date->is_future(true)){
+                            if ($cookie['expires']){
+                                $date = new date($cookie['expires']);
+                                
+                                if ($date->is_future(true)){
+                                    $expired = false;
+                                }
+                            }else{
                                 $expired = false;
                             }
                         }
@@ -287,29 +291,37 @@ namespace adapt{
                         }
                     }
                     
+                    /* Are we posting? */
+                    $payload = "";
+                    
+                    if ($type == "post"){
+                        /* Add the data */
+                        if(is_assoc($data)){
+                            $first = true;
+                            foreach($data as $key => $value){
+                                $key = urlencode($key);
+                                $value = urlencode($value);
+                                if (!$first){
+                                    $payload .= "&";
+                                }
+                                $payload .= "{$key}={$value}";
+                                $first = false;
+                            }
+                        }else{
+                            $payload .= $data;
+                        }
+                        
+                        if (strlen($payload)){
+                            $headers['Content-Length'] = strlen($payload);
+                        }
+                    }
+                    
                     /* Add the headers to the request */
                     foreach($headers as $key => $value){
                         $request .= "{$key}: {$value}\r\n";
                     }
                     
-                    $request .= "\r\n";
-                    
-                    /* Add the data */
-                    if (is_string($data)){
-                        $request .= $data;
-                    }elseif(is_assoc($data)){
-                        //TODO: Url encode key pairs
-                        $first = true;
-                        foreach($data as $key => $value){
-                            $key = urlencode($key);
-                            $value = urlencode($value);
-                            if (!$first){
-                                $request .= "&";
-                            }
-                            $request .= "{$key}={$value}";
-                            $first = false;
-                        }
-                    }
+                    $request .= "\r\n" . $payload;
                     
                     /* Send the request */
                     fwrite($socket, $request, strlen($request));
@@ -338,6 +350,7 @@ namespace adapt{
                         /* Parse and store any cookies in the cookie jar */
                         if (isset($output['headers']['set-cookie'])){
                             $cookies = $output['headers']['set-cookie'];
+                            
                             if (!is_array($cookies)) $cookies = array($cookies);
                             foreach($cookies as $cookie){
                                 $parts = explode(";", $cookie);
@@ -347,7 +360,8 @@ namespace adapt{
                                 $value = trim($value);
                                 $meta = array(
                                     'name' => $name,
-                                    'value' => $value
+                                    'value' => $value,
+                                    'domain' => $url['host']
                                 );
                                 if (count($parts) > 0){
                                     for($i = 1; $i < count($parts); $i++){
@@ -489,7 +503,7 @@ namespace adapt{
                 $handle = fsockopen($host, $port, $error_number, $error_string, $this->timeout);
                 
                 if ($use_ssl){
-                    if (false == stream_socket_enable_crypto($handle, true, STREAM_CRYPTO_METHOD_SSLv3_CLIENT)){
+                    if (false == stream_socket_enable_crypto($handle, true)){
                         $this->error('Failed to initialise SSL');
                         return null;
                     }

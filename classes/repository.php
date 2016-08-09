@@ -23,7 +23,7 @@ namespace adapt{
             }
         }
         
-        public function request($uri){
+        protected function _request($uri){
             $response =  $this->_http->get($this->_url . $uri);
             
             if ($response['status'] == 200 && $response['headers']['content-type'] == "application/xml"){
@@ -31,7 +31,24 @@ namespace adapt{
                 if ($content instanceof xml){
                     if (!isset($this->_session_token)){
                         $this->_session_token = $content->find('repository')->attr('session-key');
-                        //print new html_pre("Using session: " . $this->_session_token);
+                    }
+                    
+                    return $content;
+                }
+            }
+            
+            return false;
+        }
+        
+        protected function _post($uri, $data, $content_type = "application/xml"){
+            $response = $this->_http->post($this->_url . $uri, $data, ['content-type' => $content_type]);
+            //print_r($response);
+            if ($response['status'] == 200 && $response['headers']['content-type'] == "application/xml"){
+                $content = xml::parse($response['content']);
+                if ($content instanceof xml){
+                    if (!isset($this->_session_token)){
+                        $this->_session_token = $content->find('repository')->attr('session-key');
+                        
                     }
                     
                     return $content;
@@ -42,11 +59,90 @@ namespace adapt{
         }
         
         public function login($username, $password){
+            $uri = "?actions=api/login";
+            $data = new xml_action(
+                [
+                    new xml_username($username),
+                    new xml_password($password)
+                ],
+                ['name' => 'api/login']
+            );
             
+            $response = $this->_post($uri, new xml_adapt_framework($data));
+            
+            if ($response !== false){
+                if ($response instanceof xml){
+                    if ($response->find('[name="api/login"] success')->size() == 1){
+                        return true;
+                    }else{
+                        return false;
+                    }
+                }
+            }
+            
+            return false;
         }
         
-        public function get_dependency_list($bundle_name, $bundle_versions = array()){
+        public function post($bundle_file){
+            if (file_exists($bundle_file)){
+                $content = file_get_contents($bundle_file);
+                
+                if ($content){
+                    $uri = "?actions=api/bundles/post";
+                    
+                    $response = $this->_post($uri, $content, "application/octet-stream");
+                    print $response;
+                }else{
+                    $this->error("Unable to read file or file is empty");
+                }
+            }else{
+                $this->error('File not found');
+            }
             
+            return false;
+        }
+        
+        public function get_dependency_list($bundle_name, $bundle_version){
+            if (preg_match("/^[a-zA-Z]+[-_a-zA-Z0-9]+[a-zA-Z0-9]+$/", $bundle_name)){
+                
+                $uri = "/bundles/{$bundle_name}";
+                if ($bundle_version){
+                    if (preg_match("/^[0-9]+(\.[0-9]+){0,2}$/", $bundle_version)){
+                        $uri .= "/{$bundle_version}";
+                    }else{
+                        $this->error("Invalid bundle version '{$bundle_version}'");
+                        return false;
+                    }
+                }else{
+                    $uri .= "/latest";
+                }
+                
+                $response = $this->_request($uri);
+                
+                if ($response !== false){
+                    $output = [];
+                    
+                    $depends_on = $response->find('depends_on bundle')->get();
+                    foreach($depends_on as $dependency){
+                        $output[] = [
+                            'name' => $dependency->find('name')->text(),
+                            'version' => $dependency->find('version')->text()
+                        ];
+                    }
+                    
+                    return $output;
+                }else{
+                    $this->error("Bundle not found");
+                    return false;
+                }
+                
+                
+            }else{
+                $this->error("Invalid bundle name '{$bundle_name}'");
+                return false;
+            }
+            
+            return false;
         }
         
         public function get_works_with_list($bundle_name, $bundle_versions = array()){
@@ -68,7 +164,7 @@ namespace adapt{
                     $uri .= "/latest";
                 }
                 
-                $response = $this->request($uri);
+                $response = $this->_request($uri);
                 //print $response->find('bundles > bundle > version')->get(0)->get(0);
                 return $response->find('bundles > bundle > version')->get(0)->get(0);
                 
@@ -96,7 +192,7 @@ namespace adapt{
                 $bundle_types = [];
                 $uri = "/bundle-types";
                 
-                $data = $this->request($uri);
+                $data = $this->_request($uri);
                 
                 if ($data instanceof xml){
                     $type_nodes = $data->find('bundle_type')->get();
