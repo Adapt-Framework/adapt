@@ -29,9 +29,12 @@ namespace adapt{
         protected $_local_config_handlers;
         protected $_local_install_handlers;
         
+        protected $_config_handlers_to_process;
+        
         public function __construct($name, $data){
             $this->_local_config_handlers = array();
             $this->_local_install_handlers = array();
+            $this->_config_handlers_to_process = array();
             $this->_has_changed = false;
             $this->_is_loaded = false;
             $this->load($name, $data);
@@ -556,22 +559,41 @@ namespace adapt{
                             break;
                         default:
                             /* Do we have a handler to handle the tag? */
-                            $handlers = $this->store("adapt.config_handlers");
-                            print "<pre>CONFIG HANDLERS: " . print_r($handlers, true) . "</pre>";
-                            if (is_array($handlers) && isset($handlers[$child->tag])){
-                                
-                                $handler = $handlers[$child->tag];
-                                
-                                $bundle = $this->bundles->load_bundle($handler['bundle_name']);
-                                if ($bundle instanceof bundle && $bundle->name == $handler['bundle_name']){
-                                    $function = $handler['function'];
-                                    
-                                    if (method_exists($bundle, $function)){
-                                        $bundle->$function($this, $child);
-                                    }
-                                    
-                                }
+                            
+                            /**
+                             * The boot and install process require bundles to
+                             * be processed in a particular order, loading does
+                             * not, and so some config handlers may not
+                             * have been defined at this point.
+                             *
+                             * This is a great BIG BUG!
+                             */
+                            
+                            //$handlers = $this->store("adapt.config_handlers") ?: [];
+                            
+                            if (!is_array($this->_config_handlers_to_process)) $this->_config_handlers_to_process = [];
+                            
+                            if (!is_array($this->_config_handlers_to_process[$child->tag])){
+                                $this->_config_handlers_to_process[$child->tag] = [];
                             }
+                            
+                            $this->_config_handlers_to_process[$child->tag][] = $child;
+                            
+                            //print "<pre>CONFIG HANDLERS: " . print_r($handlers, true) . "</pre>";
+                            //if (is_array($handlers) && isset($handlers[$child->tag])){
+                            //    if (!is_array($handlers[$child->tag]['actions'])){
+                            //        $handlers[$child->tag]['actions'] = [];
+                            //    }
+                            //    
+                            //    $handlers[$child->tag]['actions'][] = $child;
+                            //}else{
+                            //    $handlers[$child->tag] = [];
+                            //    $handlers[$child->tag]['actions'] = [$child];
+                            //    
+                            //}
+                            //$this->store('adapt.config_handlers', $handlers);
+                            
+                            
                             break;
                         }
                         
@@ -713,6 +735,7 @@ namespace adapt{
         }
         
         public function install(){
+            //print "<pre>Calling install for {$this->name}</pre>";
             if (!$this->is_installed()){
                 if (is_array($this->_schema) && $this->data_source instanceof data_source_sql){
                     /*
@@ -1140,6 +1163,10 @@ namespace adapt{
                                                 $value = new sql_now();
                                             }
                                             
+                                            if ($field_name == 'guid'){
+                                                $value = guid();
+                                            }
+                                            
                                             if ($field_name == "bundle_name"){
                                                 $value = $this->name;
                                             }
@@ -1175,13 +1202,53 @@ namespace adapt{
                     }
                 }
                 
+                // Process config handlers
+                //$handlers = $this->store("adapt.config_handlers") ?: [];
+                //foreach($handlers as $tag => $handler){
+                //    print "<pre>Handling tag {$tag}:{$handler['bundle_name']}:{$handler['function']}</pre>";
+                //    $bundle = $this->bundles->load_bundle($handler['bundle_name']);
+                //    if ($bundle instanceof bundle && $bundle->name == $handler['bundle_name']){
+                //        $function = $handler['function'];
+                //        
+                //        if (method_exists($bundle, $function)){
+                //            foreach($handler['actions'] as $child){
+                //                $bundle->$function($this, $child);
+                //            }
+                //            unset($handler['actions']);
+                //        }
+                //        
+                //    }
+                
+                /* Process config handlers */
+                $handlers = $this->store("adapt.config_handlers") ?: [];
+                foreach($this->_config_handlers_to_process as $tag => $children){
+                    //print "<pre>Seeking handler for {$tag}</pre>";
+                    //print "<pre>" . print_r($handlers, true) . "</pre>";
+                    if (is_array($handlers[$tag])){
+                        //print "<pre>foo</pre>";
+                        $bundle = $this->bundles->load_bundle($handlers[$tag]['bundle_name']);
+                        if ($bundle instanceof bundle && $bundle->name == $handlers[$tag]['bundle_name']){
+                            //print "<pre>bar</pre>";
+                            $function = $handlers[$tag]['function'];
+                            
+                            if (method_exists($bundle, $function)){
+                                foreach($children as $child){
+                                    //print "<pre>foobar {$child->tag}</pre>";
+                                    $bundle->$function($this, $child);
+                                }
+                            }
+                        }
+                    }
+                
+                }
+                
                 //print "<pre>" . print_r($this->_schema, true) . "</pre>";
                 
                 /* Add the bundle to bundle_version if it isn't already */
                 $model = new model_bundle_version();
                 if (!$model->load_by_name_and_version($this->name, $this->version)){
                     $errors = $model->errors(true);
-                    print "<pre>" . print_r($errors, true) . "</pre>";
+                    //print "<pre>" . print_r($errors, true) . "</pre>";
                     foreach($errors as $error) $this->error("Model 'bundle_version' return the error \"{$error}\"");
                 }
                 
@@ -1192,8 +1259,8 @@ namespace adapt{
                 $model->installed = "Yes";
                 if ($model->save()){
                     $errors = $model->errors(true);
-                    print "<pre>" . print_r($errors, true) . "</pre>";
-                    print "<pre>Saved {$this->name}-{$this->version}</pre>";
+                    //print "<pre>" . print_r($errors, true) . "</pre>";
+                    //print "<pre>Saved {$this->name}-{$this->version}</pre>";
                     $this->_is_installed = true;
                     $this->bundles->set_bundle_installed($this->name, $this->version);
                     

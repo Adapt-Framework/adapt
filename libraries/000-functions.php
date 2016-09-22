@@ -87,6 +87,42 @@ function q($string){
     return "\"\"";
 }
 
-
+/**
+* Returns a GUIDv4 string
+*
+* Uses the best cryptographically secure method 
+* for all supported platforms with fallback to an older, 
+* less secure version.
+*
+* @author Dave Pearson - via PHP.net
+* @param bool $trim
+* @return string
+*/
+function guid(){
+    if (function_exists('com_create_guid')){
+        return trim(com_create_guid(), '{}');
+    }
+    
+    if (function_exists('openssl_random_pseudo_bytes')){
+        $data = openssl_random_pseudo_bytes(16);
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }
+    
+    mt_srand((double)microtime() * 10000);
+    $charid = strtolower(md5(uniqid(rand(), true)));
+    $hyphen = chr(45);
+    $lbrace = $trim ? "" : chr(123);
+    $rbrace = $trim ? "" : chr(125);
+    $guidv4 = $lbrace .
+        substr($charid,  0,  8).$hyphen .
+        substr($charid,  8,  4).$hyphen .
+        substr($charid, 12,  4).$hyphen .
+        substr($charid, 16,  4).$hyphen .
+        substr($charid, 20, 12) .
+        $rbrace;
+    return $guidv4;
+}
 
 ?>

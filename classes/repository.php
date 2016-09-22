@@ -84,7 +84,7 @@ namespace adapt{
                     //print "Failed to write to temp";
                     $this->error('Unable to write to temp directory: ' . TEMP_PATH);
                 }
-                break;
+                //break;
             }else{
                 $this->error("Received {$response['status']} from the repository.");
             }

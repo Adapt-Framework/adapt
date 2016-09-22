@@ -27,6 +27,8 @@
  */
 
 namespace adapt{
+
+    use Exception;
     
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
@@ -74,7 +76,7 @@ namespace adapt{
         
         public function aset_tag($tag){
             if (!is_null($tag) && is_string($tag) && mb_trim($tag) != ""){
-                if (mb_strpos($tag, ":")){
+                if (\mb_strpos($tag, ":")){
                     list($this->_namespace, $this->_tag) = explode(":", $tag);
                 }else{
                     $this->_tag = $tag;

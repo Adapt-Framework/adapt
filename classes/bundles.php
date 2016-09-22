@@ -700,7 +700,7 @@ namespace adapt{
                 
                 $bundle_data = file_get_contents($bundle_path);
                 
-                if ($bundle_data && xml::is_xml($bundle_data)){
+                if ($bundle_data /*&& xml::is_xml($bundle_data)*/){
                     
                     $data = xml::parse($bundle_data);
                     

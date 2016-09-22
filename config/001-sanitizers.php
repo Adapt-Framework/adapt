@@ -57,6 +57,7 @@ namespace adapt{
     $adapt->sanitize->add_validator('text', ".*");
     $adapt->sanitize->add_validator('mediumtext', ".*");
     $adapt->sanitize->add_validator('longtext', ".*");
+    $adapt->sanitize->add_validator('guid', ".*");
     
     /* Dates and times */
     $adapt->sanitize->add_validator('year', "^[0-9]{4,4}$");
