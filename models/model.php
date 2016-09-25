@@ -243,54 +243,11 @@ namespace adapt{
             }
             
             return $return;
-            
-            $return = null;
-            
-            $fields = array_keys($this->_data);
-                
-            if (in_array($key, $fields)){
-                
-                /* Unformat the value */
-                $value = $this->data_source->unformat($this->table_name, $key, $value);
-                
-                /* Has the value changed? */
-                if ($this->_data[$key] != $value){
-                    
-                    /* Is the new value valid? */
-                    if ($this->data_source->validate($this->_table_name, $key, $value)){
-                        $this->_has_changed = true;
-                        $this->_changed_fields[$key] = array(
-                            'old_value' => $this->_data[$key],
-                            'new_value' => $value
-                        );
-                        
-                        $this->_data[$key] = $value;
-                        
-                    }else{
-                        $errors = $this->data_source->errors(true);
-                        foreach($errors as $error) $this->error($error);
-                    }
-                    
-                }
-                
-            }else{
-                $return = parent::__set($key, $value);
-            }
-            
-            return $return;
         }
         
         public function _get_data(){
             return $this->_data;
         }
-        
-        //public function data($key, $value = null){
-        //    if (is_null($value)){
-        //        return $this->_data[$key];
-        //    }else{
-        //        $this->_data[$key] = $value;
-        //    }
-        //}
         
         /*
          * Child functions

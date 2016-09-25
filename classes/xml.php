@@ -70,7 +70,7 @@ namespace adapt{
         /*
          * Properties
          */
-        public function aget_tag(){
+        public function pget_tag(){
             return $this->_tag;
         }
         
@@ -84,27 +84,27 @@ namespace adapt{
             }
         }
         
-        public function aget_namespace(){
+        public function pget_namespace(){
             return $this->_namespace;
         }
         
-        public function aset_namespace($namespace){
+        public function pset_namespace($namespace){
             $this->_namespace = $namespace;
         }
         
-        public function aget_parent(){
+        public function pget_parent(){
             return $this->_parent;
         }
         
-        public function aset_parent($parent){
+        public function pset_parent($parent){
             $this->_parent = $parent;
         }
         
-        public function aget_text(){
+        public function pget_text(){
             return $this->value();
         }
         
-        public function aget_attributes(){
+        public function pget_attributes(){
             return $this->_attributes;
         }
         

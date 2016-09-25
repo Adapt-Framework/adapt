@@ -501,9 +501,25 @@ namespace adapt{
                                                                 if ($field instanceof xml){
                                                                     $field_name = $field->tag;
                                                                     
-                                                                    if ($field->attr('get-from') && $field->attr('where-name-is')){
+                                                                    $field_attributes = $field->attributes;
+                                                                    $field_attribute_keys = array_keys($field_attributes);
+                                                                    
+                                                                    if (in_array('get-from', $field_attribute_keys)){
+                                                                        $lookup = [
+                                                                            '_lookup_table' => $field->attr('get-from'),
+                                                                            '_lookup_field' => null,
+                                                                            '_lookup_value' => null
+                                                                        ];
                                                                         
-                                                                        $current_record[$field_name] = array('_lookup_table' => $field->attr('get-from'), '_lookup_name' => $field->attr('where-name-is'));
+                                                                        foreach($field_attribute_keys as $key){
+                                                                            $matches = [];
+                                                                            if (preg_match("/^where-([_a-zA-Z0-9]+)-is$/", $key, $matches)){
+                                                                                $lookup['_lookup_field'] = $matches[1];
+                                                                                $lookup['_lookup_value'] = $field->attr($matches[0]);
+                                                                            }
+                                                                        }
+                                                                        
+                                                                        $current_record[$field_name] = $lookup;
                                                                     }else{
                                                                         $field_value = $field->get(0);
                                                                         $current_record[$field_name] = $field_value;
@@ -833,7 +849,7 @@ namespace adapt{
                                                 'label' => $attributes['label'],
                                                 'placeholder_label' => $attributes['placeholder_label'],
                                                 'description' => $attributes['description'],
-                                                'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_name' => $attributes['data_type']),
+                                                'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_field' => 'name', '_lookup_value' => $attributes['data_type']),
                                                 'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
                                                 'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
                                                 'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",
@@ -938,7 +954,7 @@ namespace adapt{
                                                 'label' => $attributes['label'],
                                                 'placeholder_label' => $attributes['placeholder_label'],
                                                 'description' => $attributes['description'],
-                                                'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_name' => $attributes['data_type']),
+                                                'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_field' => 'name', '_lookup_value' => $attributes['data_type']),
                                                 'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
                                                 'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
                                                 'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",
@@ -969,7 +985,7 @@ namespace adapt{
                                             'label' => 'Date created',
                                             'placeholder_label' => null,
                                             'description' => 'Date the record was created',
-                                            'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_name' => 'datetime'),
+                                            'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_field' => 'name', '_lookup_value' => 'datetime'),
                                             'primary_key' => 'No',
                                             'signed' => 'No',
                                             'nullable' => 'Yes',
@@ -993,7 +1009,7 @@ namespace adapt{
                                             'label' => 'Date modified',
                                             'placeholder_label' => null,
                                             'description' => 'Date the record was modified',
-                                            'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_name' => 'timestamp'),
+                                            'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_field' => 'name', '_lookup_value' => 'timestamp'),
                                             'primary_key' => 'No',
                                             'signed' => 'No',
                                             'nullable' => 'Yes',
@@ -1017,7 +1033,7 @@ namespace adapt{
                                             'label' => 'Date deleted',
                                             'placeholder_label' => null,
                                             'description' => 'Date the record was deleted',
-                                            'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_name' => 'datetime'),
+                                            'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_field' => 'name', '_lookup_value' => 'datetime'),
                                             'primary_key' => 'No',
                                             'signed' => 'No',
                                             'nullable' => 'Yes',
@@ -1146,16 +1162,19 @@ namespace adapt{
                                             $value = $row[$field_name];
                                             if (is_array($value)){
                                                 if (isset($value['_lookup_table'])){
-                                                    $result = $this->data_source->sql
+                                                    
+                                                    $sql = $this->data_source->sql
                                                         ->select($value['_lookup_table'] . '_id')
                                                         ->from($value['_lookup_table'])
                                                         ->where(
                                                             new sql_and(
                                                                 new sql_cond('date_deleted', sql::IS, new sql_null()),
-                                                                new sql_cond('name', sql::EQUALS, sql::q($value['_lookup_name']))
+                                                                new sql_cond($value['_lookup_field'], sql::EQUALS, sql::q($value['_lookup_value']))
                                                             )
-                                                        )->execute()
-                                                        ->results(60 * 60 * 24 * 5); //Cache for 5 days
+                                                        );
+                                                    print new html_pre($sql);
+                                                    $result = $sql->execute(60 * 60 * 24 * 5)->results();
+                                                    print new html_pre(print_r($result, true));
                                                     $value = $result[0][$value['_lookup_table'] . "_id"];
                                                 }
                                             }
