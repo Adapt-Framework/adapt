@@ -74,6 +74,11 @@ namespace adapt{
         const EVENT_ON_LOAD_BY_DATA = 'model.on_load_by_data';
         
         /**
+         * Fired when a model is loaded by GUID
+         */
+        const EVENT_ON_LOAD_BY_GUID = 'model.on_load_by_guid';
+        
+        /**
          * Fired when a model is saved
          */
         const EVENT_ON_SAVE = 'model.on_save';
@@ -330,41 +335,6 @@ namespace adapt{
                     
                     
                 }
-            }
-            
-            return $return;
-            
-            $return = null;
-            
-            $fields = array_keys($this->_data);
-                
-            if (in_array($key, $fields)){
-                
-                /* Unformat the value */
-                $value = $this->data_source->unformat($this->table_name, $key, $value);
-                
-                /* Has the value changed? */
-                if ($this->_data[$key] != $value){
-                    
-                    /* Is the new value valid? */
-                    if ($this->data_source->validate($this->_table_name, $key, $value)){
-                        $this->_has_changed = true;
-                        $this->_changed_fields[$key] = array(
-                            'old_value' => $this->_data[$key],
-                            'new_value' => $value
-                        );
-                        
-                        $this->_data[$key] = $value;
-                        
-                    }else{
-                        $errors = $this->data_source->errors(true);
-                        foreach($errors as $error) $this->error($error);
-                    }
-                    
-                }
-                
-            }else{
-                $return = parent::__set($key, $value);
             }
             
             return $return;
@@ -724,6 +694,65 @@ namespace adapt{
         }
         
         /**
+         * Loads the model with the supplied guid
+         *
+         * @access public
+         * @param string
+         * The GUID
+         * @return boolean
+         * **true** is successful
+         */
+        public function load_by_guid($guid){
+            $this->initialise();
+            
+            /* Make sure name is set */
+            if (isset($guid)){
+                
+                /* We need to check this table has a guid field */
+                $fields = array_keys($this->_data);
+                
+                if (in_array('guid', $fields)){
+                    $sql = $this->data_source->sql;
+                    
+                    $sql->select(new sql('*'))
+                        ->from($this->table_name);
+                    
+                    /* Do we have a date_deleted field? */
+                    if (in_array('date_deleted', $fields)){
+                        
+                        $name_condition = new sql_cond('guid', sql::EQUALS, sql::q($guid));
+                        $date_deleted_condition = new sql_cond('date_deleted', sql::IS, new sql_null());
+                        
+                        $sql->where(new sql_and($name_condition, $date_deleted_condition));
+                        
+                    }else{
+                        
+                        $sql->where(new sql_cond('name', sql::EQUALS, sql::q($guid)));
+                    }
+                    
+                    /* Get the results */
+                    $results = $sql->execute()->results();
+                    
+                    if (count($results) == 1){
+                        $this->trigger(self::EVENT_ON_LOAD_GUID);
+                        return $this->load_by_data($results[0]);
+                    }elseif(count($results) == 0){
+                        $this->error("Unable to find a record with guid {$guid}");
+                    }elseif(count($results) > 1){
+                        $this->error(count($results) . " records found with guid '{$guid}'.");
+                    }
+                    
+                }else{
+                    $this->error('Unable to load by guid, this table has no \'guid\' field.');
+                }
+            }else{
+                $this->error('Unable to load by guid, no guid supplied');
+            }
+            
+            return false;
+        }
+        
+        /**
          * Loads the model with the supplied $data
          *
          * @access public
@@ -824,95 +853,6 @@ namespace adapt{
                             }
                         }
                     }
-                    
-                    //print new html_pre(print_r($relationships, true));
-                    
-                    /* Find all the references to this table */
-                    //$tables = array();
-                    //foreach($schema as $field){
-                    //    
-                    //    if ($field['referenced_table_name'] == $this->_table_name){
-                    //        foreach($keys as $key){
-                    //            if ($key == $field['referenced_field_name']){
-                    //                $tables[$field['table_name']] = $field['field_name'];
-                    //            }
-                    //        }
-                    //    }
-                    //}
-                    
-                    //print new html_pre("References for {$this->table_name}" . print_r($tables, true));
-                    
-                    /* Shoud we limit the tables we load? */
-                    //if (count($this->_auto_load_only_tables) > 0){
-                    //    $final_tables = array();
-                    //    foreach($tables as $table_name => $field){
-                    //        if (in_array($table_name, $this->_auto_load_only_tables)){
-                    //            $final_tables[$table_name] = $field;
-                    //        }
-                    //    }
-                    //    $tables = $final_tables;
-                    //}
-                    //print new html_pre(print_r($tables, true));
-                    /* Load the children */
-                    //foreach($tables as $table_name => $field_name){
-                    //    $sql = $this->data_source->sql;
-                    //    $sql->select('*');
-                    //    $sql->from($table_name);
-                    //    
-                    //    /*
-                    //     * Whats the relationship between the tables?
-                    //     */
-                    //    $relationship = $this->data_source->get_relationship($this->table_name, $table_name);
-                    //    
-                    //    if (is_array($relationship)){
-                    //        $field_key = $relationship['field1'];
-                    //        $where_sql = new sql_condition(new sql("{$relationship['field2']}"), ' = ', $this->$field_key);
-                    //    }else{
-                    //        $key = $keys[0];
-                    //        $where_sql = new sql_condition(new sql($key), ' = ', $this->$key);
-                    //    }
-                    //    
-                    //    
-                    //    
-                    //    /* Do we have a date_deleted field? */
-                    //    $date_deleted = $this->data_source->get_field_structure($table_name, 'date_deleted');
-                    //    
-                    //    if (is_array($date_deleted) && count($date_deleted) > 0){
-                    //        
-                    //        /* We need to add the date deleted field */
-                    //        $where_sql = new sql_and($where_sql, new sql_condition(new sql('date_deleted'), 'is', new sql('null')));
-                    //    }
-                    //    
-                    //    $sql->where($where_sql);
-                    //    
-                    //    /* Do we have a priority field? */
-                    //    $priority = $this->data_source->get_field_structure($table_name, 'priority');
-                    //    
-                    //    if (is_array($priority) && count($priority) > 0){
-                    //        
-                    //        $sql->order_by(new sql('priority'));
-                    //    }
-                    //    //print new html_pre($sql);
-                    //    /* Execute the statement */
-                    //    if ($sql->execute()){
-                    //        $results = $sql->results();
-                    //        
-                    //        /* Load the models */
-                    //        foreach($results as $result){
-                    //            $model = "model_" . $table_name;
-                    //            if (class_exists($model)){
-                    //                $model = new $model();
-                    //                if ($model instanceof \frameworks\adapt\model){
-                    //                    if ($model->load_by_data($result)){
-                    //                        /* Add the child */
-                    //                        $this->add($model);
-                    //                    }
-                    //                }
-                    //            }
-                    //        }
-                    //    }
-                    //    
-                    //}
                     
                 }
                 
@@ -1115,6 +1055,11 @@ namespace adapt{
                         /* Does this table have a date_modified field? */
                         if (in_array('date_modified', $fields)){
                             $this->_data['date_modified'] = new sql_now();
+                        }
+                        
+                        /* Does this table have a guid field? */
+                        if (in_array('guid', $fields)){
+                            $this->_data['guid'] = guid();
                         }
                         
                         $data_to_write = array();
@@ -1520,7 +1465,45 @@ namespace adapt{
          * A string containing the data in JSON format.
          */
         public function to_json(){
-            return json_encode($this->to_hash());
+            $output = [];
+            foreach($this->_data as $key => $value){
+                if ($value instanceof sql){
+                    $sql = new sql_null();
+                    if ($sql->render() == $value->render()){
+                        $hash[$key] = null;
+                    }
+                }elseif(is_null($value)){
+                    $hash[$key] = null;
+                }else{
+                    $hash[$key] = $this->data_source->format($this->table_name, $key, $value);
+                }
+            }
+            
+            $class = new \ReflectionClass(get_class($this));
+            foreach($class->getMethods(\ReflectionMethod::IS_PUBLIC) as $method){
+                $name = $method->name;
+                if (substr($name, 0, 5) == "mget_"){
+                    $key = substr($name, 5);
+                    $hash[$key] = $this->$name();
+                }
+            }
+            
+            $output[$this->table_name] = $hash;
+            
+            $children = $this->get();
+            
+            foreach($children as $child){
+                if ($child instanceof model){
+                    if (!isset($output[$child->table_name])){
+                        $output[$child->table_name] = [];
+                    }
+                    
+                    $hash = $child->to_hash();
+                    $output[$child->table_name][] = $hash[$child->table_name];
+                }
+            }
+            
+            return json_encode($output);
         }
         
         /** @ignore */

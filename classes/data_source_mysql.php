@@ -343,6 +343,17 @@ namespace adapt{
                     $params = $sql->functions[$function_name];
                     
                     switch($function_name){
+                    case "union":
+                        foreach($params as $param){
+                            if ($param instanceof \adapt\sql){
+                                if ($statement == ""){
+                                    $statement = "(" . $param . ")";
+                                }else{
+                                    $statement .= " UNION (" . $param . ")";
+                                }
+                            }
+                        }
+                        break;
                     case "and":
                     case "or":
                         foreach($params as $param){
@@ -928,6 +939,7 @@ namespace adapt{
                     if (isset($collation)) $statement .= " COLLATE={$collation}";
                     
                     $statement .= ";\n";
+                    //echo "<pre>" . $statement . "</pre>\n"; 
                     return $statement;
                 }
                 

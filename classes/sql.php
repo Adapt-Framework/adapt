@@ -133,6 +133,8 @@ namespace adapt{
                 $params = array_reverse($params);
                 
                 $allowed_functions = array(
+                    /* Unions */
+                    'union',
                     /* conditions */
                     'condition', 'cond', 'if',
                     /* Logical operators */

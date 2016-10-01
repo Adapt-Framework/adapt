@@ -218,7 +218,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -229,7 +229,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -240,7 +240,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -251,7 +251,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -262,7 +262,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -273,7 +273,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -284,7 +284,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -295,7 +295,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -306,7 +306,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -317,7 +317,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -328,7 +328,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -339,7 +339,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -350,7 +350,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -361,7 +361,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -372,7 +372,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -383,7 +383,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -394,7 +394,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -405,7 +405,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -416,7 +416,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -427,7 +427,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -438,7 +438,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -449,7 +449,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -460,7 +460,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -471,7 +471,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -482,7 +482,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -493,7 +493,7 @@
             <unformatter></unformatter>
             <datetime_format></datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -504,7 +504,7 @@
             <unformatter></unformatter>
             <datetime_format>Y</datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -515,7 +515,7 @@
             <unformatter></unformatter>
             <datetime_format>Y-m-d</datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -526,7 +526,7 @@
             <unformatter>time</unformatter>
             <datetime_format>H:i:s</datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -537,7 +537,7 @@
             <unformatter>datetime</unformatter>
             <datetime_format>Y-m-d H:i:s</datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
           </record>
           
           <record>
@@ -548,7 +548,18 @@
             <unformatter>datetime</unformatter>
             <datetime_format>Y-m-d H:i:s</datetime_format>
             <max_length></max_length>
-            
+            <based_on_data_type></based_on_data_type>
+          </record>
+          
+          <record>
+            <bundle_name>adapt</bundle_name>
+            <name>guid</name>
+            <validator>guid</validator>
+            <formatter></formatter>
+            <unformatter></unformatter>
+            <datetime_format></datetime_format>
+            <max_length></max_length>
+            <based_on_data_type>varchar(256)</based_on_data_type>
           </record>
           
         </table>

@@ -106,6 +106,9 @@ $adapt->file_store = new \adapt\storage_file_system();
 /* Set the cache */
 $adapt->cache = new \adapt\cache();
 
+/* Set the dom */
+$adapt->dom = new \adapt\page();
+
 /*
  * Is the current page cached?
  */

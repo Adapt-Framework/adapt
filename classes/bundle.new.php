@@ -1,126 +1,36 @@
 <?php
 
-/**
- * Adapt Framework
- *
- * The MIT License (MIT)
- *   
- * Copyright (c) 2016 Matt Bruton
- * Authored by Matt Bruton (matt.bruton@gmail.com)
- *   
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *   
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *   
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * @package     adapt
- * @author      Matt Bruton <matt.bruton@gmail.com>
- * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
- * @license     https://opensource.org/licenses/MIT     MIT License
- * @link        http://www.adpatframework.com
- *
- */
-
 namespace adapt{
     
     /* Prevent Direct Access */
     defined('ADAPT_STARTED') or die;
     
-    /**
-     * Controls access to the bundles bundle.xml, bundle installation
-     * and bundle booting.
-     *
-     * @property-read boolean $is_loaded
-     * Has the bundle.xml be parsed and loaded?
-     * @property string $label
-     * The label of this bundle.
-     * @property string $name
-     * The name of this bundle.
-     * @property string $version
-     * The version of this bundle.
-     * @property string $type
-     * The type of bundle.
-     * @property string $namespace
-     * The namespace of this bundle.
-     * @property string $description
-     * The description of this bundle.
-     * @property string $copyright
-     * The copyright of this bundle.
-     * @property string $license
-     * The license for this bundle.
-     * @property integer $version_major
-     * The major version of this bundle.
-     * @property integer $version_minor
-     * The minor version of this bundle.
-     * @property integer $version_revision
-     * The version revision of this bundle.
-     * @property array $depends_on
-     * A list of dependencies this bundle depends on.
-     * @property boolean $is_booted
-     * Has this bundle been booted?
-     */
     class bundle extends base{
         
-        /** @ignore */
         protected $_data;
-        /** @ignore */
+        
         protected $_label;
-        /** @ignore */
         protected $_name;
-        /** @ignore */
         protected $_version;
-        /** @ignore */
         protected $_type;
-        /** @ignore */
         protected $_namespace;
-        /** @ignore */
         protected $_description;
-        /** @ignore */
         protected $_copyright;
-        /** @ignore */
         protected $_license;
-        /** @ignore */
         protected $_depends_on;
-        /** @ignore */
         protected $_settings;
-        /** @ignore */
         protected $_settings_hash;
-        /** @ignore */
         protected $_schema;
-        /** @ignore */
+        
         protected $_has_changed;
-        /** @ignore */
         protected $_is_loaded;
-        /** @ignore */
         protected $_is_installed;
-        /** @ignore */
+        
         protected $_local_config_handlers;
-        /** @ignore */
         protected $_local_install_handlers;
-        /** @ignore */
+        
         protected $_config_handlers_to_process;
-        /**
-         * Constructor
-         *
-         * @access public
-         * @param string $name
-         * Name of the bundle to load
-         * @param xml $data
-         * The bundle.xml structure
-         */
+        
         public function __construct($name, $data){
             $this->_local_config_handlers = array();
             $this->_local_install_handlers = array();
@@ -133,17 +43,15 @@ namespace adapt{
         /*
          * Properties
          */
-        /** @ignore */
+        
         public function pget_is_loaded(){
             return $this->_is_loaded;
         }
         
-        /** @ignore */
         public function pget_label(){
             return $this->_label;
         }
         
-        /** @ignore */
         public function pset_label($value){
             if ($value != $this->_label){
                 $this->_label = $value;
@@ -151,12 +59,10 @@ namespace adapt{
             }
         }
         
-        /** @ignore */
         public function pget_name(){
             return $this->_name;
         }
         
-        /** @ignore */
         public function pset_name($value){
             if ($value != $this->_name){
                 $this->_name = $value;
@@ -164,12 +70,10 @@ namespace adapt{
             }
         }
         
-        /** @ignore */
         public function pget_version(){
             return $this->_version;
         }
         
-        /** @ignore */
         public function pset_version($value){
             if ($value != $this->_version){
                 $this->_version = $value;
@@ -177,12 +81,10 @@ namespace adapt{
             }
         }
         
-        /** @ignore */
         public function pget_type(){
             return $this->_type;
         }
         
-        /** @ignore */
         public function pset_type($value){
             if ($value != $this->_type){
                 $this->_type = $value;
@@ -190,12 +92,10 @@ namespace adapt{
             }
         }
         
-        /** @ignore */
         public function pget_namespace(){
             return $this->_namespace;
         }
         
-        /** @ignore */
         public function pset_namespace($value){
             if ($value != $this->_namespace){
                 $this->_namespace = $value;
@@ -203,12 +103,10 @@ namespace adapt{
             }
         }
         
-        /** @ignore */
         public function pget_description(){
             return $this->_description;
         }
         
-        /** @ignore */
         public function pset_description($value){
             if ($value != $this->_description){
                 $this->_description = $value;
@@ -216,12 +114,10 @@ namespace adapt{
             }
         }
         
-        /** @ignore */
         public function pget_copyright(){
             return $this->_copyright;
         }
         
-        /** @ignore */
         public function pset_copyright($value){
             if ($value != $this->_copyright){
                 $this->_copyright = $value;
@@ -229,12 +125,10 @@ namespace adapt{
             }
         }
         
-        /** @ignore */
         public function pget_license(){
             return $this->_license;
         }
         
-        /** @ignore */
         public function pset_license($value){
             if ($value != $this->_license){
                 $this->_license = $value;
@@ -242,7 +136,6 @@ namespace adapt{
             }
         }
         
-        /** @ignore */
         public function pget_version_major(){
             $version = $this->version;
             list($major, $minor, $revision) = explode(".", $version);
@@ -250,7 +143,6 @@ namespace adapt{
             return $major;
         }
         
-        /** @ignore */
         public function pset_version_major($value){
             $version = $this->version;
             list($major, $minor, $revision) = explode(".", $version);
@@ -260,7 +152,6 @@ namespace adapt{
             }
         }
         
-        /** @ignore */
         public function pget_version_minor(){
             $version = $this->version;
             list($major, $minor, $revision) = explode(".", $version);
@@ -268,7 +159,6 @@ namespace adapt{
             return $minor;
         }
         
-        /** @ignore */
         public function pset_version_minor($value){
             $version = $this->version;
             list($major, $minor, $revision) = explode(".", $version);
@@ -278,7 +168,6 @@ namespace adapt{
             }
         }
         
-        /** @ignore */
         public function pget_version_revision(){
             $version = $this->version;
             list($major, $minor, $revision) = explode(".", $version);
@@ -286,7 +175,6 @@ namespace adapt{
             return $revision;
         }
         
-        /** @ignore */
         public function pset_version_revision($value){
             $version = $this->version;
             list($major, $minor, $revision) = explode(".", $version);
@@ -296,17 +184,14 @@ namespace adapt{
             }
         }
         
-        /** @ignore */
         public function pget_depends_on(){
             return $this->_depends_on;
         }
         
-        /** @ignore */
         public function pset_depends_on($values){
             $this->_depends_on = $values;
         }
         
-        /** @ignore */
         public function pget_is_booted(){
             /*
              * This bundle will be cached on first call, so we need to
@@ -321,7 +206,6 @@ namespace adapt{
             }
         }
         
-        /** @ignore */
         public function pset_is_booted($value){
             $this->store("adapt.bundle.{$this->name}.booted", $value);
         }
@@ -329,7 +213,6 @@ namespace adapt{
         /*
          * Serialization
          */
-        /** @ignore */
         public function __wakeup(){
             $handlers = $this->_local_config_handlers;
             $this->_local_config_handlers = array();
@@ -349,27 +232,13 @@ namespace adapt{
             
         }
         
-        /**
-         * Returns the settings for this bundle as defined
-         * in the bundles bundle.xml file.
-         *
-         * @access public
-         * @return array
-         * Returns a hash array of the bundles settings.
+        /*
+         * Bundle.xml control
          */
         public function get_bundle_settings(){
             return $this->_settings;
         }
         
-        /**
-         * Loads a bunble
-         *
-         * @access public
-         * @param string $bundle_name
-         * The name of the bundle to load
-         * @param xml $data
-         * The contents of the bundles bundle.xml file.
-         */
         public function load($bundle_name, $data){
             //print "<pre>Loading: {$bundle_name}</pre>";
             if ($data instanceof xml){
@@ -632,9 +501,25 @@ namespace adapt{
                                                                 if ($field instanceof xml){
                                                                     $field_name = $field->tag;
                                                                     
-                                                                    if ($field->attr('get-from') && $field->attr('where-name-is')){
+                                                                    $field_attributes = $field->attributes;
+                                                                    $field_attribute_keys = array_keys($field_attributes);
+                                                                    
+                                                                    if (in_array('get-from', $field_attribute_keys)){
+                                                                        $lookup = [
+                                                                            '_lookup_table' => $field->attr('get-from'),
+                                                                            '_lookup_field' => null,
+                                                                            '_lookup_value' => null
+                                                                        ];
                                                                         
-                                                                        $current_record[$field_name] = array('_lookup_table' => $field->attr('get-from'), '_lookup_name' => $field->attr('where-name-is'));
+                                                                        foreach($field_attribute_keys as $key){
+                                                                            $matches = [];
+                                                                            if (preg_match("/^where-([_a-zA-Z0-9]+)-is$/", $key, $matches)){
+                                                                                $lookup['_lookup_field'] = $matches[1];
+                                                                                $lookup['_lookup_value'] = $field->attr($matches[0]);
+                                                                            }
+                                                                        }
+                                                                        
+                                                                        $current_record[$field_name] = $lookup;
                                                                     }else{
                                                                         $field_value = $field->get(0);
                                                                         $current_record[$field_name] = $field_value;
@@ -691,23 +576,6 @@ namespace adapt{
                             break;
                         default:
                             /* Do we have a handler to handle the tag? */
-//<<<<<<< HEAD
-//                            $handlers = $this->store("adapt.config_handlers");
-//                            //print "<pre>CONFIG HANDLERS: " . print_r($handlers, true) . "</pre>";
-//                            if (is_array($handlers) && isset($handlers[$child->tag])){
-//                                
-//                                $handler = $handlers[$child->tag];
-//                                
-//                                $bundle = $this->bundles->load_bundle($handler['bundle_name']);
-//                                if ($bundle instanceof bundle && $bundle->name == $handler['bundle_name']){
-//                                    $function = $handler['function'];
-//                                    
-//                                    if (method_exists($bundle, $function)){
-//                                        $bundle->$function($this, $child);
-//                                    }
-//                                    
-//                                }
-//=======
                             
                             /**
                              * The boot and install process require bundles to
@@ -724,7 +592,6 @@ namespace adapt{
                             
                             if (!is_array($this->_config_handlers_to_process[$child->tag])){
                                 $this->_config_handlers_to_process[$child->tag] = [];
-//>>>>>>> horizon
                             }
                             
                             $this->_config_handlers_to_process[$child->tag][] = $child;
@@ -757,30 +624,10 @@ namespace adapt{
 
         }
         
-        /**
-         * Saves the bundles bundle.xml
-         *
-         * @ignore
-         * @todo Write this function
-         */
         public function save(){
             
         }
         
-        /**
-         * Registers a config handler.
-         * This allows bundles to extend bundle.xml and add there own tags. Upon parsing the
-         * bundle.xml file any tags defined by this function will be parsed to the function
-         * named $function_name for processing.
-         *
-         * @access public
-         * @param string $bundle_name
-         * The name of the bundle defining the tag.
-         * @param string $tag_name
-         * The XML tag name to be processed
-         * @param string $function_name
-         * The name of the function to process the tag.
-         */
         public function register_config_handler($bundle_name, $tag_name, $function_name){
             
             $handler = array(
@@ -800,20 +647,6 @@ namespace adapt{
             $this->store("adapt.config_handlers", $handlers);
         }
         
-        /**
-         * Registers an install handler.
-         * This allows bundles to extend bundle.xml and add there own tags. Upon parsing the
-         * bundle.xml file any tags defined by this function will be parsed to the function
-         * named $function_name for processing.
-         *
-         * @access public
-         * @param string $bundle_name
-         * The name of the bundle processing the tag
-         * @param string $target_bundle
-         * The bundle that defined the tag
-         * @param string $function_name
-         * The name of the function to process the tag.
-         */
         public function register_install_handler($bundle_name, $target_bundle, $function_name){
             
             $handler = array(
@@ -841,17 +674,15 @@ namespace adapt{
             $this->store("adapt.install_handlers", $handlers);
         }
         
-        /**
-         * Applies the bundles settings to the system.
-         */
+        
+        
         public function apply_settings(){
             /*
              * We need to first apply the settings and
              * then we need to re-apply the global settings
              * so they take priority.
-             *
-             * @access public
              */
+            
             if (is_array($this->_settings_hash)){
                 /* Get a hash of the settings currently in affect */
                 $current_settings = $this->get_settings();
@@ -868,16 +699,9 @@ namespace adapt{
                 /* Override the current settings with our updated copy */
                 $this->set_settings($current_settings);
             }
+            
         }
         
-        /**
-         * Boots the bundle
-         *
-         * @access public
-         * @return boolean
-         * Returns true if the bundle booted successfully, otherwise
-         * returns false.
-         */
         public function boot(){
             //print "<pre>Booting (bundle level): {$this->name}</pre>";
             
@@ -896,7 +720,6 @@ namespace adapt{
                         foreach($dependency_list as $bundle_data){
                             //print "<pre>Loading {$bundle_data['name']} {$bundle_data['version']}</pre>";
                             //print "<pre>" . print_r($this->store('adapt.namespaces'), true) . "</pre>";
-                            
                             $bundle = $this->bundles->load_bundle($bundle_data['name'], $bundle_data['version']);
                             if ($bundle instanceof bundle && $bundle->is_loaded){
                                 //print "<pre>Loaded {$bundle->name} {$bundle->version} (" . get_class($bundle) . ")</pre>";
@@ -909,7 +732,7 @@ namespace adapt{
                                 return false;
                             }
                         }
-                        
+                    
                         $this->booted = true;
                     }else{
                         $errors = $this->bundles->errors(true);
@@ -928,22 +751,9 @@ namespace adapt{
             return true;
         }
         
-        /**
-         * Installs the bundle.
-         *
-         * @access public
-         */
         public function install(){
-<<<<<<< HEAD
-            if (!$this->is_installed() && !$this->is_installing()){
-                
-                /* Mark as installing */
-                $this->file_store->set("adapt/installation/{$this->name}-{$this->version}", "true", "text/plain");
-                
-=======
             //print "<pre>Calling install for {$this->name}</pre>";
             if (!$this->is_installed()){
->>>>>>> horizon
                 if (is_array($this->_schema) && $this->data_source instanceof data_source_sql){
                     /*
                      * We have a schema
@@ -1039,7 +849,7 @@ namespace adapt{
                                                 'label' => $attributes['label'],
                                                 'placeholder_label' => $attributes['placeholder_label'],
                                                 'description' => $attributes['description'],
-                                                'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_name' => $attributes['data_type']),
+                                                'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_field' => 'name', '_lookup_value' => $attributes['data_type']),
                                                 'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
                                                 'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
                                                 'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",
@@ -1144,7 +954,7 @@ namespace adapt{
                                                 'label' => $attributes['label'],
                                                 'placeholder_label' => $attributes['placeholder_label'],
                                                 'description' => $attributes['description'],
-                                                'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_name' => $attributes['data_type']),
+                                                'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_field' => 'name', '_lookup_value' => $attributes['data_type']),
                                                 'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
                                                 'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
                                                 'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",
@@ -1175,7 +985,7 @@ namespace adapt{
                                             'label' => 'Date created',
                                             'placeholder_label' => null,
                                             'description' => 'Date the record was created',
-                                            'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_name' => 'datetime'),
+                                            'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_field' => 'name', '_lookup_value' => 'datetime'),
                                             'primary_key' => 'No',
                                             'signed' => 'No',
                                             'nullable' => 'Yes',
@@ -1199,7 +1009,7 @@ namespace adapt{
                                             'label' => 'Date modified',
                                             'placeholder_label' => null,
                                             'description' => 'Date the record was modified',
-                                            'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_name' => 'timestamp'),
+                                            'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_field' => 'name', '_lookup_value' => 'timestamp'),
                                             'primary_key' => 'No',
                                             'signed' => 'No',
                                             'nullable' => 'Yes',
@@ -1223,7 +1033,7 @@ namespace adapt{
                                             'label' => 'Date deleted',
                                             'placeholder_label' => null,
                                             'description' => 'Date the record was deleted',
-                                            'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_name' => 'datetime'),
+                                            'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_field' => 'name', '_lookup_value' => 'datetime'),
                                             'primary_key' => 'No',
                                             'signed' => 'No',
                                             'nullable' => 'Yes',
@@ -1352,16 +1162,19 @@ namespace adapt{
                                             $value = $row[$field_name];
                                             if (is_array($value)){
                                                 if (isset($value['_lookup_table'])){
-                                                    $result = $this->data_source->sql
+                                                    
+                                                    $sql = $this->data_source->sql
                                                         ->select($value['_lookup_table'] . '_id')
                                                         ->from($value['_lookup_table'])
                                                         ->where(
                                                             new sql_and(
                                                                 new sql_cond('date_deleted', sql::IS, new sql_null()),
-                                                                new sql_cond('name', sql::EQUALS, sql::q($value['_lookup_name']))
+                                                                new sql_cond($value['_lookup_field'], sql::EQUALS, sql::q($value['_lookup_value']))
                                                             )
-                                                        )->execute()
-                                                        ->results(60 * 60 * 24 * 5); //Cache for 5 days
+                                                        );
+                                                    print new html_pre($sql);
+                                                    $result = $sql->execute(60 * 60 * 24 * 5)->results();
+                                                    print new html_pre(print_r($result, true));
                                                     $value = $result[0][$value['_lookup_table'] . "_id"];
                                                 }
                                             }
@@ -1450,16 +1263,6 @@ namespace adapt{
                 }
                 
                 //print "<pre>" . print_r($this->_schema, true) . "</pre>";
-<<<<<<< HEAD
-                if ($this->data_source && $this->data_source instanceof data_source_sql){   
-                    /* Add the bundle to bundle_version if it isn't already */
-                    $model = new model_bundle_version();
-                    if (!$model->load_by_name_and_version($this->name, $this->version)){
-                        $errors = $model->errors(true);
-                        //print "<pre>" . print_r($errors, true) . "</pre>";
-                        foreach($errors as $error) $this->error("Model 'bundle_version' return the error \"{$error}\"");
-                    }
-=======
                 
                 /* Add the bundle to bundle_version if it isn't already */
                 $model = new model_bundle_version();
@@ -1480,55 +1283,33 @@ namespace adapt{
                     //print "<pre>Saved {$this->name}-{$this->version}</pre>";
                     $this->_is_installed = true;
                     $this->bundles->set_bundle_installed($this->name, $this->version);
->>>>>>> horizon
                     
-                    $model->name = $this->name;
-                    $model->type = $this->type;
-                    $model->version = $this->version;
-                    $model->local = "Yes";
-                    $model->installed = "Yes";
-                    if ($model->save()){
-                        $errors = $model->errors(true);
-                        print "<pre>" . print_r($errors, true) . "</pre>";
-                        print "<pre>Saved {$this->name}-{$this->version}</pre>";
-                        $this->_is_installed = true;
-                        $this->bundles->set_bundle_installed($this->name, $this->version);
-                        
-                        /* Process install handlers */
-                        $handlers = $this->store('adapt.install_handlers');
-                        //print "<pre>Handlers: " . print_r($handlers, true) . "</pre>";
-                        if (is_array($handlers) && is_array($handlers[$this->name])){
-                            foreach($handlers[$this->name] as $handler){
-                                $bundle = $this->bundles->load_bundle($handler['bundle_name']);
-                                if ($bundle instanceof bundle){
-                                    $function = $handler['function'];
-                                    if (method_exists($bundle, $function)){
-                                        $bundle->$function($this);
-                                    }
+                    /* Process install handlers */
+                    $handlers = $this->store('adapt.install_handlers');
+                    //print "<pre>Handlers: " . print_r($handlers, true) . "</pre>";
+                    if (is_array($handlers) && is_array($handlers[$this->name])){
+                        foreach($handlers[$this->name] as $handler){
+                            $bundle = $this->bundles->load_bundle($handler['bundle_name']);
+                            if ($bundle instanceof bundle){
+                                $function = $handler['function'];
+                                if (method_exists($bundle, $function)){
+                                    $bundle->$function($this);
                                 }
                             }
                         }
-                        
-                        return true;
-                    }else{
-                        $errors = $model->errors(true);
-                        //print "<pre>" . print_r($errors, true) . "</pre>";
-                        foreach($errors as $error) $this->error("Model 'bundle_version' returned the error \"{$error}\"");
-                        return false;
                     }
+                    
+                    return true;
+                }else{
+                    $errors = $model->errors(true);
+                    //print "<pre>" . print_r($errors, true) . "</pre>";
+                    foreach($errors as $error) $this->error("Model 'bundle_version' returned the error \"{$error}\"");
+                    return false;
                 }
                 
-                /* Remove installation mark */
-                $this->file_store->delete("adapt/installation/{$this->name}-{$this->version}");
             }
         }
         
-        /**
-         * Is the bundle installed?
-         *
-         * @access public
-         * @return boolean
-         */
         public function is_installed(){
             /*
              * self::_is_installed property is only used by
@@ -1544,20 +1325,6 @@ namespace adapt{
             }
             
             return $this->_is_installed;
-        }
-        
-        /**
-         * Is the bundle currently being installed?
-         *
-         * @access public
-         * @return boolean
-         */
-        public function is_installing(){
-            if ($this->file_store->get("adapt/installation/{$this->name}-{$this->version}") == "true"){
-                return true;
-            }
-            
-            return false;
         }
         
     }
