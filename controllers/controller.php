@@ -52,6 +52,8 @@ namespace adapt{
      * and that view isn't html.
      * @property string $url
      * The URL that was passed to this controller during routing.
+     * @property string $url_mount_point
+     * The point in the URL where this controller is mounted.
      */
     abstract class controller extends base{
         
@@ -68,6 +70,9 @@ namespace adapt{
         
         /** @ignore */
         protected $_url;
+        
+        /** @ignore */
+        protected $_url_mount_point;
         
         /**
          * Contstructor
@@ -156,6 +161,11 @@ namespace adapt{
         /** @ignore */
         public function pset_url($url){
             $this->_url = $url;
+        }
+        
+        /** @ignore */
+        public function pget_url_mount_point(){
+            return $this->_url_mount_point;
         }
         
         /**
@@ -296,6 +306,7 @@ namespace adapt{
          */
         public function route($url, $is_action = false){
             $url = trim($url);
+            $this->_url_mount_point = '/' . trim(substr($this->request['url'], 0, strlen($this->request['url']) - strlen($url)), '/');
             
             if (!isset($url) || $url == ""){
                 $url = "default";
@@ -309,6 +320,8 @@ namespace adapt{
             if (!$is_action){
                 $this->url = $url;
             }
+            
+            //print new html_pre(get_class($this) . ": '{$this->url}'");
             
             if (strlen($method) > 0){
                 if ($is_action){
