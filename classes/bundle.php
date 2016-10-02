@@ -934,16 +934,16 @@ namespace adapt{
          * @access public
          */
         public function install(){
-<<<<<<< HEAD
+//<<<<<<< HEAD
             if (!$this->is_installed() && !$this->is_installing()){
                 
                 /* Mark as installing */
                 $this->file_store->set("adapt/installation/{$this->name}-{$this->version}", "true", "text/plain");
                 
-=======
+//=======
             //print "<pre>Calling install for {$this->name}</pre>";
-            if (!$this->is_installed()){
->>>>>>> horizon
+//           if (!$this->is_installed()){
+//>>>>>>> horizon
                 if (is_array($this->_schema) && $this->data_source instanceof data_source_sql){
                     /*
                      * We have a schema
@@ -1450,7 +1450,7 @@ namespace adapt{
                 }
                 
                 //print "<pre>" . print_r($this->_schema, true) . "</pre>";
-<<<<<<< HEAD
+//<<<<<<< HEAD
                 if ($this->data_source && $this->data_source instanceof data_source_sql){   
                     /* Add the bundle to bundle_version if it isn't already */
                     $model = new model_bundle_version();
@@ -1459,28 +1459,28 @@ namespace adapt{
                         //print "<pre>" . print_r($errors, true) . "</pre>";
                         foreach($errors as $error) $this->error("Model 'bundle_version' return the error \"{$error}\"");
                     }
-=======
-                
-                /* Add the bundle to bundle_version if it isn't already */
-                $model = new model_bundle_version();
-                if (!$model->load_by_name_and_version($this->name, $this->version)){
-                    $errors = $model->errors(true);
-                    //print "<pre>" . print_r($errors, true) . "</pre>";
-                    foreach($errors as $error) $this->error("Model 'bundle_version' return the error \"{$error}\"");
-                }
-                
-                $model->name = $this->name;
-                $model->type = $this->type;
-                $model->version = $this->version;
-                $model->local = "Yes";
-                $model->installed = "Yes";
-                if ($model->save()){
-                    $errors = $model->errors(true);
-                    //print "<pre>" . print_r($errors, true) . "</pre>";
-                    //print "<pre>Saved {$this->name}-{$this->version}</pre>";
-                    $this->_is_installed = true;
-                    $this->bundles->set_bundle_installed($this->name, $this->version);
->>>>>>> horizon
+//=======
+//                
+//                /* Add the bundle to bundle_version if it isn't already */
+//                $model = new model_bundle_version();
+//                if (!$model->load_by_name_and_version($this->name, $this->version)){
+//                    $errors = $model->errors(true);
+//                    //print "<pre>" . print_r($errors, true) . "</pre>";
+//                    foreach($errors as $error) $this->error("Model 'bundle_version' return the error \"{$error}\"");
+//                }
+//                
+//                $model->name = $this->name;
+//                $model->type = $this->type;
+//                $model->version = $this->version;
+//                $model->local = "Yes";
+//                $model->installed = "Yes";
+//                if ($model->save()){
+//                    $errors = $model->errors(true);
+//                    //print "<pre>" . print_r($errors, true) . "</pre>";
+//                    //print "<pre>Saved {$this->name}-{$this->version}</pre>";
+//                    $this->_is_installed = true;
+//                    $this->bundles->set_bundle_installed($this->name, $this->version);
+//>>>>>>> horizon
                     
                     $model->name = $this->name;
                     $model->type = $this->type;

@@ -3,8 +3,8 @@
   <bundle>
     <label>Adapt Framework</label>
     <name>adapt</name>
-    <version>2.0.2</version>
-    <version_status>beta</version_status>
+    <version>2.0.0</version>
+    <version_status>release</version_status>
     <availability>public</availability>
     <type>framework</type>
     <namespace>\adapt</namespace>
