@@ -246,6 +246,7 @@ namespace adapt{
          */
         public function load_controller($name, $append_view = true){
             $parts = explode("\\", $name);
+            
             if (count($parts) == 0){
                 return false;
             }elseif (count($parts) == 1){
