@@ -299,9 +299,9 @@ namespace adapt{
                         break;
                     case "between":
                         if (count($params) == 3){
-                            if ($params[0] instanceof sql) $params[0] = $params[0] = $this->render_sql($params[0]);
-                            if ($params[1] instanceof sql) $params[1] = $params[1] = $this->render_sql($params[1]);
-                            if ($params[2] instanceof sql) $params[2] = $params[2] = $this->render_sql($params[2]);
+                            if ($params[0] instanceof sql) $params[0] = $this->render_sql($params[0]);
+                            if ($params[1] instanceof sql) $params[1] = $this->render_sql($params[1]);
+                            if ($params[2] instanceof sql) $params[2] = $this->render_sql($params[2]);
                             
                             $statement .= "({$params[0]} BETWEEN {$params[1]} AND {$params[2]})";
                         }
@@ -309,18 +309,18 @@ namespace adapt{
                     case "condition":
                     case "cond":
                         if (count($params) == 3){
-                            if ($params[0] instanceof sql) $params[0] = $params[0] = $this->render_sql($params[0]);
-                            if ($params[1] instanceof sql) $params[1] = $params[1] = $this->render_sql($params[1]);
-                            if ($params[2] instanceof sql) $params[2] = $params[2] = $this->render_sql($params[2]);
+                            if ($params[0] instanceof sql) $params[0] = $this->render_sql($params[0]);
+                            if ($params[1] instanceof sql) $params[1] = $this->render_sql($params[1]);
+                            if ($params[2] instanceof sql) $params[2] = $this->render_sql($params[2]);
                             
                             $statement .= "{$params[0]} {$params[1]} {$params[2]}";
                         }
                         break;
                     case "if":
                         if (count($params) == 3){
-                            if ($params[0] instanceof sql) $params[0] = $params[0] = $this->render_sql($params[0]);
-                            if ($params[1] instanceof sql) $params[1] = $params[1] = $this->render_sql($params[1]);
-                            if ($params[2] instanceof sql) $params[2] = $params[2] = $this->render_sql($params[2]);
+                            if ($params[0] instanceof sql) $params[0] = $this->render_sql($params[0]);
+                            if ($params[1] instanceof sql) $params[1] = $this->render_sql($params[1]);
+                            if ($params[2] instanceof sql) $params[2] = $this->render_sql($params[2]);
                             
                             $statement .= "IF ({$params[0]}, {$params[1]}, {$params[2]})";
                         }
