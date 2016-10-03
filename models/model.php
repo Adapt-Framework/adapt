@@ -1,11 +1,12 @@
 <?php
 
-/*
+/**
+ * Adapt Framework
+ *
  * The MIT License (MIT)
  *   
  * Copyright (c) 2016 Matt Bruton
- * Authored by Matt Bruton (matt@adaptframework.com)
- * http://www.adaptframework.com
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,41 +25,123 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *  
+ *
+ * @package     adapt
+ * @author      Matt Bruton <matt.bruton@gmail.com>
+ * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
+ * @license     https://opensource.org/licenses/MIT     MIT License
+ * @link        http://www.adpatframework.com
+ *
  */
-
 namespace adapt{
     
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
     
+    /**
+     * The foundation class for models
+     *
+     * @property-read $data_source
+     * The current data source used by this model
+     * @property-read array $schema
+     * The schema of this model
+     * @property-read boolean $is_loaded
+     * Has this model been loaded?
+     * @property-read boolean $has_changed
+     * Has this model changed?
+     * @property-read boolean $is_valid
+     * Is this model valid?
+     * @property-read string $table_name
+     * The table name this model is using.
+     * @property-read boolean $auto_load_children
+     * Are child models auto loaded?
+     */
     class model extends base{
         
-        /* Events */
+        /**
+         * Fired when a model is loaded
+         */
         const EVENT_ON_LOAD = 'model.on_load';
+        
+        /**
+         * Fired when a model is loaded by name
+         */
         const EVENT_ON_LOAD_BY_NAME = 'model.on_load_by_name';
+        
+        /**
+         * Fired when a model is loaded by data
+         */
         const EVENT_ON_LOAD_BY_DATA = 'model.on_load_by_data';
+        
+        /**
+         * Fired when a model is loaded by GUID
+         */
         const EVENT_ON_LOAD_BY_GUID = 'model.on_load_by_guid';
+        
+        /**
+         * Fired when a model is saved
+         */
         const EVENT_ON_SAVE = 'model.on_save';
+        
+        /**
+         * Fired when a model is deleted
+         */
         const EVENT_ON_DELETE = 'model.on_delete';
+        
+        /**
+         * Fired when a child model is added to this model
+         */
         const EVENT_ON_ADD = 'model.on_add';
+        
+        /**
+         * Fired when a data is pushed into this model
+         */
         const EVENT_ON_PUSH = 'model.on_push';
         
+        /** @ignore */
         protected $_data_source;
+        
+        /** @ignore */
         protected $_table_name;
+        
+        /** @ignore */
         protected $_schema;
         
+        /** @ignore */
         protected $_is_loaded;
+        /** @ignore */
         protected $_has_changed;
         
+        /** @ignore */
         protected $_children;
+        
+        /** @ignore */
         protected $_children_loaded;
+        
+        /** @ignore */
         protected $_auto_load_children = false;
+        
+        /** @ignore */
         protected $_auto_load_only_tables;
         
+        /** @ignore */
         protected $_data;
+        
+        /** @ignore */
         protected $_changed_fields;
         
+        /**
+         * Constructor
+         *
+         * @access public
+         * @param string
+         * The table name for this model
+         * @param string|integer
+         * The ID of the record to load
+         * @param data_source
+         * The data source containing the table used by this model. When null
+         * the default data source is used.
+         */
         public function __construct($table_name, $id = null, $data_source = null){
             parent::__construct();
             $this->_data_source = $data_source;
@@ -81,6 +164,9 @@ namespace adapt{
             }
         }
         
+        /**
+         * Initialises this model
+         */
         public function initialise(){
             $this->_data = array();
             $this->_changed_fields = array();
@@ -107,6 +193,7 @@ namespace adapt{
         /*
          * Properties
          */
+        /** @ignore */
         public function pget_data_source(){
             if (isset($this->_data_source) && $this->_data_source instanceof data_source){
                 return $this->_data_source;
@@ -115,18 +202,22 @@ namespace adapt{
             return parent::pget_data_source();
         }
         
+        /** @ignore */
         public function pget_schema(){
             return $this->_schema;
         }
         
+        /** @ignore */
         public function pget_is_loaded(){
             return $this->_is_loaded;
         }
         
+        /** @ignore */
         public function pget_has_changed(){
             return $this->_has_changed;
         }
         
+        /** @ignore */
         public function pget_is_valid(){
             if (count($this->errors()) == 0){
                 
@@ -155,10 +246,12 @@ namespace adapt{
             return count($this->errors()) == 0 ? true : false;
         }
         
+        /** @ignore */
         public function pget_table_name(){
             return $this->_table_name;
         }
         
+        /** @ignore */
         public function pget_auto_load_children(){
             return $this->_auto_load_children;
         }
@@ -166,6 +259,7 @@ namespace adapt{
         /*
          * Dynamic functions
          */
+        /** @ignore */
         public function __get($key){
             $return = parent::__get($key);
             
@@ -196,6 +290,7 @@ namespace adapt{
             return $return;
         }
         
+        /** @ignore */
         public function __set($key, $value){
             $return = parent::__set($key, $value);
             
@@ -245,12 +340,27 @@ namespace adapt{
             return $return;
         }
         
+        /** @ignore */
         public function _get_data(){
             return $this->_data;
         }
         
-        /*
-         * Child functions
+        //public function data($key, $value = null){
+        //    if (is_null($value)){
+        //        return $this->_data[$key];
+        //    }else{
+        //        $this->_data[$key] = $value;
+        //    }
+        //}
+        
+        /**
+         * Adds a child model to this model.
+         *
+         * @access public
+         * @param model
+         * The model to add.
+         * @return boolean
+         * **true** is successful.
          */
         public function add($data){
             if (is_array($data) && !is_assoc($data)){
@@ -268,6 +378,15 @@ namespace adapt{
             return false;
         }
         
+        /**
+         * Returns the child model at $index or when $index
+         * is null an array containing all children.
+         *
+         * @access public
+         * @param integer
+         * The index of the child to get.
+         * @return model|model[]
+         */
         public function get($index = null){
             if (is_null($index)){
                 return $this->_children;
@@ -276,12 +395,30 @@ namespace adapt{
             }
         }
         
+        /**
+         * Changes a child model at $index
+         *
+         * @access public
+         * @param integer
+         * The index of the child to replace
+         * @param model
+         * The new child
+         */
         public function set($index, $item){
             if (is_int($index) && $index >= 0 && $index < count($this->_children)){
                 $this->_children[$index] = $item;
             }
         }
         
+        
+        /**
+         * Removes a child model, the $index_or_child is null all
+         * children are removed.
+         *
+         * @access public
+         * @param integer|model
+         * The index of the child to remove or the child itself
+         */
         public function remove($index_or_child = null){
             if (is_object($index_or_child)){
                 for($i = 0; $i < count($this->_children); $i++){
@@ -296,14 +433,31 @@ namespace adapt{
             }
         }
         
+        /**
+         * Clears all child models
+         */
         public function clear(){
             $this->remove();
         }
         
+        /**
+         * Returns the count of child models
+         *
+         * @access public
+         * @return integer
+         */
         public function count(){
             return count($this->_children);
         }
         
+        /**
+         * Tests if this model has a child model
+         *
+         * @access public
+         * @param model
+         * The child to check for
+         * @return boolean
+         */
         public function has($child){
             foreach($this->_children as $c){
                 if ($c === $child) return true;
@@ -312,8 +466,14 @@ namespace adapt{
             return false;
         }
         
-        /*
-         * Error functions
+        /**
+         * Returns a list of errors that have occured until now.
+         *
+         * @access public
+         * @param boolean
+         * When true the errors are cleared.
+         * @return array
+         * Returns an array of string messages
          */
         public function errors($clear = false){
             /* Overriden to so it can include children */
@@ -332,8 +492,11 @@ namespace adapt{
             return $errors;
         }
         
-        /*
-         * Cloning functions
+        /**
+         * Returns a clone of the model, the clone is unsaved.
+         *
+         * @access public
+         * @return model
          */
         public function copy(){
             $class = get_class($this);
@@ -360,8 +523,14 @@ namespace adapt{
             return $copy;
         }
         
-        /*
-         * Loading functions
+        /**
+         * Loads the model with the $id
+         *
+         * @access public
+         * @param integer
+         * The ID to load the model with
+         * @return boolean
+         * **true** is successful
          */
         public function load($id){
             $this->initialise();
@@ -465,6 +634,15 @@ namespace adapt{
             return false;
         }
         
+        /**
+         * Loads the model with the $name
+         *
+         * @access public
+         * @param string
+         * The name of the model to load
+         * @return boolean
+         * **true** is successful
+         */
         public function load_by_name($name){
             $this->initialise();
             
@@ -515,6 +693,15 @@ namespace adapt{
             return false;
         }
         
+        /**
+         * Loads the model with the supplied guid
+         *
+         * @access public
+         * @param string
+         * The GUID
+         * @return boolean
+         * **true** is successful
+         */
         public function load_by_guid($guid){
             $this->initialise();
             
@@ -565,6 +752,15 @@ namespace adapt{
             return false;
         }
         
+        /**
+         * Loads the model with the supplied $data
+         *
+         * @access public
+         * @param array
+         * An associative array with the data for this model
+         * @return boolean
+         * **true** is successful
+         */
         public function load_by_data($data = array()){
             $this->initialise();
             
@@ -670,6 +866,17 @@ namespace adapt{
             }
         }
         
+        /**
+         * Static function to load many models at a time
+         *
+         * @access public
+         * @param string
+         * The table name to get the data from
+         * @param integer[]
+         * An array of ID's to load
+         * @return model[]
+         * An array of models
+         */
         public static function load_many($table_name, $ids = array()){
             /* The array we are going to output */
             $output = array();
@@ -791,8 +998,13 @@ namespace adapt{
             return $output;
         }
         
-        /*
-         * Save functions
+        /**
+         * Saves the data to the data source
+         *
+         * @access public
+         * @return boolean|integer
+         * Saving an existing model returns true or false, saving a new
+         * model returns it's ID if successful otherwise false.
          */
         public function save(){
             $return = false;
@@ -1028,7 +1240,11 @@ namespace adapt{
             return $return;
         }
         
-        
+        /**
+         * Deletes the model
+         *
+         * @access public
+         */
         public function delete(){
             if ($this->is_loaded){
                 $this->date_deleted = new sql_now();
@@ -1037,8 +1253,12 @@ namespace adapt{
             }
         }
         
-        /*
-         * Data export functions
+        /**
+         * Export hash to a hash array
+         *
+         * @access public
+         * @return array
+         * A hash array containing the models data.
          */
         public function to_hash(){
             $output = array();
@@ -1114,6 +1334,13 @@ namespace adapt{
             return $output;
         }
         
+        /**
+         * Returns a simplified hash array
+         *
+         * @access public
+         * @return array
+         * A hash array containing the models data.
+         */
         public function to_hash_string(){
             $output = array();
             $hash = $this->to_hash();
@@ -1148,8 +1375,13 @@ namespace adapt{
             return $output;
         }
         
-        
-        
+        /**
+         * Returns the models data as XML
+         *
+         * @access public
+         * @return xml
+         * XML object containing the models data.
+         */
         public function to_xml(){
             /* Create a new XML object */
             $xml = new xml($this->table_name, array('type' => 'model'));
@@ -1225,6 +1457,13 @@ namespace adapt{
             return $xml;
         }
         
+        /**
+         * Returns the models data in JSON format
+         *
+         * @access public
+         * @return string
+         * A string containing the data in JSON format.
+         */
         public function to_json(){
             $output = [];
             foreach($this->_data as $key => $value){
@@ -1267,12 +1506,17 @@ namespace adapt{
             return json_encode($output);
         }
         
+        /** @ignore */
         public function __toString(){
             return $this->to_json();
         }
         
-        /*
-         * Data import functions
+        /**
+         * Pushes data into the model
+         *
+         * @access public
+         * @param string|array|xml
+         * The data in XML, a hash array or in JSON format.
          */
         public function push($data){
             if (is_array($data) && is_assoc($data) && count($data)){

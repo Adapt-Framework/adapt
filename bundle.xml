@@ -4,6 +4,8 @@
     <label>Adapt Framework</label>
     <name>adapt</name>
     <version>2.0.0</version>
+    <version_status>release</version_status>
+    <availability>public</availability>
     <type>framework</type>
     <namespace>\adapt</namespace>
     <description>Adapt framework is designed for rapid application and web deployment, built to scale it can meet the needs of the most demanding websites.</description>
@@ -112,23 +114,15 @@
         <setting>
           <name>repository.url</name>
           <label>Repoistory URL</label>
-          <default_values>
-            <value>https://repository.adaptframework.com</value>
-          </default_values>
+          <default_value>http://dev2.matt.wales/api</default_value>
         </setting>
         <setting>
           <name>repository.username</name>
           <label>Repoistory Username</label>
-          <default_values>
-            <value></value>
-          </default_values>
         </setting>
         <setting>
           <name>repository.password</name>
           <label>Repoistory Password</label>
-          <default_values>
-            <value></value>
-          </default_values>
         </setting>
       </category>
       <category name="Caching">

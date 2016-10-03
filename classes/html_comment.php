@@ -1,10 +1,12 @@
 <?php
 
-/*
+/**
+ * Adapt Framework
+ *
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2016 Matt Bruton
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +25,13 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *  
+ *
+ * @package     adapt
+ * @author      Matt Bruton <matt.bruton@gmail.com>
+ * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
+ * @license     https://opensource.org/licenses/MIT     MIT License
+ * @link        http://www.adpatframework.com
+ *
  */
 
 namespace adapt{
@@ -31,29 +39,76 @@ namespace adapt{
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
     
+    /**
+     * Create a HTML comment.
+     *
+     * @property-read integer $type
+     * The type of comment
+     * @property-read string $comment
+     * The comment
+     */
     class html_comment extends html{
         
+        /** @ignore */
         protected $_comment;
+        
+        /** @ignore */
         protected $_type;
         
+        /**
+         * Comment type: Standard
+         */
         const STANDARD = 0;
+        
+        /**
+         * Comment type: IE conditional start
+         */
         const IE_START = 1;
+        
+        /**
+         * Comment type: IE conditional end
+         */
         const IE_END = 2;
         
+        /**
+         * Contructor
+         *
+         * @access public
+         * @param string
+         * The comment
+         * @param integer
+         * Optional, the type of comment.
+         */
         public function __construct($comment, $type = 0){
             parent::__construct("_comment_");
             $this->_comment = $comment;
             $this->_type = $type;
         }
         
-        public function aget_type(){
+        /** @ignore */
+        public function pget_type(){
             return $this->_type;
         }
         
-        public function aget_comment(){
+        /** @ignore */
+        public function pget_comment(){
             return $this->_comment;
         }
         
+        /**
+         * Renders the element.
+         *
+         * @access public
+         * @param boolean
+         * Used internally, should always be null.
+         * @param boolean
+         * Used internally, should always be null.
+         * @param integer
+         * Used internally, should always be null. When outputting
+         * readable HTML this denotes the depth of the element.
+         * @return string
+         * The rendered element.
+         */
         public function render($not_req_1 = null, $not_req_2 = null, $depth = 0){
             /*
              * We can ignore the first two input params because

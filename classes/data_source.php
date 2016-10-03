@@ -1,10 +1,12 @@
 <?php
 
-/*
+/**
+ * Adapt Framework
+ *
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2016 Matt Bruton
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +25,12 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *  
+ *
+ * @package     adapt
+ * @author      Matt Bruton <matt.bruton@gmail.com>
+ * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
+ * @license     https://opensource.org/licenses/MIT     MIT License
+ * @link        http://www.adpatframework.com
  */
 
 namespace adapt{
@@ -31,12 +38,23 @@ namespace adapt{
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
     
+    /**
+     * The foundation class for building data sources.
+     *
+     * @property array $schema
+     * An array containing the schema for the data source.
+     * @property array $data_types
+     * An array of supported data types of the data source.
+     */
     abstract class data_source extends base implements interfaces\data_source{
         
+        /** @ignore */
         protected $_schema;
+        
+        /** @ignore */
         protected $_data_types;
         
-        /*
+        /**
          * Constructor
          */
         public function __construct(){
@@ -53,32 +71,44 @@ namespace adapt{
         /*
          * Properties
          */
+        /** @ignore */
         public function pget_schema(){
             return $this->_schema;
         }
         
+        /** @ignore */
         public function pset_schema($schema){
             $this->_schema = $schema;
         }
         
+        /** @ignore */
         public function pget_data_types(){
             return $this->_data_types;
         }
         
+        /** @ignore */
         public function pset_data_types($data_types){
             $this->_data_types = $data_types;
         }
         
-        /*
+        /**
          * Get the number of datasets in this source
+         *
+         * @access public
+         * @return integer
          */
         public function get_number_of_datasets(){
             return count($this->get_dataset_list());
             //return count($this->_schema['tables']);
         }
         
-        /*
+        /**
          * Get a list of datasets
+         *
+         * @access public
+         * @return string[]
+         * Returns a list of datasets. For a SQL database this will be a list of
+         * tables.
          */
         public function get_dataset_list(){
             $tables = array();
@@ -97,15 +127,31 @@ namespace adapt{
             //return array_keys($this->schema['tables']);
         }
         
-        /*
+        /**
          * Retrieve record count
+         *
+         * This is a placeholder function for child datasources
+         * to implement.
+         *
+         * @access public
+         * @param string
+         * The dataset index or name.
+         * @return integer
          */
         public function get_number_of_rows($dataset_index){
             
         }
         
-        /*
+        /**
          * Retrieve record structure
+         *
+         * Returns an array containing the record structure
+         * for a particular dataset.
+         *
+         * @access public
+         * @param string
+         * The dataset index or name
+         * @return array
          */
         public function get_row_structure($dataset_index){
             
@@ -127,16 +173,20 @@ namespace adapt{
             
             $this->error('Schema not found');
             return null;
-            
-            //if (is_array($this->_schema['tables'][$dataset_index])){
-            //    return $this->_schema['tables'][$dataset_index];
-            //}
-            //
-            //return null;
         }
         
-        /*
+        /**
          * Retrieve field structure
+         *
+         * Returns an array containing the record structure for a
+         * particular field.
+         *
+         * @access public
+         * @param string
+         * The dataset index or name
+         * @param string
+         * The field name
+         * @return array
          */
         public function get_field_structure($dataset_index, $field_name){
             $row = $this->get_row_structure($dataset_index);
@@ -150,18 +200,21 @@ namespace adapt{
             }
             
             return null;
-            //$row = $this->get_row_structure($dataset_index);
-            //
-            //if (!is_null($row)){
-            //    if (is_array($row[$field_name])){
-            //        return $row[$field_name];
-            //    }
-            //}
-            //return null;
         }
         
-        /*
-         * Reference functions
+        /**
+         * If the provided $field_name on $table_name is a foreign key
+         * then the table and field it pertains to is returned.
+         *
+         * The returned array will contain two keys, 'table_name' and 'field_name'
+         * when a reference is found, else returns an empty array.
+         *
+         * @access public
+         * @param string
+         * The table name of the field you wish to find the reference of.
+         * @param string
+         * The field name you wish to find the reference of.
+         * @return array
          */
         public function get_reference($table_name, $field_name){
             $output = array();
@@ -182,23 +235,22 @@ namespace adapt{
             if (!isset($output['table_name'])) $output = array();
             
             return $output;
-            //$output = array();
-            //$schema = $this->schema;
-            //
-            //if (isset($schema['references'])){
-            //    foreach($schema['references'] as $ref){
-            //        if ($ref['table_name'] == $table_name && $ref['field_name'] == $field_name){
-            //            $output = array(
-            //                'table_name' => $ref['referenced_table_name'],
-            //                'field_name' => $ref['referenced_field_name']
-            //            );
-            //        }
-            //    }
-            //}
-            //
-            //return $output;
         }
         
+        /**
+         * If the provided $field_name on $table_name is a primary key
+         * then any relationships to this field is returned.
+         *
+         * The returned array of arrays will contain two keys, 'table_name' and 'field_name'
+         * when a reference is found, else returns an empty array.
+         *
+         * @access public
+         * @param string
+         * The table name of the field you wish to find the reference of.
+         * @param string
+         * The field name you wish to find the reference of.
+         * @return array
+         */
         public function get_referenced_by($table_name, $field_name){
             $output = array();
             
@@ -215,27 +267,21 @@ namespace adapt{
                 }
             }
             
-            //if (!isset($output['table_name'])) $output = array();
-            
             return $output;
-            
-            //$output = array();
-            //$schema = $this->schema;
-            //
-            //if (isset($schema['references'])){
-            //    foreach($schema['references'] as $ref){
-            //        if ($ref['referenced_table_name'] == $table_name && $ref['referenced_field_name'] == $field_name){
-            //            $output = array(
-            //                'table_name' => $ref['table_name'],
-            //                'field_name' => $ref['field_name']
-            //            );
-            //        }
-            //    }
-            //}
-            //
-            //return $output;
         }
         
+        /**
+         * Returns the relationship between two tables.
+         *
+         * @access public
+         * @param string
+         * The first table
+         * @param string
+         * The second table
+         * @return array
+         * An array containing two keys, 'field1' and 'field2'.
+         * **field1** is the field from $table1 that related to **field2** from $table2
+         */
         public function get_relationship($table1, $table2){
             $schema = $this->_schema;
             
@@ -262,8 +308,14 @@ namespace adapt{
             return null;
         }
         
-        /*
-         * Retrieve data types
+        /**
+         * Returns the data type record for a particular $data_type
+         *
+         * @access public
+         * @param string
+         * The name or id of the data type
+         * @return array
+         * Array of key / value pairs describing the data type.
          */
         public function get_data_type($data_type){
             if (is_array($this->data_types)){
@@ -281,13 +333,17 @@ namespace adapt{
             }
             
             return null;
-            //if (is_array($this->_schema) && isset($this->_schema['data_types']) && isset($this->_schema['data_types'][$data_type])){
-            //    return $this->_schema['data_types'][$data_type];
-            //}
-            //
-            //return null;
         }
         
+        /**
+         * Returns the data type record for the named $data_type
+         * 
+         * @access public
+         * @param string
+         * The name the data type
+         * @return integer
+         * The ID for the data type.
+         */
         public function get_data_type_id($data_type){
             $type = $this->get_data_type($data_type);
             if ($type && is_array($type)){
@@ -297,6 +353,22 @@ namespace adapt{
             return null;
         }
         
+        /**
+         * Returns the base data type for the named $data_type.
+         *
+         * Data types in Adapt are flexible, the bundle **advanced_data_types**
+         * introduces a number of new data types, including for example **email**.
+         *
+         * Because the underlying data source provider is unlikey to support a
+         * data type named 'email' this method is used to reduce to the data
+         * type down to a level that the data source understands. For a
+         * SQL database the 'email' data type will be reduced to a varchar.
+         *
+         * @access string
+         * The name or ID of the data type to reduce.
+         * @return array
+         * An array containing the base data type
+         */
         public function get_base_data_type($data_type){
             $output = $this->get_data_type($data_type);
             $type = $output;
@@ -306,17 +378,22 @@ namespace adapt{
             }
             
             return $type;
-            //$data_type = $this->get_data_type($data_type);
-            //if (isset($data_type)){
-            //    return $this->get_data_type($data_type['based_on']);
-            //}
-            //
-            //return null;
         }
         
-        
-        /*
+        /**
          * Retrieve record
+         *
+         * Placeholder function to be over-ridden by children.
+         *
+         * @access public
+         * @param string
+         * The dataset index or name
+         * @param integer
+         * The row offset of the first record to retrieve.
+         * @param integer
+         * The number of rows to retrieve.
+         * @return array
+         * An array of records.
          */
         public function get($dataset_index, $row_offset, $number_of_rows = 1){
             

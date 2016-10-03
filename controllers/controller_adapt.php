@@ -1,10 +1,12 @@
 <?php
 
-/*
+/**
+ * Adapt Framework
+ *
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2016 Matt Bruton
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +25,13 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *  
+ *
+ * @package     adapt
+ * @author      Matt Bruton <matt.bruton@gmail.com>
+ * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
+ * @license     https://opensource.org/licenses/MIT     MIT License
+ * @link        http://www.adpatframework.com
+ *
  */
 
 namespace adapt{
@@ -31,8 +39,27 @@ namespace adapt{
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
     
+    /**
+     * Adapt View Controller
+     *
+     * This controller is automatically mounted on the URL **\/_adapt**.  This controller
+     * is used to make validators, formatters and unformatters available to the front
+     * end.
+     *
+     * Calling **\/_adapt/sanitizers** will return a javascript page containing the
+     * sanitizer functions.  This link is automatically added to the DOM so no futher
+     * action is required.
+     * 
+     */
     class controller_adapt extends controller{
         
+        /**
+         * Changes the content type to javascript and returns a page in javascript containing all the
+         * validators, formatters and unformatters.
+         *
+         * @access public
+         * @return string
+         */
         public function view_sanitizers(){
             $this->content_type = 'text/javascript';
             
@@ -84,6 +111,7 @@ namespace adapt{
             return $output;
         }
         
+        /** @ignore */
         public function view_about(){
             
         }

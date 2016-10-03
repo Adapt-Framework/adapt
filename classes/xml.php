@@ -74,7 +74,7 @@ namespace adapt{
             return $this->_tag;
         }
         
-        public function aset_tag($tag){
+        public function pset_tag($tag){
             if (!is_null($tag) && is_string($tag) && mb_trim($tag) != ""){
                 if (\mb_strpos($tag, ":")){
                     list($this->_namespace, $this->_tag) = explode(":", $tag);
@@ -334,7 +334,7 @@ namespace adapt{
         
         /* This function exists so that children can more easily override the default behaviour */
         public function _render($close_all_empty_tags = false, $add_slash_to_empty_tags = true, $depth = 0){
-            $readable = strtolower($this->setting('xml.readable')) == 'yes' ? true : false;
+            $readable = mb_strtolower($this->setting('xml.readable')) == 'yes' ? true : false;
             $tag = $this->_tag;
             
             if (mb_trim($tag) == "" || is_null($tag)) return "";
@@ -464,7 +464,8 @@ namespace adapt{
                 $nodes = array();
                 
                 if (mb_strpos($data[0], ">")){
-                    list($tag_data, $string_data) = explode(">", $data[0]);
+                    list($tag_data, $string_data) = mb_split("/>/", $data[0]);
+                    //list($tag_data, $string_data) = explode(">", $data[0]);
                     $tag_data = mb_trim($tag_data);
                 }else{
                     $tag_data = mb_trim($data[0]);
@@ -487,7 +488,8 @@ namespace adapt{
                     if ($string_data != "") $node->add(self::unescape($string_data));
                     
                     
-                    $parts = explode(" ", $tag_data);
+                    //$parts = explode(" ", $tag_data);
+                    $parts = mb_split("/ /", $tag_data);
                     
                     if (count($parts) >= 0){
                         /* Set the tag */
@@ -503,7 +505,8 @@ namespace adapt{
                             }elseif ($parts[$i]){
                                 if ($current_part == ""){
                                     if (preg_match("/=\"/", $parts[$i])){
-                                        list($name, $temp) = explode("=", $parts[$i], 2);
+                                        //list($name, $temp) = explode("=", $parts[$i], 2);
+                                        list($name, $temp) = mb_split("/=/", $parts[$i], 2);
                                         $parts[$i] = $temp;
                                         $name = mb_trim($name);
                                     }
@@ -571,7 +574,8 @@ namespace adapt{
                                     }
                                 }
                                 
-                                list($end_tag, $data_node) = explode(">", $data[$i]);
+                                //list($end_tag, $data_node) = explode(">", $data[$i]);
+                                list($end_tag, $data_node) = mb_split("/>/", $data[$i]);
                                 
                                 if (mb_strlen(mb_trim($data_node)) == 0){
                                     $data_node = null;

@@ -1,27 +1,77 @@
 <?php
+/**
+ * Adapt Framework
+ *
+ * The MIT License (MIT)
+ *   
+ * Copyright (c) 2016 Matt Bruton
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
+ *   
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *   
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *   
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ * @package     adapt
+ * @author      Matt Bruton <matt.bruton@gmail.com>
+ * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
+ * @license     https://opensource.org/licenses/MIT     MIT License
+ * @link        http://www.adpatframework.com
+ *
+ */
 
 namespace adapt{
     
     /* Prevent Direct Access */
     defined('ADAPT_STARTED') or die;
     
+    /**
+     * Bundle management system used to download and install bundles.
+     *
+     * @property-read repository $repository
+     * Returns a repository object used for talking to the Adapt repository.
+     */ 
     class bundles extends base{
         
+        /** @ignore */
         protected $_bundle_cache;
+        
+        /** @ignore */
         protected $_bundle_cache_changed = false;
         
+        /** @ignore */
         protected $_data_source_bundle_cache;
+        
+        /** @ignore */
         protected $_data_source_bundle_cache_changed = false;
         
+        /** @ignore */
         protected $_bundle_class_paths;
         
+        /** @ignore */
         protected $_global_settings;
+        
+        /** @ignore */
         protected $_global_settings_changed = false;
         
+        /** @ignore */
         protected $_repository;
         
-        /*
-         * Contruction
+        /**
+         * Contructor
          */
         public function __constuct(){
             parent::__construct();
@@ -31,20 +81,24 @@ namespace adapt{
         /*
          * Properties
          */
+        /** @ignore */
         public function pget_repository(){
             if ($this->_repository && $this->_repository instanceof repository){
                 return $this->_repository;
             }else{
-                $username = $this->settings('repository.username');
-                $password = $this->settings('repository.password');
-                $this->_repository = new repository($username, $password);
+                $url = $this->setting('repository.url');
+                $username = $this->setting('repository.username');
+                $password = $this->setting('repository.password');
+                $this->_repository = new repository($url, $username, $password);
                 
                 return $this->_repository;
             }
         }
         
-        /*
-         * Global settings
+        /**
+         * Loads the global settings from settings.xml
+         *
+         * @access public
          */
         public function load_global_settings(){
             $this->_global_settings = $this->cache->get("adapt/global.settings");
@@ -54,7 +108,7 @@ namespace adapt{
                 $this->_global_settings = array();
                 
                 $settings_path = ADAPT_PATH . "settings.xml";
-                
+                //print "Settings path: " . $settings_path;
                 if (file_exists($settings_path)){
                     $settings_data = file_get_contents($settings_path);
                     
@@ -113,6 +167,11 @@ namespace adapt{
             }
         }
         
+        /**
+         * Applies the global settings to the system
+         *
+         * @access public
+         */
         public function apply_global_settings(){
             if (is_array($GLOBALS['__adapt']['settings'])){
                 $GLOBALS['__adapt']['settings'] = array_merge($GLOBALS['__adapt']['settings'], $this->_global_settings);
@@ -121,6 +180,11 @@ namespace adapt{
             }
         }
         
+        /**
+         * Saves the global settings to settings.xml
+         *
+         * @access public
+         */
         public function save_global_settings(){
             if ($this->_global_settings_changed){
                 $this->cache->serialize('adapt/global.settings', $this->_global_settings, 60 * 60 * 24 * 5);
@@ -157,6 +221,14 @@ namespace adapt{
             return true;
         }
         
+        /**
+         * Gets a global setting from settings.xml
+         *
+         * @access public
+         * @param string $key
+         * The key to seek the value for
+         * @return string
+         */
         public function get_global_setting($key){
             if (isset($this->_global_settings[$key])){
                 return $this->_global_settings[$key];
@@ -165,6 +237,15 @@ namespace adapt{
             return null;
         }
         
+        /**
+         * Sets a global setting
+         *
+         * @access public
+         * @param string key
+         * The name of the setting
+         * @param string $value
+         * The value of the setting.
+         */
         public function set_global_setting($key, $value){
             if ($this->get_global_setting($key) != $value){
                 $this->_global_settings[$key] = $value;
@@ -172,17 +253,43 @@ namespace adapt{
             }
         }
         
+        /**
+         * Returns an array of all global settings
+         * 
+         * @return array
+         */
         public function get_global_settings(){
             return $this->_global_settings;
         }
         
+        /**
+         * Allows the replacing of all global settings
+         *
+         * @access public
+         * @param array $hash
+         * Hash array containing the settings name and value.
+         */
         public function set_global_settings($hash){
             $this->_global_settings = $hash;
             $this->_global_settings_changed = true;
         }
         
-        /*
-         * System booting
+        /**
+         * Boots an application.
+         *
+         * When $application_name is missing Adapt will seek the value
+         * of 'adapt.default_application_name' from the global settings.
+         *
+         * If the setting 'adapt.default_application_name' is missing then
+         * the first application found will be booted.
+         *
+         * @access public
+         * @param string $application_name
+         * Optional.  The application name to be booted.
+         * @param string $application_version
+         * Optional.  The version of the application to be booted.
+         * @return boolean
+         * Indicates if the application was successfully booted, or not.
          */
         public function boot_application($application_name = null, $application_version = null){
             
@@ -333,8 +440,16 @@ namespace adapt{
             }
         }
         
-        /*
-         * Remote bundle management
+        /**
+         * Fetch a bundle from the Adapt repository.
+         *
+         * @access public
+         * @param string $bundle_name
+         * The name of the bundle to fetch from the repository
+         * @param string $bundle_version
+         * Optional. The version of the bundle to fetch from the
+         * repository.
+         * @return boolean
          */
         public function fetch_bundle($bundle_name, $bundle_version = null){
             if ($this->repository->has($bundle_name, $bundle_version)){
@@ -358,8 +473,15 @@ namespace adapt{
             }
         }
         
-        /*
-         * Local bundle management
+        /**
+         * Marks a bundle as installed
+         *
+         * @access public
+         * @param string $bundle_name
+         * The name of the bundle to mark as installed.
+         * @param string $bundle_version
+         * The version of the bundle.
+         * @return boolean
          */
         public function set_bundle_installed($bundle_name, $bundle_version){
             if ($this->data_source && $this->data_source instanceof data_source_sql){
@@ -412,9 +534,19 @@ namespace adapt{
             return false;
         }
         
+        /**
+         * Is a bundle installed?
+         *
+         * @access public
+         * @param string $bundle_name
+         * The name of the bundle
+         * @param string $bundle_version
+         * The version of the bundle.
+         * @return boolean
+         */
         public function is_bundle_installed($bundle_name, $bundle_version){
             //print "<pre>DS: " . print_r($this->data_source, true) . "</pre>";
-            print "<pre>Checking if {$bundle_name}-{$bundle_version} is installed... ";
+            //print "<pre>Checking if {$bundle_name}-{$bundle_version} is installed... ";
             if ($this->data_source && $this->data_source instanceof data_source_sql){
                 
                 if (!is_array($this->_data_source_bundle_cache)){
@@ -449,22 +581,32 @@ namespace adapt{
                 if (is_array($this->_data_source_bundle_cache)){
                     foreach($this->_data_source_bundle_cache as $bundle){
                         if ($bundle['name'] == $bundle_name && $bundle['version'] == $bundle_version){
-                            print "Intalled</pre>";
+                            //print "Intalled</pre>";
                             return true;
                         }
                     }
                     
                 }
                 
-                print "Not intalled</pre>";
+                //print "Not intalled</pre>";
                 return false;
                 //print "<pre>Data source connected in bundles::is_bundle_installed</pre>";
             }
             
-            print "Unknown - assuming not.</pre>";
+            //print "Unknown - assuming not.</pre>";
             return false;
         }
         
+        /**
+         * Is a bundle available locally?
+         *
+         * @access public
+         * @param string $bundle_name
+         * The name of the bundle
+         * @param string $bundle_version
+         * Optional. The version of the bundle.
+         * @return boolean
+         */
         public function has_bundle($bundle_name, $bundle_version = null){
             if (in_array($bundle_name, $this->list_bundles())){
                 if (is_null($bundle_version)){
@@ -482,6 +624,17 @@ namespace adapt{
             return false;
         }
         
+        /**
+         * Have we met all the dependencies for a bundle?
+         *
+         * @access public
+         * @param string $bundle_name
+         * The name of the bundle
+         * @param string $bundle_version
+         * Optional. The version of the bundle.
+         * @return boolean|array
+         * Returns true or false, or an array of un-met dependencies.
+         */
         public function has_all_dependencies($bundle_name, $bundle_version = null){
             $required_dependencies = array();
             //print "<pre>XX {$bundle_name} {$bundle_version}</pre>";
@@ -528,6 +681,17 @@ namespace adapt{
             return $required_dependencies;
         }
         
+        /**
+         * Returns a list of dependencies for a bundle.
+         *
+         * @access public
+         * @param string $bundle_name
+         * The name of the bundle
+         * @param string $bundle_version
+         * The version of the bundle.
+         * @return array
+         * Returns an array of dependencies.
+         */
         public function get_dependency_list($bundle_name, $bundle_version){
             //print "<pre>get_dependency_list($bundle_name, $bundle_version)</pre>";
             $cache_key = "adapt/dependency.list.{$bundle_name}-{$bundle_version}";
@@ -614,6 +778,35 @@ namespace adapt{
             return $list;
         }
         
+        /**
+         * Loads a bundle
+         *
+         * This is the prefered way to load a bundle because the function
+         * caches and so performs much better than:
+         *
+         * <code>
+         * //The slow way
+         * $forms_bundle = new bundle_forms();
+         * </code>
+         *
+         * Because \adapt\base exposes this class as a shared property you can
+         * load a bundle from almost any class. In the following example we
+         * will load the forms bundle from a html div element.
+         *
+         * <code>
+         * $div = new html_div();
+         * $forms_bundle = $div->bundles->load_bundle('forms');
+         * </code>
+         * 
+         * 
+         * @access public
+         * @param string $bundle_name
+         * The name of the bundle
+         * @param string $bundle_version
+         * Optionally. The version of the bundle.
+         * @return bundle
+         * Returns a bundle.
+         */
         public function load_bundle($bundle_name, $bundle_version = null){
             if (!is_array($this->_bundle_cache)){
                 
@@ -720,7 +913,6 @@ namespace adapt{
                     
                     $object = new $class($data);
                     //$object = new bundle($bundle_name, $data);
-                    
                     if ($object && $object instanceof bundle){
                         $this->_bundle_cache[$bundle_name][$selected_version] = $object;
                         $this->_bundle_cache_changed = true;
@@ -740,6 +932,13 @@ namespace adapt{
             }
         }
         
+        
+        /**
+         * Saves the internal bundle cache for faster
+         * performance in the future.
+         *
+         * @access public
+         */
         public function save_bundle_cache(){
             if ($this->_bundle_cache_changed){
                 $this->_bundle_cache_changed = false;
@@ -753,6 +952,14 @@ namespace adapt{
             }
         }
         
+        /**
+         * Static function to list all the bundles
+         * available locally.
+         *
+         * @access public
+         * @return string[]
+         * Returns the bundle names of the local bundles.
+         */
         public static function list_bundles(){
             $output = array();
             
@@ -765,6 +972,14 @@ namespace adapt{
             return $output;
         }
         
+        /**
+         * Static function to list bundle versions available locally
+         * for the named bundle.
+         *
+         * @access public
+         * @param string $bundle_name
+         * @return string[]
+         */
         public static function list_bundle_versions($bundle_name){
             $output = array();
             
@@ -780,6 +995,20 @@ namespace adapt{
             return $output;
         }
         
+        /**
+         * Registers a namespace.
+         *
+         * For Adapt to auto load on behalf of bundles it needs
+         * to know the namespaces used by a bundle.
+         *
+         * @access public
+         * @param string $namespace
+         * The namespace to be registered
+         * @param string $bundle_name
+         * The bundle using the namespace
+         * @param string $bundle_version
+         * The version of the bundle using the namespace.
+         */
         public function register_namespace($namespace, $bundle_name, $bundle_version){
             //print "<p>Registering namespace <strong>{$namespace}-{$bundle_version}</strong></p>"; //new html_p(array("Registering namespace ", new html_strong($namespace)));
             $namespaces = $this->store('adapt.namespaces');
@@ -807,6 +1036,21 @@ namespace adapt{
             //}
         }
         
+        /**
+         * Static function to check if two versions are the
+         * same.
+         *
+         * <code>
+         * if (bundle::matches_version('2.0', '2.0.8')){
+         *      //True because 2.0.8 is considered a revision of 2.0
+         * }
+         * </code>
+         *
+         * @access public
+         * @param string $version_1
+         * @param string $version_2
+         * @return boolean
+         */
         public static function matches_version($version_1, $version_2){
             $v1 = array('major' => '', 'minor' => '', 'revision' => '');
             $v2 = array('major' => '', 'minor' => '', 'revision' => '');
@@ -832,6 +1076,22 @@ namespace adapt{
             return false;
         }
         
+        /**
+         * Static function to get the newest version
+         * from two or more.
+         *
+         * When both params are provided, each param is expected
+         * to be a string.
+         *
+         * When only the first param is provided it is expected
+         * to be an array of version strings.
+         *
+         * @access public
+         * @param string|string[] $version_1
+         * @param string $version_2
+         * @return string
+         * Returns the newest version string.
+         */
         public static function get_newest_version($version_1, $version_2 = null){
             if (is_array($version_1)){
                 

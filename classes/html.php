@@ -1,10 +1,12 @@
 <?php
 
-/*
+/**
+ * Adapt Framework
+ *
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2016 Matt Bruton
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +25,13 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *  
+ *
+ * @package     adapt
+ * @author      Matt Bruton <matt.bruton@gmail.com>
+ * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
+ * @license     https://opensource.org/licenses/MIT     MIT License
+ * @link        http://www.adpatframework.com
+ *
  */
 
 namespace adapt{
@@ -31,12 +39,43 @@ namespace adapt{
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
     
+    /**
+     * Foundation class for handling html.
+     *
+     * This class has been registered as a class handler.
+     *
+     * Example of creating a div tag without using this class
+     * as a class handler.
+     *
+     * <code>
+     * $div = new html('div');
+     * </code>
+     *
+     * Example of creating a div tag using this class as a
+     * class handler.
+     *
+     * <code>
+     * $div = new html_div();
+     * </code>
+     *
+     * @property string $id
+     * Gets or sets the HTML id attribute
+     */
     class html extends xml{
         
+        /** @ignore */
         protected $_closed_tags;
         
-        /*
+        /**
          * Constructor
+         *
+         * @access public
+         * @param string
+         * The tag to create
+         * @param string|html|view
+         * Optionally the data to add.
+         * @param array
+         * An associative array of attributes.
          */
         public function __construct($tag = null, $data = null, $attributes = array()){
             $this->_closed_tags = $GLOBALS['adapt']->setting('html.closed_tags');
@@ -44,24 +83,35 @@ namespace adapt{
             
         }
         
-        /*
-         * ID functions
+        /**
+         * Sets the ID attribute
+         *
+         * @access public
+         * @param string
+         * Optional, when provided the ID is set to this value, else the ID is
+         * auto generated.
          */
         public function set_id($id = null){
             if (is_null($id)) $id = "adapt-id-" . $this->instance_id;
             $this->attribute('id', $id);
         }
         
-        public function aget_id(){
+        /** @ignore */
+        public function pget_id(){
             return $this->attribute('id');
         }
         
-        public function aset_id($id){
+        /** @ignore */
+        public function pset_id($id){
             $this->attribute('id', $id);
         }
         
-        /*
-         * Class functions
+        /**
+         * Add a HTML class to the element.
+         *
+         * @access publc
+         * @param string
+         * The class to add.
          */
         public function add_class($class){
             if (is_array($class)) foreach ($class as $c) return $this->add_class($c);
@@ -73,6 +123,13 @@ namespace adapt{
             $this->attribute('class', $classes);
         }
         
+        /**
+         * Removes a HTML class from the element
+         *
+         * @access public
+         * @param string
+         * The class to remove from the element.
+         */
         public function remove_class($class){
             if (is_array($class)) foreach ($class as $c) return $this->remove_class($c);
             $classes = $this->attribute('class');
@@ -83,14 +140,29 @@ namespace adapt{
             $this->attribute('class', $classes);
         }
         
+        /**
+         * Checks if the element has the class.
+         *
+         * @access public
+         * @param string
+         * The class to check.
+         */
         public function has_class($class){
             $classes = $this->attribute('class');
             $classes = explode(" ", $classes);
             return in_array($class, $classes);
         }
         
-        /*
-         * Render functions
+        /**
+         * Renders an attribute
+         *
+         * @access
+         * @param string
+         * The attribute name
+         * @param string
+         * The attribute value
+         * @return string
+         * The rendered attribute.
          */
         public function render_attribute($key, $value = null){
             if (is_null($value) || $value == ""){
@@ -100,6 +172,20 @@ namespace adapt{
             return parent::render_attribute($key, $value);
         }
         
+        /**
+         * Renders the element.
+         *
+         * @access public
+         * @param boolean
+         * Used internally, should always be null.
+         * @param boolean
+         * Used internally, should always be null.
+         * @param integer
+         * Used internally, should always be null. When outputting
+         * readable HTML this denotes the depth of the element.
+         * @return string
+         * The rendered element.
+         */
         public function render($not_req_1 = null, $not_req_2 = null, $depth = 0){
             /**
              * We are going to override render to output html 5
@@ -111,11 +197,19 @@ namespace adapt{
             return parent::_render(false, false, $depth);
         }
         
-        /*
-         * Parse functions
+        /**
+         * Parses a HTML string
+         *
+         * @access public
+         * @param string
+         * The HTML to be parsed.
+         * @param boolean
+         * Should the returned string be output as a document. **Warning** this
+         * should always be set to **false**.
+         * @return html
          */
         public static function parse($data, $return_as_document = false){
-            /**
+            /*
              * We are going to override the parse function
              * to deal with html 5 style tags that miss
              * the closing slash ie, <... /> to <...>
@@ -154,9 +248,9 @@ namespace adapt{
                 $data = $final;
             }
             if ($return_as_document){
-                $output = \application\xml::parse($data, false, new \application\html_document()); //ISSUE: Ummm... This class doesn't exist!
+                $output = xml::parse($data, false, new \application\html_document()); //ISSUE: Ummm... This class doesn't exist!
             }else{
-                $output = \application\xml::parse($data);
+                $output = xml::parse($data);
             }
             
             /*
@@ -174,6 +268,15 @@ namespace adapt{
             return $output;
         }
         
+        /**
+         * Converts HTML5 single tags such as <input> to <input></input> so
+         * it is compatable with XML and can be parsed by xml::parse.
+         *
+         * @access public
+         * @param xml
+         * The xml to be fixed
+         * @return html
+         */
         public static function fix_parsed_tags($item){
             $closed_tags = $GLOBALS['adapt']->setting('html.closed_tags');
             
@@ -186,10 +289,10 @@ namespace adapt{
             }
             
             /* Convert the children */
-            if ($item instanceof \application\html){ //ISSUE: Application namespace?
+            if ($item instanceof html){ 
                 for($i = 0; $i < $item->count(); $i++){
                     if ($item->get($i) instanceof xml){
-                        $item->set($i, \application\html::fix_parsed_tags($item->get($i))); //ISSUE: Application namespace?
+                        $item->set($i, html::fix_parsed_tags($item->get($i)));
                     }
                 }
             }
@@ -197,8 +300,13 @@ namespace adapt{
             return $item;
         }
         
-        /*
-         * Helper functions
+        /**
+         * Is the $string html?
+         *
+         * @access public
+         * @param string
+         * A string
+         * @return boolean
          */
         public static function is_html($string){
             $string = trim($string);

@@ -1,10 +1,12 @@
 <?php
 
-/*
+/**
+ * Adapt Framework
+ *
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2016 Matt Bruton
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +25,13 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *  
+ *
+ * @package     adapt
+ * @author      Matt Bruton <matt.bruton@gmail.com>
+ * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
+ * @license     https://opensource.org/licenses/MIT     MIT License
+ * @link        http://www.adpatframework.com
+ *
  */
 
 namespace adapt{
@@ -31,59 +39,191 @@ namespace adapt{
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
     
+    /**
+     * Native HTTP / HTTPS support without any extensions.
+     *
+     * @property boolean $handle_redirects
+     * Should HTTP redirects automatically be followed? Default is true.
+     * @property-read array $connections
+     * Returns an array of connections.
+     * @property integer $timeout
+     * How many seconds should we wait before declaring the connection unreachable? Default is 30.
+     * @property-read array $cookie_jar
+     * Returns an array of cookies used by this class.
+     */
     class http extends base{
         
+        /**
+         * @ignore
+         */
         protected $_connections;
+        
+        /**
+         * @ignore
+         */
         protected $_timeout;
+        
+        /**
+         * @ignore
+         */
         protected $_cookie_jar;
+        
+        /**
+         * @ignore
+         */
         protected $_handle_redirects = true;
         
+        /**
+         * Constructor
+         */
         public function __construct(){
             parent::__construct();
             $this->_timeout = 30;
             $this->_cookie_jar = array();
         }
         
+        
+        /**
+         * @ignore
+         */
         public function __destruct(){
             
         }
         
+        /**
+         * @ignore
+         */
         public function pget_handle_redirects(){
             return $this->_handle_redirects;
         }
         
+        /**
+         * @ignore
+         */
         public function pset_handle_redirects($value){
             $this->_handle_redirects = $value;
         }
         
+        /**
+         * @ignore
+         */
         public function pget_connections(){
             return $this->_connections;
         }
         
+        /**
+         * @ignore
+         */
         public function pget_timeout(){
             return $this->_timeout;
         }
         
+        /**
+         * @ignore
+         */
         public function pset_timeout($timeout){
             $this->_timeout = $timeout;
         }
         
+        /**
+         * @ignore
+         */
         public function pget_cookie_jar(){
             return $this->_cookie_jar;
         }
         
+        /**
+         * Performs a HTTP Get request with optional headers.
+         *
+         * <code>
+         * $http = new http();
+         *
+         * $response = $http->get('http://www.example.com');
+         * if ($response['status'] == 200){
+         *      print $response['content'];
+         * }
+         * </code>
+         * 
+         * @access public
+         * @param string $url
+         * The URL to get, for example: http://www.example.com
+         * @param array $headers
+         * Optionally an array of headers to send with the request
+         * @return array
+         * Returns an array containing the status, headers and the content.
+         */
         public function get($url, $headers = array()){
             return $this->request($url, 'get', $headers);
         }
         
+        /**
+         * Performs a HTTP Head request with optional headers.
+         *
+         * <code>
+         * $http = new http();
+         *
+         * $response = $http->head('http://www.example.com');
+         * if ($response['status'] == 200){
+         *      print_r($response['headers']);
+         * }
+         * </code>
+         * 
+         * @access public
+         * @param string $url
+         * The URL to get, for example: http://www.example.com
+         * @param array $headers
+         * Optionally an array of headers to send with the request
+         * @return array
+         * Returns an array containing the status and headers.
+         */
         public function head($url, $headers = array()){
             return $this->request($url, 'head', $headers);
         }
         
+        /**
+         * Performs a HTTP Post request.
+         *
+         * <code>
+         * $http = new http();
+         *
+         * $response = $http->post('http://www.example.com', '<xml></xml>', ['content-type: text/xml']);
+         * if ($response['status'] == 200){
+         *      print $response['content'];
+         * }
+         * </code>
+         * 
+         * @access public
+         * @param string $url
+         * The URL to get, for example: http://www.example.com
+         * @param mixed $data
+         * The data to post.
+         * @param array $headers
+         * Optionally an array of headers to send with the request
+         * @return array
+         * Returns an array containing the status, headers and content.
+         */
         public function post($url, $data, $headers = array()){
             return $this->request($url, 'post', $headers, $data);
         }
         
+        /**
+         * Performs a HTTP request
+         *
+         * @access public
+         * @param string $url
+         * The URL to make the request against
+         * @param string $type
+         * The HTTP request type, eg, get, post or head.
+         * @param array $headers
+         * Optionally include and array of headers
+         * @param mixed $data
+         * Optionally data to post.
+         * @param integer $redirect_count
+         * Used internally to track redirects and prevents redirect loops
+         * from occuring.
+         * @return array
+         * Returns an array containing the status, content and headers.
+         */
         public function request($url, $type = 'get', $headers = array(), $data = null, $redirect_count = 0){
             $url = $this->parse_url($url);
             
@@ -129,9 +269,13 @@ namespace adapt{
                         
                         if ($correct_domain && $correct_path){
                             /* Check the exipry time */
-                            $date = new date($cookie['expires']);
-                            
-                            if ($date->is_future(true)){
+                            if ($cookie['expires']){
+                                $date = new date($cookie['expires']);
+                                
+                                if ($date->is_future(true)){
+                                    $expired = false;
+                                }
+                            }else{
                                 $expired = false;
                             }
                         }
@@ -147,29 +291,37 @@ namespace adapt{
                         }
                     }
                     
+                    /* Are we posting? */
+                    $payload = "";
+                    
+                    if ($type == "post"){
+                        /* Add the data */
+                        if(is_assoc($data)){
+                            $first = true;
+                            foreach($data as $key => $value){
+                                $key = urlencode($key);
+                                $value = urlencode($value);
+                                if (!$first){
+                                    $payload .= "&";
+                                }
+                                $payload .= "{$key}={$value}";
+                                $first = false;
+                            }
+                        }else{
+                            $payload .= $data;
+                        }
+                        
+                        if (strlen($payload)){
+                            $headers['Content-Length'] = strlen($payload);
+                        }
+                    }
+                    
                     /* Add the headers to the request */
                     foreach($headers as $key => $value){
                         $request .= "{$key}: {$value}\r\n";
                     }
                     
-                    $request .= "\r\n";
-                    
-                    /* Add the data */
-                    if (is_string($data)){
-                        $request .= $data;
-                    }elseif(is_assoc($data)){
-                        //TODO: Url encode key pairs
-                        $first = true;
-                        foreach($data as $key => $value){
-                            $key = urlencode($key);
-                            $value = urlencode($value);
-                            if (!$first){
-                                $request .= "&";
-                            }
-                            $request .= "{$key}={$value}";
-                        }
-                    }
-                    
+                    $request .= "\r\n" . $payload;
                     
                     /* Send the request */
                     fwrite($socket, $request, strlen($request));
@@ -198,6 +350,7 @@ namespace adapt{
                         /* Parse and store any cookies in the cookie jar */
                         if (isset($output['headers']['set-cookie'])){
                             $cookies = $output['headers']['set-cookie'];
+                            
                             if (!is_array($cookies)) $cookies = array($cookies);
                             foreach($cookies as $cookie){
                                 $parts = explode(";", $cookie);
@@ -207,7 +360,8 @@ namespace adapt{
                                 $value = trim($value);
                                 $meta = array(
                                     'name' => $name,
-                                    'value' => $value
+                                    'value' => $value,
+                                    'domain' => $url['host']
                                 );
                                 if (count($parts) > 0){
                                     for($i = 1; $i < count($parts); $i++){
@@ -325,8 +479,19 @@ namespace adapt{
             return null;
         }
         
-        
-        
+        /**
+         * Opens a connection to a server and returns the socket handle.
+         *
+         * @access public
+         * @param string $host
+         * The host name you wish to connect to.
+         * @param integer $port
+         * The port to open the connection on
+         * @param boolean $use_ssl
+         * Should the connection be made over SSL?
+         * @return null|resource
+         * When successful the socket handle is returned.
+         */
         public function get_connection($host, $port, $use_ssl = false){
             $key = $host . ":" . $port;
             
@@ -338,7 +503,7 @@ namespace adapt{
                 $handle = fsockopen($host, $port, $error_number, $error_string, $this->timeout);
                 
                 if ($use_ssl){
-                    if (false == stream_socket_enable_crypto($handle, true, STREAM_CRYPTO_METHOD_SSLv3_CLIENT)){
+                    if (false == stream_socket_enable_crypto($handle, true)){
                         $this->error('Failed to initialise SSL');
                         return null;
                     }
@@ -359,6 +524,16 @@ namespace adapt{
             return null;
         }
         
+        /**
+         * Breaks a URL down into it's composite parts and returns
+         * as an array.
+         *
+         * @access public
+         * @param string $url
+         * The URL to be parsed
+         * @return array
+         * Returns an array of the URL parts.
+         */
         public function parse_url($url){
             $output = array(
                 'protocol' => 'http',

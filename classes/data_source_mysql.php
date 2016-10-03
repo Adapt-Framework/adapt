@@ -1,10 +1,12 @@
 <?php
 
-/*
+/**
+ * Adapt Framework
+ *
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2016 Matt Bruton
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +25,12 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *  
+ *
+ * @package     adapt
+ * @author      Matt Bruton <matt.bruton@gmail.com>
+ * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
+ * @license     https://opensource.org/licenses/MIT     MIT License
+ * @link        http://www.adpatframework.com
  */
 
 namespace adapt{
@@ -31,10 +38,21 @@ namespace adapt{
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
     
+    /**
+     * MySQL / MariaDB Data source driver
+     */
     class data_source_mysql extends data_source_sql implements interfaces\data_source_sql{
         
-        /*
-         * SQL Execution
+        /**
+         * Execute a SQL read or write statement.
+         *
+         * @access public
+         * @param string
+         * A SQL statement.
+         * @param boolean
+         * Is this statement writing data?
+         * @return resource
+         * Returns a statement handle.
          */
         public function query($sql, $write = false){
             $host = $this->get_host($write);
@@ -61,6 +79,15 @@ namespace adapt{
             return false;
         }
         
+        /**
+         * Fetches data from a statement handle.
+         *
+         * @access public
+         * @param resource
+         * The statement handle returned from read(), write() or query().
+         * @param integer
+         * How should the data be fetched? See the constants prefixed FETCH_
+         */
         public function fetch($statement_handle, $fetch_type = self::FETCH_ASSOC){
             if (is_object($statement_handle)){
                 switch($fetch_type){
@@ -95,6 +122,13 @@ namespace adapt{
             return false;
         }
         
+        /**
+         * Returns the last inserted record ID
+         *
+         * @access public
+         * @return integer
+         * The ID of the record.
+         */
         public function last_insert_id(){
             $host = $this->get_host(true);
             if (isset($host) && isset($host['handle'])){
@@ -102,8 +136,22 @@ namespace adapt{
             }
         }
         
-        /*
-         * Connection management
+        /**
+         * Opens a connection to the $host.
+         *
+         * Connections are handled automatically and you shouldn't
+         * need to use this function.
+         *
+         * Example usage.
+         * <code>
+         * $source = new data_source_mysql();
+         * $source->add_host('hostname', 'username', 'password', 'schema', true);
+         * $source->connect($source->get_host(true));
+         * </code>
+         *
+         * @access public
+         * @param array
+         * An array representing the host.
          */
         public function connect($host){
             //$mysql = new mysqli($host['host'], $host['username'], $host['password'], $host['schema']);
@@ -134,6 +182,23 @@ namespace adapt{
             return $mysql;
         }
         
+        /**
+         * Closes a connection to the $host.
+         *
+         * Connections are handled automatically and you shouldn't
+         * need to use this function.
+         *
+         * Example usage.
+         * <code>
+         * $source = new data_source_mysql();
+         * $source->add_host('hostname', 'username', 'password', 'schema', true);
+         * $source->disconnect($source->get_host(true));
+         * </code>
+         *
+         * @access public
+         * @param array
+         * An array representing the host.
+         */
         public function disconnect($host){
             if (isset($host['handle'])){
                 mysqli_close($host['handle']);
@@ -141,8 +206,14 @@ namespace adapt{
             }
         }
         
-        /*
-         * Escaping
+        /**
+         * Escapes a value
+         *
+         * @access public
+         * @param string
+         * The value to be escaped
+         * @return string
+         * The escaped value
          */
         public function escape($string){
             $host = $this->get_host();
@@ -153,8 +224,15 @@ namespace adapt{
             }
         }
         
-        /*
-         * SQL Rendering
+        /**
+         * Converts a sql object to a SQL string for the target
+         * database platform.
+         *
+         * @access public
+         * @param sql
+         * The sql object to be converted.
+         * @return string
+         * Returns the SQL statement as a string.
          */
         public function render_sql(\adapt\sql $sql){
             $statement = "";
@@ -913,8 +991,18 @@ namespace adapt{
         //    
         //}
         
-        /*
-         * Data types
+        /**
+         * Converts a data type from a string into an array
+         * 
+         * @access public
+         * @param string
+         * The data type as a string, such as 'varchar(64)'
+         * @param boolean
+         * For numeric data types, is the type signed?
+         * @param boolean
+         * Should the data type by zero filled?
+         * @return array
+         * Returns an array containing the data type structure.
          */
         public function convert_data_type($type, $signed = true, $zero_fill = false){
             $params = array();
@@ -1061,6 +1149,7 @@ namespace adapt{
             }
         }
         
+        /** @ignore */
         public function sync_schema(){
             //base::install();
             print_r($this->errors());
