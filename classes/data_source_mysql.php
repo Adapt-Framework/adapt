@@ -62,8 +62,10 @@ namespace adapt{
                 if (mysqli_real_query($host['handle'], $sql)){
                     $this->trigger(self::EVENT_QUERY, array('sql' => $sql, 'host' => $host));
                     if ($write){
+                        mysqli_next_result($host['handle']);
                         return true;
                     }elseif ($result = mysqli_store_result($host['handle'])){
+                        mysqli_next_result($host['handle']);
                         return $result;
                     }
                     
