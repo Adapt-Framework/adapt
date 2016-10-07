@@ -734,7 +734,7 @@ namespace adapt{
                     $results = $sql->execute()->results();
                     
                     if (count($results) == 1){
-                        $this->trigger(self::EVENT_ON_LOAD_GUID);
+                        $this->trigger(self::EVENT_ON_LOAD_BY_GUID);
                         return $this->load_by_data($results[0]);
                     }elseif(count($results) == 0){
                         $this->error("Unable to find a record with guid {$guid}");
