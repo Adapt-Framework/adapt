@@ -727,7 +727,7 @@ namespace adapt{
                         
                     }else{
                         
-                        $sql->where(new sql_cond('name', sql::EQUALS, sql::q($guid)));
+                        $sql->where(new sql_cond('guid', sql::EQUALS, sql::q($guid)));
                     }
                     
                     /* Get the results */
