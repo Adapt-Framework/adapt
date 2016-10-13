@@ -42,6 +42,8 @@ namespace adapt{
      * The foundation controller, the controller that all
      * other controllers inherit from.
      *
+     * @property-readonly controller|null $parent
+     * Returns the parent controller
      * @property xml|html|view $view
      * The view being managed by this controller.
      * @property model $model
@@ -56,6 +58,9 @@ namespace adapt{
      * The point in the URL where this controller is mounted.
      */
     abstract class controller extends base{
+        
+        /** @ignore */
+        protected $_parent;
         
         /** @ignore */
         protected $_view;
@@ -93,7 +98,7 @@ namespace adapt{
             
             if (isset($this->_model) && is_object($this->_model) && $this->_model instanceof model){
                 if (!$this->_model->is_loaded){
-                    //TODO: Test
+                    
                     if (isset($this->request[$this->_model->table_name])){
                         /* Get the values */
                         $values = $this->request[$this->_model->table_name];
@@ -119,6 +124,16 @@ namespace adapt{
         /*
          * Properties
          */
+        /** @ignore */
+        public function pget_parent(){
+            return $this->_parent;
+        }
+        
+        /** @ignore */
+        public function pset_parent($controllers){
+            $this->parent = $controllers;
+        }
+        
         /** @ignore */
         public function pget_view(){
             return $this->_view;
@@ -269,6 +284,10 @@ namespace adapt{
             if ($controller instanceof $name){
                 $this->_children[] = $controller;
                 
+                if ($controller instanceof controller){
+                    $controller->parent = $this;
+                }
+                
                 if ($append_view == true){
                     $this->add_view($controller->view);
                 }
@@ -307,7 +326,7 @@ namespace adapt{
          */
         public function route($url, $is_action = false){
             $url = trim($url);
-            $this->_url_mount_point = '/' . trim(substr($this->request['url'], 0, strlen($this->request['url']) - strlen($url)), '/');
+            $this->_url_mount_point = '/' . trim(substr($this->request['url'], 0, strlen($this->request['url']) - strlen($url)), '/'); // << Wrong!
             
             if (!isset($url) || $url == ""){
                 $url = "default";
@@ -321,8 +340,6 @@ namespace adapt{
             if (!$is_action){
                 $this->url = $url;
             }
-            
-            //print new html_pre(get_class($this) . ": '{$this->url}'");
             
             if (strlen($method) > 0){
                 if ($is_action){
@@ -338,8 +355,6 @@ namespace adapt{
                 $permission = "permission_{$method}";
                 
                 if (isset($method)){
-                    
-                    //$this->$method();
                     if (method_exists($this, $method) || is_callable(array($this, $method))){
                         if (/*(!method_exists($this, $permission) && !is_callable(array($this, $permission)))*/ is_null($this->$permission()) || $this->$permission() == true){
                             $output =  $this->$method();
