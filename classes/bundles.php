@@ -71,7 +71,7 @@ namespace adapt{
         protected $_repository;
         
         /**
-         * Contructor
+         * Constructor
          */
         public function __constuct(){
             parent::__construct();
