@@ -45,7 +45,7 @@ namespace adapt{
     class bundle_adapt extends bundle {
         
         /**
-         * Construtor
+         * Constructor
          *
          * @access public
          * @param xml $bundle_data
