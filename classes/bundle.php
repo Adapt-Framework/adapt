@@ -73,7 +73,9 @@ namespace adapt{
      * Has this bundle been booted?
      */
     class bundle extends base{
-        
+
+        /** @ignore */
+        protected $_file_store;
         /** @ignore */
         protected $_data;
         /** @ignore */
@@ -133,6 +135,22 @@ namespace adapt{
         /*
          * Properties
          */
+        /** @ignore */
+        public function pget_file_store(){
+            if ($this->_file_store) {
+                return $this->_file_store;
+            }
+
+            $store = parent::pget_file_store();
+
+            if ($store instanceof storage_file_system) {
+                return $store;
+            } else {
+                $this->_file_store = new storage_file_system();
+                return $this->_file_store;
+            }
+        }
+
         /** @ignore */
         public function pget_is_loaded(){
             return $this->_is_loaded;
