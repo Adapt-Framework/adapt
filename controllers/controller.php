@@ -82,9 +82,10 @@ namespace adapt{
         /**
          * Contstructor
          */
-        public function __construct(){
+        public function __construct($parent = null){
             parent::__construct();
-            
+
+            $this->_parent = $parent;
             $namespaces = explode("\\", get_class($this));
             $class_name = array_pop($namespaces);
             
@@ -131,7 +132,7 @@ namespace adapt{
         
         /** @ignore */
         public function pset_parent($controllers){
-            $this->parent = $controllers;
+            $this->_parent = $controllers;
         }
         
         /** @ignore */
@@ -279,14 +280,10 @@ namespace adapt{
                 }
             }
             
-            $controller = self::create_object($name);
-            
+            $controller = self::create_object($name, $this);
+
             if ($controller instanceof $name){
                 $this->_children[] = $controller;
-                
-                if ($controller instanceof controller){
-                    $controller->parent = $this;
-                }
                 
                 if ($append_view == true){
                     $this->add_view($controller->view);
@@ -294,6 +291,13 @@ namespace adapt{
             }
             
             return $controller;
+        }
+
+        public static function create_object($class, $concrete = null)
+        {
+            if (class_exists($class)){
+                return new $class($concrete);
+            }
         }
         
         
