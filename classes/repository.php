@@ -150,6 +150,7 @@ namespace adapt{
         }
         
         public function has($bundle_name, $bundle_version = null){
+            print $bundle_name . "\n";
             if (preg_match("/^[a-zA-Z]+[-_a-zA-Z0-9]+[a-zA-Z0-9]+$/", $bundle_name)){
                 
                 $uri = "/bundles/{$bundle_name}";

@@ -1624,9 +1624,8 @@ namespace adapt{
                 
                 /* Do we have anything for our chilren? */
                 foreach($table_names as $table_name){
-                    if ($this->table_name != $this->table_name){
+                    if ($this->table_name != $table_name){
                         if (is_array($this->data_source->get_relationship($this->table_name, $table_name))){
-                            
                             $field_names = array_keys($data[$table_name]);
                             $record_count = count($data[$table_name][$field_names[0]]);
                             $keys = $this->data_source->get_primary_keys($table_name);
@@ -1689,25 +1688,26 @@ namespace adapt{
                                         }
                                     }
                                     
-                                    if (!$record_processed){
-                                        /* Add child */
-                                        $model_name = "model_" . $table_name;
-                                        $model = new $model_name();
-                                        
-                                        $hash = $data;
-                                                
-                                        /* Remove all siblings from the push hash */
-                                        $hash[$table_name] = $record[$table_name];
-                                        
-                                        /* Push the data */
-                                        $model->push($hash);
-                                        
-                                        /* Add the model */
-                                        $this->add($model);
-                                        
-                                        /* Mark the record as processed */
-                                        $record_processed = true;
-                                    }
+                                }
+                                
+                                if (!$record_processed){
+                                    /* Add child */
+                                    $model_name = "model_" . $table_name;
+                                    $model = new $model_name();
+                                    
+                                    $hash = $data;
+                                            
+                                    /* Remove all siblings from the push hash */
+                                    $hash[$table_name] = $record[$table_name];
+                                    
+                                    /* Push the data */
+                                    $model->push($hash);
+                                    
+                                    /* Add the model */
+                                    $this->add($model);
+                                    
+                                    /* Mark the record as processed */
+                                    $record_processed = true;
                                 }
                             }
                             
