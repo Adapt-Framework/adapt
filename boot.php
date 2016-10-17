@@ -493,6 +493,3 @@ if ($adapt->bundles->boot_application()){
 //        print $adapt->dom;
 //    }
 //}
-
-
-?>
