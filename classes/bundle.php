@@ -898,9 +898,7 @@ namespace adapt{
          */
         public function boot(){
             //print "<pre>Booting (bundle level): {$this->name}</pre>";
-            
             if (!$this->is_booted){
-                
                 $this->apply_settings();
                 
                 if ($this->type == 'application'){
@@ -918,6 +916,7 @@ namespace adapt{
                             $bundle = $this->bundles->load_bundle($bundle_data['name'], $bundle_data['version']);
                             if ($bundle instanceof bundle && $bundle->is_loaded){
                                 //print "<pre>Loaded {$bundle->name} {$bundle->version} (" . get_class($bundle) . ")</pre>";
+                                $time = microtime(true);
                                 if (!$bundle->boot()){
                                     $this->error("Unable to boot '{$bundle_data['name']}'");
                                     return false;

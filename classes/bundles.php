@@ -292,7 +292,6 @@ namespace adapt{
          * Indicates if the application was successfully booted, or not.
          */
         public function boot_application($application_name = null, $application_version = null){
-            
             /* Load global settings */
             $this->load_global_settings();
             
@@ -391,29 +390,34 @@ namespace adapt{
                         //print "<pre>Loaded application {$application->name}</pre>";
                         
                         //Maybe impletement boot statergies here, if (we have one){...}
-                        $dependencies_resolved = $this->has_all_dependencies($application->name, $application->version);
-                        $in_error = false;
+                        $cache_key = "dependencies-resolved-{$application->name}-{$application->version}";
+                        $dependencies_resolved = $this->cache->get($cache_key);
                         
-                        while(!$in_error && is_array($dependencies_resolved)){
+                        if (!$dependencies_resolved){
+                            $dependencies_resolved = $this->has_all_dependencies($application->name, $application->version);
+                            $in_error = false;
                             
-                            /* Fetch from the repository */
-                            foreach($dependencies_resolved as $name => $versions){
-                                $version = self::get_newest_version($versions);
-                                if (!$this->fetch_bundle($name, $version)){
-                                    $in_error = true;
+                            while(!$in_error && is_array($dependencies_resolved)){
+                                
+                                /* Fetch from the repository */
+                                foreach($dependencies_resolved as $name => $versions){
+                                    $version = self::get_newest_version($versions);
+                                    if (!$this->fetch_bundle($name, $version)){
+                                        $in_error = true;
+                                    }
                                 }
+                                
+                                if (!$in_error){
+                                    $dependencies_resolved = $this->has_all_dependencies($application->name, $application->version);
+                                }
+                                //print "<pre>" . print_r($dependencies_resolved, true) . "</pre>";
+                                //ob_flush();
+                                //$dependencies_resolved = false;
                             }
-                            
-                            if (!$in_error){
-                                $dependencies_resolved = $this->has_all_dependencies($application->name, $application->version);
-                            }
-                            //print "<pre>" . print_r($dependencies_resolved, true) . "</pre>";
-                            //ob_flush();
-                            //$dependencies_resolved = false;
                         }
                         
-                        if ($dependencies_resolved === true){
-                            
+                        if ($dependencies_resolved){
+                            $this->cache->set($cache_key, 1);
                             /* Set the running application for the auto loader */
                             $this->setting("adapt.running_application", $application->namespace);
                             
