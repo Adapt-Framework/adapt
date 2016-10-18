@@ -1573,10 +1573,5 @@ namespace adapt{
             
             return false;
         }
-        
     }
-    
-    
 }
-
-?>
