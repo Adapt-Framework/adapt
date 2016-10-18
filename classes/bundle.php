@@ -908,14 +908,11 @@ namespace adapt{
                     if (is_array($dependency_list)){
                         
                         $dependency_list = array_reverse($dependency_list);
-                        //print new html_pre(print_r($dependency_list, true));
+                        
                         foreach($dependency_list as $bundle_data){
-                            //print "<pre>Loading {$bundle_data['name']} {$bundle_data['version']}</pre>";
-                            //print "<pre>" . print_r($this->store('adapt.namespaces'), true) . "</pre>";
-                            
                             $bundle = $this->bundles->load_bundle($bundle_data['name'], $bundle_data['version']);
                             if ($bundle instanceof bundle && $bundle->is_loaded){
-                                //print "<pre>Loaded {$bundle->name} {$bundle->version} (" . get_class($bundle) . ")</pre>";
+                                
                                 $time = microtime(true);
                                 if (!$bundle->boot()){
                                     $this->error("Unable to boot '{$bundle_data['name']}'");
