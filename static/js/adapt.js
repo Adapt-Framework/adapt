@@ -79,9 +79,6 @@ var adapt = {
      */
     date: {
         convert_date: function(input_pattern, output_pattern, value){
-            console.log('Input pattern: ' + input_pattern);
-            console.log('Output pattern: ' + output_pattern);
-            console.log('Value: ' + value);
             var output = '';
             var date = {
                 day_of_month: '',
@@ -97,7 +94,6 @@ var adapt = {
                 
                 switch (chr){
                 case "d":
-                    console.log('Value IN: ' + value);
                     if (value.length >= 2){
                         var val = value.substr(0, 2);
                         value = value.substr(2);
@@ -106,7 +102,6 @@ var adapt = {
                             date.day_of_month = parseInt(val);
                         }
                     }
-                    console.log('Value OUT: ' + value);
                     break;
                 case "D":
                     value = value.replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/i, '');
@@ -169,8 +164,6 @@ var adapt = {
                     
                     var match = pattern.exec(value);
                     
-                    console.log('Value IN: ' + value);
-                    
                     if (match != null){
                         var val = match[0];
                         
@@ -183,9 +176,6 @@ var adapt = {
                             }
                         }
                     }
-                    
-                    console.log('Value OUT: ' + value);
-                    
                     break;
                 case "M":
                     var months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
@@ -352,14 +342,10 @@ var adapt = {
                     value = value.replace(/^([0-9]{6,6})/, '');
                     break;
                 default:
-                    console.log('Value IN (default): ' + value);
                     value = value.substr(1);
-                    console.log('Value OUT (default): ' + value);
                     break;
                 }
             }
-            
-            console.log(date);
             
             for(var c = 0; c < output_pattern.length; c++){
                 var chr = output_pattern[c];
@@ -541,9 +527,7 @@ window.addEventListener('load', function(e){
                 var value = e.target.value;
                 
                 if (e.target.getAttribute('data-unformatter')){
-                    console.log('Value before "' + value + '"');
                     value = adapt.sanitize.unformat(e.target.getAttribute('data-unformatter'), value);
-                    console.log('Value after "' + value + '"');
                 }
                 
                 if (value == "" || !value){
