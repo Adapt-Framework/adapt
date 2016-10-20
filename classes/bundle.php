@@ -897,12 +897,10 @@ namespace adapt{
          * returns false.
          */
         public function boot(){
-            //print "<pre>Booting (bundle level): {$this->name}</pre>";
             if (!$this->is_booted){
                 $this->apply_settings();
                 
                 if ($this->type == 'application'){
-                    //print "<pre>Booting application</pre>";
                     $dependency_list = $this->bundles->get_dependency_list($this->name, $this->version);
                     
                     if (is_array($dependency_list)){
@@ -913,7 +911,6 @@ namespace adapt{
                             $bundle = $this->bundles->load_bundle($bundle_data['name'], $bundle_data['version']);
                             if ($bundle instanceof bundle && $bundle->is_loaded){
                                 
-                                $time = microtime(true);
                                 if (!$bundle->boot()){
                                     $this->error("Unable to boot '{$bundle_data['name']}'");
                                     return false;
@@ -948,16 +945,11 @@ namespace adapt{
          * @access public
          */
         public function install(){
-//<<<<<<< HEAD
             if (!$this->is_installed() && !$this->is_installing()){
                 
                 /* Mark as installing */
                 $this->file_store->set("adapt/installation/{$this->name}-{$this->version}", "true", "text/plain");
                 
-//=======
-            //print "<pre>Calling install for {$this->name}</pre>";
-//           if (!$this->is_installed()){
-//>>>>>>> horizon
                 if (is_array($this->_schema) && $this->data_source instanceof data_source_sql){
                     /*
                      * We have a schema
@@ -1257,8 +1249,7 @@ namespace adapt{
                                          * so the table can be properly registered.
                                          */
                                         $this->store('adapt.installing_bundle', $this->name);
-                                        //print "<pre>{$sql}</pre>";
-                                        //print "<pre>Registrations: " . print_r($field_registrations, true) . "</pre>";
+                                        
                                         /* Write the table */
                                         $sql->execute();
                                         
@@ -1274,39 +1265,12 @@ namespace adapt{
                                             
                                             $this->_schema['add']['records']['field'] = array_merge($this->_schema['add']['records']['field'], $field_registrations);
                                             
-                                            /* We need to record our fields and register them when bundle_version is created */
-                                            //$stored_registrations = $this->store("adapt.field_registrations");
-                                            
-                                            //if (is_array($stored_registrations)){
-                                            //    $stored_registrations = array_merge($stored_registrations, $field_registrations);
-                                            //}else{
-                                            //    $stored_registrations = $field_registrations;
-                                            //}
-                                            
-                                            //$this->store("adapt.field_registrations", $stored_registrations);
-                                            
-                                        //}elseif($table_name == "bundle_version"){
-                                        //    $stored_registrations = $this->store("adapt.field_registrations");
-                                        //    
-                                        //    if (is_array($stored_registrations)){
-                                        //        $stored_registrations = array_merge($stored_registrations, $field_registrations);
-                                        //    }else{
-                                        //        $stored_registrations = $field_registrations;
-                                        //    }
-                                        //    
-                                        //    /* Register the tables */
-                                        //    $this->data_source->register_table($stored_registrations);
-                                        //    
                                         }else{
                                             /* Register the table */
                                             $this->data_source->register_table($field_registrations);
                                         }
                                         
-                                        
-                                        
                                         $this->remove_store('adapt.installing_bundle');
-                                        
-                                        //print $sql . "ff\n\n";
                                     }
                                 }
                             }
@@ -1316,29 +1280,16 @@ namespace adapt{
                             /*
                              * Adding records
                              */
-                            //print "<pre>" . print_r($this->_schema['add']['records'], true) . "</pre>";
-                            //exit(1);
                             $tables = array_keys($this->_schema['add']['records']);
-                            
-                            /*if (in_array('field', $tables)){
-                                $final = array('field');
-                                foreach($tables as $table){
-                                    if ($table != 'field'){
-                                        $final[] = $field;
-                                    }
-                                }
-                                
-                                $tables = $final;
-                            }*/
                             
                             foreach($tables as $table_name){
                                 $rows = $this->_schema['add']['records'][$table_name];
                                 $field_names = array();
-                                //print "<pre>Table name: {$table_name}</pre>";
+                                
                                 $schema = $this->data_source->get_row_structure($table_name);
                                 
                                 if (is_null($schema) || !is_array($schema)){
-                                    //print "<pre>" . print_r($this->_schema['add']['records']['field'], true) . "</pre>";
+                                    
                                     if (isset($this->_schema['add']['records']['field'])){
                                         $schema = array();
                                         
@@ -1397,8 +1348,6 @@ namespace adapt{
                                         
                                         $sql->values($values);
                                     }
-                                    
-                                    //print "<pre>" . $sql . "</pre>";
                                     
                                     if ($sql->execute()){
                                         if ($table_name == 'data_type' || $table_name == 'field'){

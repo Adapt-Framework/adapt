@@ -410,9 +410,6 @@ namespace adapt{
                                 if (!$in_error){
                                     $dependencies_resolved = $this->has_all_dependencies($application->name, $application->version);
                                 }
-                                //print "<pre>" . print_r($dependencies_resolved, true) . "</pre>";
-                                //ob_flush();
-                                //$dependencies_resolved = false;
                             }
                         }
                         
@@ -1146,7 +1143,6 @@ namespace adapt{
                 return $version_2;
             }
         }
-        
     }
     
     

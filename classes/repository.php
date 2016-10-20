@@ -150,7 +150,6 @@ namespace adapt{
         }
         
         public function has($bundle_name, $bundle_version = null){
-            print $bundle_name . "\n";
             if (preg_match("/^[a-zA-Z]+[-_a-zA-Z0-9]+[a-zA-Z0-9]+$/", $bundle_name)){
                 
                 $uri = "/bundles/{$bundle_name}";
@@ -166,21 +165,13 @@ namespace adapt{
                 }
                 
                 $response = $this->_request($uri);
-                //print $response->find('bundles > bundle > version')->get(0)->get(0);
-                return $response->find('bundles > bundle > version')->get(0)->get(0);
-                
+                if($response instanceof xml){
+                    return $response->find('bundles > bundle > version')->get(0)->get(0);
+                }
                 
             }else{
                 $this->error("Invalid bundle name '{$bundle_name}'");
                 return false;
-            }
-            
-            return false;
-            
-            $uri = "/bundles/{$bundle_name}";
-            
-            if ($content = $this->request($uri)){
-                return true;
             }
             
             return false;
@@ -229,11 +220,10 @@ namespace adapt{
         }
         
         public function get($bundle_name, $bundle_version = null){
-            
             if ($version = $this->has($bundle_name, $bundle_version)){
                 /* Download the bundle */
                 $uri = $this->_url . "/bundles/{$bundle_name}/{$version}/download";
-                print $uri;
+                
                 /* We need to use the HTTP object because this is non-standard output */
                 $response = $this->_http->get($uri);
                 
@@ -254,69 +244,6 @@ namespace adapt{
                 }else{
                     $this->error("Failed to download bundle '{$bundle_name}' version '{$version}'");
                 }
-            }
-            
-            return false;
-            
-            /*
-             * This code is to access the temp repo until the
-             * real repo is build. Had to do it, couldn't continue
-             * building the framework without repo support, couldn't
-             * build the repo with out the framework :/ What can you do?
-             */
-            
-            $output = "output";
-            
-            $repo = $this->setting('repository.url');
-            $url = $repo[0];
-            
-            $http = new http();
-            $response = $http->get($url . "/bundles/{$bundle_name}/{$bundle_version}");
-            $output = print_r($response, true);
-            
-            return $output;
-            
-            //$http = new http();
-            //$response = $http->get($url . "/adapt/bundles/{$bundle_name}.bundle");
-            $response = array(
-                'status' => 200,
-                /*'content' => file_get_contents("http://repo.adaptframework.com/adapt/bundles/{$bundle_name}.bundle")*/
-                'content' => file_get_contents("https://matt:poo@hyperion.matt.wales/files/Projects/adapt_framework/bundled/{$bundle_name}.bundle")
-            );
-            
-            if ($response['status'] == 200){
-                /*
-                 * Ok we have a bundle so we need to write it
-                 * to the temp directory
-                 */
-                $temp_name = TEMP_PATH . 'adapt' . md5(rand(0, 999999)) . '.bundle';
-                //print "Writing bundle to: {$temp_name}";
-                $fp = fopen($temp_name, "w");
-                if ($fp){
-                    fwrite($fp, $response['content']);
-                    fclose($fp);
-                    //exit(1);
-                    /* Lets unbundle the file */
-                    $output = $this->bundles->unbundle($temp_name);
-                    
-                    unlink($temp_name);
-                    
-                    if ($output == false){
-                        $this->error("Unable to unbundle '{$bundle_name}' from '{$temp_name}'");
-                        $errors = $this->bundles->errors(true);
-                        foreach($errors as $error){
-                            $this->error($error);
-                        }
-                    }
-                    
-                    return $output;
-                }else{
-                    //print "Failed to write to temp";
-                    $this->error('Unable to write to temp directory: ' . TEMP_PATH);
-                }
-                //break;
-            }else{
-                $this->error("Received {$response['status']} from the repository.");
             }
             
             return false;
