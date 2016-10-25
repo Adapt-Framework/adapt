@@ -53,6 +53,9 @@ namespace adapt{
      */
     class controller_adapt extends controller{
         
+        public function __construct(){
+            parent::__construct();
+        }
         /**
          * Changes the content type to javascript and returns a page in javascript containing all the
          * validators, formatters and unformatters.
@@ -61,6 +64,7 @@ namespace adapt{
          * @return string
          */
         public function view_sanitizers(){
+            $this->dom->cache_time = 0;
             $this->content_type = 'text/javascript';
             
             $store = $this->store('adapt.sanitizer.data');
@@ -113,7 +117,7 @@ namespace adapt{
         
         /** @ignore */
         public function view_about(){
-            
+            print 'foo';
         }
     }
 }
