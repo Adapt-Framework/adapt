@@ -1048,7 +1048,6 @@ namespace adapt{
                      * Has anything changed?
                      */
                     if ($this->has_changed == true){
-                        
                         /* Lets build the sql statement */
                         $sql = $this->data_source->sql; //Same as: $sql = new sql(null, $this->data_source);
                         
@@ -1557,11 +1556,13 @@ namespace adapt{
                             if ($this->is_loaded){
                                 /* Only if the keys match */
                                 $keys_required = count($keys);
+                                
                                 foreach($keys as $key){
-                                    if ($data[$table_name][$key][$i] == $this->$key){
+                                    if ($data[$this->table_name][$key][$i] == $this->$key){
                                         $keys_required--;
                                     }
                                 }
+                                
                                 if ($keys_required == 0){
                                     /* We can accept */
                                     $record_processed = $i;
@@ -1575,7 +1576,7 @@ namespace adapt{
                                 $keys_required = count($keys);
                                 
                                 foreach($keys as $key){
-                                    if (!is_null($data[$table_name][$key][$i]) && $data[$table_name][$key][$i] != '' && $data[$table_name][$key][$i] == $this->$key){
+                                    if (!is_null($data[$this->table_name][$key][$i]) && $data[$this->table_name][$key][$i] != '' && $data[$this->table_name][$key][$i] == $this->$key){
                                         $keys_required--;
                                     }
                                 }
@@ -1590,7 +1591,7 @@ namespace adapt{
                                     /* Load the record */
                                     $ids = array();
                                     foreach($keys as $key){
-                                        $ids = $data[$table_name][$key][$i];
+                                        $ids = $data[$this->table_name][$key][$i];
                                     }
                                     
                                     if ($this->load($ids)){
