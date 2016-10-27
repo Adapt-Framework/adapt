@@ -185,7 +185,8 @@ if ($adapt->bundles->boot_application()){
                 }
                 
                 /* Route the URL */
-                $output = $controller->route($adapt->request['url']);
+                // Remove the leading slash from nginx
+                $output = $controller->route(rtrim($adapt->request['url'], '/'));
                 $content_type = $controller->content_type;
                 
                 /* Set the content type */
