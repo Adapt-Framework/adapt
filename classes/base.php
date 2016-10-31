@@ -798,7 +798,7 @@ namespace adapt{
         }
         
         /**
-         * Request property, this is equivilent to $_REQUEST but is
+         * Request property, this is equivalent to $_REQUEST but is
          * the preferred method for dealing with server input.
          *
          * This property is shared between all instances of \adapt\base.
