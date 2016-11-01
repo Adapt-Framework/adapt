@@ -550,7 +550,13 @@ namespace adapt{
                                             
                                             
                                             $statement .= "\"{$value}\"";
-                                        }else{
+                                        }elseif (is_bool($value)) {
+                                            if ($value) {
+                                                $statement .= "true";
+                                            } else {
+                                                $statement .= "false";
+                                            }
+                                        } else {
                                             $statement .= "null";
                                         }
                                     }
