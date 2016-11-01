@@ -313,7 +313,7 @@ namespace adapt{
                         $value = $this->data_source->unformat($this->table_name, $key, $value);
                         
                         /* Has the value changed? */
-                        if ($this->_data[$key] != $value){
+                        if ($this->_data[$key] !== $value){
                             
                             /* Is the new value valid? */
                             if ($this->data_source->validate($this->_table_name, $key, $value)){
