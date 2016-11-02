@@ -696,11 +696,11 @@ namespace adapt{
                                 $statement .= $group['field'];
                             }
                             
-                            if ($group['ascending']){
-                                $statement .= " ASC";
-                            }else{
-                                $statement .= " DESC";
-                            }
+                            //if ($group['ascending']){
+                            //    $statement .= " ASC";
+                            //}else{
+                            //    $statement .= " DESC";
+                            //}
                             
                             if ($group['with_rollup']){
                                 $statement .= " WITH ROLLUP";
