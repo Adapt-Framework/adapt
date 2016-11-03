@@ -1025,19 +1025,37 @@ namespace adapt{
                 $keys = $this->data_source->get_primary_keys($this->table_name);
                 
                 foreach($fields as $field){
-                    $references = $this->data_source->get_references($this->table_name, $field);
-                    if ($references && is_array($references)){
-                        foreach($references as $ref){
-                            foreach($children as $child){
-                                if ($child instanceof model && $child->table_name == $ref['table_name']){
-                                    if ($child->save()){
-                                        $child_field_name = $ref['field_name'];
-                                        $this->$field = $child->$child_field_name;
-                                    }else{
-                                        $this->error("Failed to save child '{$child->table_name}'");
-                                        $return = false;
+                    $reference = $this->data_source->get_reference($this->table_name, $field);
+                    
+                    if ($reference && is_array($reference) && count($reference)){
+                        foreach($children as $child){
+                            if ($child instanceof model && $child->table_name == $reference['table_name']){
+                                
+                                if (is_null($this->$field)){
+                                    // Only if the child isn't loaded
+                                    if (!$child->is_loaded){
+                                        if ($child->save()){
+                                            $child_id_field = $reference['field_name'];
+                                            $this->$field = $child->$child_id_field;
+                                        }else{
+                                            $errors = $child->errors(true);
+                                            foreach($errors as $error) $this->error($error);
+                                            $return = false;
+                                        }
+                                    }
+                                    
+                                }else{
+                                    // Match the child and save it
+                                    $child_id_field = $reference['field_name'];
+                                    if ($child->$child_id_field == $this->$field){
+                                        if (!$child->save()){
+                                            $errors = $child->errors(true);
+                                            foreach($errors as $error) $this->error($error);
+                                            $return = false;
+                                        }
                                     }
                                 }
+                                
                             }
                         }
                     }
@@ -1625,7 +1643,8 @@ namespace adapt{
                 
                 /* Do we have anything for our chilren? */
                 foreach($table_names as $table_name){
-                    if ($this->table_name != $table_name){
+                    if ($this->table_name != $table_name && in_array($table_name, $this->_auto_load_only_tables)){
+                        
                         if (is_array($this->data_source->get_relationship($this->table_name, $table_name))){
                             $field_names = array_keys($data[$table_name]);
                             $record_count = count($data[$table_name][$field_names[0]]);
@@ -1645,6 +1664,7 @@ namespace adapt{
                                 foreach($children as $child){
                                     if ($child instanceof model && $child->table_name == $table_name){
                                         if ($child->is_loaded){
+                                            
                                             /* Only push if the keys match */
                                             $keys_required = count($keys);
                                             foreach($keys as $key){
@@ -1667,25 +1687,26 @@ namespace adapt{
                                             
                                             
                                         }else{
-                                            /* Only push if there are no keys */
-                                            $keys_required = count($keys);
-                                            foreach($keys as $key){
-                                                if (isset($record[$table_name][$key]) && $record[$table_name][$key] != "") $keys_required--;
-                                            }
-                                            
-                                            if ($keys_required == count($keys)){
-                                                /* We can push */
-                                                $hash = $data;
-                                                
-                                                /* Remove all siblings from the push hash */
-                                                $hash[$table_name] = $record[$table_name];
-                                                
-                                                /* Push the data */
-                                                $child->push($hash);
-                                                
-                                                /* Mark the record as processed */
-                                                $record_processed = true;
-                                            }
+                                            //print "bar\n";
+                                            ///* Only push if there are no keys */
+                                            //$keys_required = count($keys);
+                                            //foreach($keys as $key){
+                                            //    if (isset($record[$table_name][$key]) && $record[$table_name][$key] != "") $keys_required--;
+                                            //}
+                                            //
+                                            //if ($keys_required == count($keys)){
+                                            //    /* We can push */
+                                            //    $hash = $data;
+                                            //    
+                                            //    /* Remove all siblings from the push hash */
+                                            //    $hash[$table_name] = $record[$table_name];
+                                            //    
+                                            //    /* Push the data */
+                                            //    $child->push($hash);
+                                            //    
+                                            //    /* Mark the record as processed */
+                                            //    $record_processed = true;
+                                            //}
                                         }
                                     }
                                     
@@ -1697,7 +1718,7 @@ namespace adapt{
                                     $model = new $model_name();
                                     
                                     $hash = $data;
-                                            
+                                    
                                     /* Remove all siblings from the push hash */
                                     $hash[$table_name] = $record[$table_name];
                                     
