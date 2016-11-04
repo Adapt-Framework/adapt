@@ -1074,11 +1074,6 @@ namespace adapt{
                             $this->_data['date_modified'] = new sql_now();
                         }
                         
-                        /* Does this table have a guid field? */
-                        if (in_array('guid', $fields)){
-                            $this->_data['guid'] = guid();
-                        }
-                        
                         $data_to_write = array();
                         
                         foreach($this->_changed_fields as $field_name => $values){
@@ -1153,6 +1148,11 @@ namespace adapt{
                              * We are going to create a new record
                              * from scratch
                              */
+                            
+                            /* Does this table have a guid field? */
+                            if (in_array('guid', $fields) && is_null($this->guid)){
+                                $this->_data['guid'] = guid();
+                            }
                             
                             /* Do we have an auto_increment field? */
                             $auto_increment_field = null;
