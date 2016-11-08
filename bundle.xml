@@ -116,7 +116,7 @@
         <setting>
           <name>repository.url</name>
           <label>Repoistory URL</label>
-          <default_value>http://dev2.matt.wales/api</default_value>
+          <default_value>https://repository.adaptframework.com</default_value>
         </setting>
         <setting>
           <name>repository.username</name>
