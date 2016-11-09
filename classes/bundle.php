@@ -650,9 +650,21 @@ namespace adapt{
                                                                 if ($field instanceof xml){
                                                                     $field_name = $field->tag;
                                                                     
-                                                                    if ($field->attr('get-from') && $field->attr('where-name-is')){
+                                                                    if ($field->attr('get-from')/* && $field->attr('where-name-is')*/){
+                                                                        $conditions = [];
+                                                                        $attrs = $field->attributes;
+                                                                        foreach($attrs as $key => $value){
+                                                                            $match = [];
+                                                                            if (preg_match("/^where\-([-a-zA-Z0-9]+)\-is$/", $key, $match)){
+                                                                                $conditions[str_replace("-", "_", $match[1])] = $value;
+                                                                            }
+                                                                        }
                                                                         
-                                                                        $current_record[$field_name] = array('_lookup_table' => $field->attr('get-from'), '_lookup_name' => $field->attr('where-name-is'));
+                                                                        $current_record[$field_name] = [
+                                                                            'lookup_from' => $field->attr('get-from'),
+                                                                            'with_conditions' => $conditions
+                                                                        ];
+                                                                        //$current_record[$field_name] = array('_lookup_table' => $field->attr('get-from'), '_lookup_name' => $field->attr('where-name-is'));
                                                                     }else{
                                                                         $field_value = $field->get(0);
                                                                         $current_record[$field_name] = $field_value;
@@ -1300,67 +1312,152 @@ namespace adapt{
                                         }
                                     }
                                 }
-                            
                                 
                                 if (is_array($schema)){
                                     foreach($schema as $field){
                                         $field_names[] = $field['field_name'];
                                     }
                                     
-                                    $sql = $this->data_source->sql;
-                                    
-                                    $sql->insert_into($table_name, $field_names);
-                                    
                                     foreach($rows as $row){
-                                        $values = array();
+                                        $values = [];
+                                        
+                                        /*
+                                         * Before we can proceed we need to resolve the lookups
+                                         */
                                         foreach($field_names as $field_name){
                                             $value = $row[$field_name];
-                                            if (is_array($value)){
-                                                if (isset($value['_lookup_table'])){
-                                                    $result = $this->data_source->sql
-                                                        ->select($value['_lookup_table'] . '_id')
-                                                        ->from($value['_lookup_table'])
-                                                        ->where(
-                                                            new sql_and(
-                                                                new sql_cond('date_deleted', sql::IS, new sql_null()),
-                                                                new sql_cond('name', sql::EQUALS, sql::q($value['_lookup_name']))
-                                                            )
-                                                        )->execute()
-                                                        ->results(60 * 60 * 24 * 5); //Cache for 5 days
-                                                    $value = $result[0][$value['_lookup_table'] . "_id"];
+                                            
+                                            if (is_array($value) && isset($value['lookup_from']) && isset($value['with_conditions'])){
+                                                $sql = $this->data_source->sql
+                                                    ->select($value['lookup_from'] . '_id')
+                                                    ->from($value['lookup_from']);
+                                                    
+                                                $where = new sql_and(
+                                                    new sql_cond('date_deleted', sql::IS, new sql_null())
+                                                );
+                                                
+                                                foreach($value['with_conditions'] as $condition => $value){
+                                                    $where->add(new sql_cond($conditions, sql::EQUALS, sql::q($value)));
+                                                }
+                                                
+                                                $sql->where($where);
+                                                
+                                                $results = $sql->execute(60 * 60 * 24 * 5)->results();
+                                                $errors = $sql->errors(true);
+                                                
+                                                if (count($errors)){
+                                                    foreach($errors as $error){
+                                                        $this->error($error);
+                                                    }
+                                                    
+                                                    return false;
+                                                }
+                                                
+                                                if (count($results) == 0){
+                                                    $this->error("Unable to lookup value for field {$field_name}");
+                                                    return false;
+                                                }elseif(count($results) > 1){
+                                                    $this->error("Multiple values found when looking up value for field {$field_name}");
+                                                    return false;
+                                                }
+                                                
+                                                $row[$field_name] = $result[0][$value['lookup_from'] . "_id"];
+                                            }
+                                        }
+                                        
+                                        /*
+                                         * We need to check if a row exists, if it has a name
+                                         * field we will use this as a key and update the rest
+                                         * of the row, if it doesn't then we are going to try
+                                         * and match the whole record, if it matches we will
+                                         * ignore the entire record, if it doesn't we will
+                                         * insert it.
+                                         */
+                                        $ignore_record = false;
+                                        
+                                        if (in_array('name', $field_names)){
+                                            // Intentionally we are skipping the
+                                            // date_deleted field on the basis that
+                                            // if this record is deleted, it should
+                                            // remain deleted, that said, still
+                                            // we will update it as required.
+                                            $sql = $this->data_source->sql
+                                                ->select($table_name . '_id')
+                                                ->from($table_name)
+                                                ->where(new sql_cond('name', sql::EQUALS, sql::q($row['name'])));
+                                            
+                                            $results = $sql->execute(60 * 60 * 24 * 7)->results();
+                                            
+                                            if (count($results) == 1){
+                                                // Update the record
+                                                $ignore_record = true;
+                                                
+                                                $sql = $this->data_source->sql;
+                                                $sql->update($table_name);
+                                                foreach($field_names as $field_name){
+                                                    if ($row[$field_name]){
+                                                        $sql->set($field_name, sql::q($row[$field_name]));
+                                                    }
+                                                }
+                                                $sql->where(new sql_cond($table_name, sql::EQUALS, sql::q($row[$field_name])));
+                                                
+                                                $sql->execute();
+                                            }
+                                        }else{
+                                            // Try to match against all fields
+                                            $sql = $this->data_source->sql
+                                                ->select($table_name . '_id')
+                                                ->from($table_name);
+                                            
+                                            $where = new sql_and();
+                                            foreach($field_names as $field_name){
+                                                if ($row[$field_name]){
+                                                    $where->add(new sql_cond($field_name, sql::EQUALS, sql::q($row[$field_name])));
                                                 }
                                             }
                                             
-                                            if ($field_name == 'date_created' || $field_name == 'date_modified'){
-                                                $value = new sql_now();
+                                            if (count($sql->execute(60 * 60 * 24 * 7)->results()) == 1){
+                                                $ignore_record;
                                             }
-                                            
-                                            if ($field_name == 'guid'){
-                                                $value = guid();
-                                            }
-                                            
-                                            if ($field_name == "bundle_name"){
-                                                $value = $this->name;
-                                            }
-                                            
-                                            $values[] = $value;
                                         }
                                         
-                                        $sql->values($values);
-                                    }
-                                    
-                                    if ($sql->execute()){
-                                        if ($table_name == 'data_type' || $table_name == 'field'){
-                                            $this->data_source->load_schema();
+                                        if (!$ignore_record){
+                                            // Insert the record
+                                            foreach($field_names as $field_name){
+                                                switch($field_name){
+                                                case "date_created":
+                                                case "date_modified":
+                                                    $row[$field_name] = new sql_now();
+                                                    break;
+                                                case "guid":
+                                                    $row[$field_name] = guid();
+                                                    break;
+                                                case "bundle_name":
+                                                    $row[$field_name] = $this->name;
+                                                    break;
+                                                }
+                                                
+                                                $values[] = $row[$field_name];
+                                            }
+                                            
+                                            $sql = $this->data_source->sql;
+                                            
+                                            $sql->insert_into($table_name, $field_names)->values($values);
+                                            $sql->execute();
+                                            $errors = $sql->errors(true);
+                                            
+                                            if (count($errors)){
+                                                foreach($error as $errors) $this->error($error);
+                                                return false;
+                                            }
+                                            
+                                            if ($table_name == 'data_type' || $table_name == 'field'){
+                                                $this->data_source->load_schema();
+                                            }
                                         }
+                                        
                                     }
-                                    
-                                    
-                                    
                                 }
-                                
-                                //print "<pre>" . print_r($field_names, true) . "</pre>";
-                                
                             }
                         }
                     }
@@ -1369,6 +1466,7 @@ namespace adapt{
                         /*
                          * Lets remove from the schema
                          */
+                        
                     }
                 }
                 
