@@ -383,8 +383,12 @@ namespace adapt{
          */
         public function error($error){
             if (isset($error)){
-                $this->_errors[] = $error;
-                $this->trigger(self::EVENT_ERROR, array('error' => $error));
+                if (is_array($error)){
+                    foreach($error as $e) $this->error($e);
+                } elseif (is_string($error)) {
+                    $this->_errors[] = $error;
+                    $this->trigger(self::EVENT_ERROR, array('error' => $error));
+                }
             }
         }
         
