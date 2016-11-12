@@ -1272,7 +1272,7 @@ namespace adapt{
                                          * so the table can be properly registered.
                                          */
                                         $this->store('adapt.installing_bundle', $this->name);
-                                        print "{$sql}\n";
+                                        
                                         /* Write the table */
                                         $sql->execute();
                                         
@@ -1306,9 +1306,7 @@ namespace adapt{
                             $tables = array_keys($this->_schema['add']['records']);
                             
                             foreach($tables as $table_name){
-                                print "========= HANDLING: {$table_name} ==========\n";
                                 $rows = $this->_schema['add']['records'][$table_name];
-                                print_r($rows);
                                 $field_names = array();
                                 
                                 $schema = $this->data_source->get_row_structure($table_name);
@@ -1330,7 +1328,6 @@ namespace adapt{
                                     foreach($schema as $field){
                                         $field_names[] = $field['field_name'];
                                     }
-                                    print "FIELD NAMES: " . print_r($field_names, true) . "\n";
                                     foreach($rows as $row){
                                         $values = [];
                                         
@@ -1354,7 +1351,7 @@ namespace adapt{
                                                 }
                                                 
                                                 $sql->where($where);
-                                                print "{$sql}\nFIELD: {$field_name}\nTABLE: {$table_name}\nBUNDLE: {$this->name}\n";
+                                                
                                                 $results = $sql->execute(60 * 60 * 24 * 5)->results();
                                                 $errors = $sql->errors(true);
                                                 
@@ -1397,7 +1394,7 @@ namespace adapt{
                                                 ->select($table_name . '_id')
                                                 ->from($table_name)
                                                 ->where(new sql_cond('name', sql::EQUALS, sql::q($row['name'])));
-                                            print "UPDATE CHECK: {$sql}\n";
+                                            
                                             $results = $sql->execute(60 * 60 * 24 * 7)->results();
                                             
                                             if (count($results) == 1){
@@ -1412,7 +1409,7 @@ namespace adapt{
                                                     }
                                                 }
                                                 $sql->where(new sql_cond($table_name, sql::EQUALS, sql::q($row[$field_name])));
-                                                print "UPDATE: {$sql}\n";
+                                                
                                                 $sql->execute();
                                             }
                                         }else{
@@ -1427,7 +1424,8 @@ namespace adapt{
                                                     $where->add(new sql_cond($field_name, sql::EQUALS, sql::q($row[$field_name])));
                                                 }
                                             }
-                                            print "MATCH FULL: {$sql}\n";
+                                            $sql->where($where);
+                                            
                                             if (count($sql->execute(60 * 60 * 24 * 7)->results()) == 1){
                                                 $ignore_record = true;
                                             }
@@ -1453,10 +1451,9 @@ namespace adapt{
                                             }
                                             
                                             $sql = $this->data_source->sql;
-                                            print_r($field_names);
-                                            print_r($values);
+                                            
                                             $sql->insert_into($table_name, $field_names)->values($values);
-                                            print "INSERT: {$sql}\n";
+                                            
                                             $sql->execute();
                                             $errors = $sql->errors(true);
                                             
@@ -1567,8 +1564,7 @@ namespace adapt{
                     $model->installed = "Yes";
                     if ($model->save()){
                         $errors = $model->errors(true);
-                        print "<pre>" . print_r($errors, true) . "</pre>";
-                        print "<pre>Saved {$this->name}-{$this->version}</pre>";
+                        
                         $this->_is_installed = true;
                         $this->bundles->set_bundle_installed($this->name, $this->version);
                         
