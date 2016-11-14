@@ -944,6 +944,7 @@ namespace adapt{
                         
                         $this->booted = true;
                     }else{
+                        $this->error("Unable to boot '{$this->name}'");
                         $errors = $this->bundles->errors(true);
                         foreach($errors as $error) $this->error($error);
                         
