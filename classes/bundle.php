@@ -1366,7 +1366,9 @@ namespace adapt{
                                                 }
                                                 
                                                 if (count($results) == 0){
-                                                    $this->error("Unable to lookup value for field {$field_name}");
+                                                    foreach($value['with_conditions'] as $condition => $val){
+                                                        $this->error("Unable to lookup value for field '{$field_name}' with value '{$val}'");
+                                                    }
                                                     return false;
                                                 }elseif(count($results) > 1){
                                                     $this->error("Multiple values found when looking up value for field {$field_name}");
