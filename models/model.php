@@ -311,7 +311,6 @@ namespace adapt{
                     }else{
                         /* Unformat the value */
                         $value = $this->data_source->unformat($this->table_name, $key, $value);
-                        
                         /* Has the value changed? */
                         if ($this->_data[$key] !== $value){
                             

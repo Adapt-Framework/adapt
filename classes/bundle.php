@@ -1070,7 +1070,7 @@ namespace adapt{
                                                 'label' => $attributes['label'],
                                                 'placeholder_label' => $attributes['placeholder_label'],
                                                 'description' => $attributes['description'],
-                                                'data_type_id' => array('_lookup_table' => 'data_type', '_lookup_name' => $attributes['data_type']),
+                                                'data_type_id' => array('lookup_from' => 'data_type', 'with_conditions' => ['name' => $attributes['data_type']]),
                                                 'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
                                                 'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
                                                 'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",

@@ -641,9 +641,7 @@ namespace adapt{
             //    print new html_pre("data_source_sql.unformat: {$field_name} set to '{$value}'");
             //}
             $field = $this->get_field_structure($table_name, $field_name);
-            //if ($table_name == 'vacancy'){
-            //    print new html_pre(print_r($field, true));
-            //}
+            
             if (is_array($field) && is_assoc($field)){
                 $data_type = $this->get_data_type($field['data_type_id']);
                 if (is_array($data_type)){
@@ -805,18 +803,19 @@ namespace adapt{
                     if (isset($field_array[$key])){
                         $value = $field_array[$key];
                         if (is_array($value)){
-                            if (isset($value['_lookup_table'])){
+                            if (isset($value['lookup_from'])){
+                                $and = new sql_and(new sql_cond('date_deleted', sql::IS, new sql_null()));
+                                foreach($value['with_conditions'] as $key => $val){
+                                    $and->add(new sql_cond($key, sql::EQUALS, sql::q($val)));
+                                }
                                 $result = $this->data_source->sql
-                                    ->select($value['_lookup_table'] . '_id')
-                                    ->from($value['_lookup_table'])
+                                    ->select($value['lookup_from'] . '_id')
+                                    ->from($value['lookup_from'])
                                     ->where(
-                                        new sql_and(
-                                            new sql_cond('date_deleted', sql::IS, new sql_null()),
-                                            new sql_cond('name', sql::EQUALS, sql::q($value['_lookup_name']))
-                                        )
+                                        $and
                                     )->execute()
                                     ->results(60 * 60 * 24 * 5); //Cache for 5 days
-                                $value = $result[0][$value['_lookup_table'] . "_id"];
+                                $value = $result[0][$value['lookup_from'] . "_id"];
                             }
                         }
                         $record[$key] = $value;
