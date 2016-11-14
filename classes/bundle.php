@@ -919,7 +919,8 @@ namespace adapt{
                 
                 if ($this->type == 'application'){
                     $dependency_list = $this->bundles->get_dependency_list($this->name, $this->version);
-                    
+                    //print "Bundle: {$this->name}\n";
+                    //print_r($dependency_list);die();
                     if (is_array($dependency_list)){
                         
                         $dependency_list = array_reverse($dependency_list);
@@ -1480,7 +1481,8 @@ namespace adapt{
                         /*
                          * Lets remove from the schema
                          */
-                        
+                        print_r($this->_schema['remove']);
+                        die();
                     }
                 }
                 

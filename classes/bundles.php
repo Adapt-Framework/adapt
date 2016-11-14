@@ -645,7 +645,7 @@ namespace adapt{
                 
                 $dependencies = $bundle->depends_on;
                 
-                //print "<pre>Seeking dependencies for: " . print_r($dependencies, true) . "</pre>";
+                //print "<pre>Seeking dependencies for: " . print_r($dependencies, true) . "</pre>\n";
                 if ($dependencies && is_array($dependencies)){
                     foreach($dependencies as $name => $versions){
                         $version = self::get_newest_version($versions);
@@ -701,11 +701,13 @@ namespace adapt{
             }
             
             $list = $this->cache->get($cache_key);
-            
+            //print "List: " . print_r($list, true);
             if (!is_array($list)){
                 $list = array();
-                
-                if ($this->has_all_dependencies($bundle_name, $bundle_version) === true){
+                //print "Inner\n";
+                $required_bundles = $this->has_all_dependencies($bundle_name, $bundle_version);
+                if ($required_bundles === true){
+                    //print "All dependencies met\n";
                     $bundle = $this->load_bundle($bundle_name, $bundle_version);
                     
                     if ($bundle->is_loaded){
@@ -773,6 +775,12 @@ namespace adapt{
                         $this->error("Unable to load bundle {$bundle_name}-{$bundle_version}");
                         return false;
                     }
+                }else{
+                    
+                    foreach($required_bundles as $requried_bundle => $required_versions){
+                        $this->error("Unable to find {$requried_bundle}");
+                    }
+                    return false;
                 }
             }
             
