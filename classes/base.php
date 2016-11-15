@@ -444,6 +444,30 @@ namespace adapt{
         }
         
         /**
+         * Listens for events in the global space
+         * 
+         * 
+         */
+        public static function listen($event_type, $function, $data = null){
+            $adapt = $GLOBALS['adapt'];
+            $event_handlers = $adapt->store('adapt.global_event_handlers');
+            $class_name = get_called_class();
+            
+            if (!is_array($event_handlers)) $event_handlers = [];
+            if (!is_array($event_handlers[$class_name])) $event_handlers[$class_name] = [];
+            if (!is_array($event_handlers[$class_name][$event_type])) $event_handlers[$class_name][$event_type] = [];
+            
+            if (is_callable($function)){
+                $event_handlers[$class_name][$event_type][] = [
+                    'function' => $function,
+                    'data' => $data
+                ];
+            }
+            
+            $adapt->store('adapt.global_event_handlers', $event_handlers);
+        }
+        
+        /**
          * Triggers an event
          *
          * @access public
@@ -453,6 +477,26 @@ namespace adapt{
          * Data to be past to any listeners.
          */
         public function trigger($event_type, $event_data = array()){
+            // Trigger global events
+            $event_handlers = $this->store('adapt.global_event_handlers');
+            $class_name = get_class($this);
+            //print $class_name . "\n";
+            //print_r(array_keys($event_handlers));
+            if (isset($event_handlers[$class_name][$event_type]) && is_array($event_handlers[$class_name][$event_type])){
+                foreach($event_handlers[$class_name][$event_type] as $handler){
+                    $data = array(
+                        'event_type' => $event_type,
+                        'event_data' => $event_data,
+                        'object' => $this,
+                        'data' => $handler['data']
+                    );
+                    
+                    $function = $handler['function'];
+                    $function($data);
+                }
+            }
+            
+            // Trigger local events
             if (isset($this->_event_handlers[$event_type]) && is_array($this->_event_handlers[$event_type])){
                 foreach($this->_event_handlers[$event_type] as $handler){
                     $data = array(
