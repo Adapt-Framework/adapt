@@ -1297,6 +1297,7 @@ namespace adapt{
             foreach($class->getMethods(\ReflectionMethod::IS_PUBLIC) as $method){
                 $name = $method->name;
                 if (substr($name, 0, 5) == "mget_"){
+                    print "Adding {$key}\n";
                     $key = substr($name, 5);
                     $hash[$key] = $this->$name();
                 }
