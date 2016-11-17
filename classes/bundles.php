@@ -1152,8 +1152,5 @@ namespace adapt{
             }
         }
     }
-    
-    
 }
 
-?>

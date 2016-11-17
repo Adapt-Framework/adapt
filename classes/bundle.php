@@ -508,7 +508,7 @@ namespace adapt{
                                             $value = null;
                                             if (isset($setting['default_value'])){
                                                 $value = $setting['default_value'];
-                                            }else{
+                                            }elseif (isset($setting['default_values'])){
                                                 $value = $setting['default_values'];
                                             }
                                             
@@ -757,7 +757,7 @@ namespace adapt{
                             
                             if (!is_array($this->_config_handlers_to_process)) $this->_config_handlers_to_process = [];
                             
-                            if (!is_array($this->_config_handlers_to_process[$child->tag])){
+                            if (!isset($this->_config_handlers_to_process[$child->tag]) || !is_array($this->_config_handlers_to_process[$child->tag])){
                                 $this->_config_handlers_to_process[$child->tag] = [];
 //>>>>>>> horizon
                             }
@@ -1462,7 +1462,7 @@ namespace adapt{
                                             $errors = $sql->errors(true);
                                             
                                             if (count($errors)){
-                                                foreach($error as $errors) $this->error($error);
+                                                foreach($errors as $error) $this->error($error);
                                                 return false;
                                             }
                                             
@@ -1479,14 +1479,15 @@ namespace adapt{
                             }
                         }
                     }
-                    
-                    if (is_array($this->_schema['remove'])){
-                        /*
-                         * Lets remove from the schema
-                         */
-                        print_r($this->_schema['remove']);
-                        die();
-                    }
+
+                    // TODO: review and remove
+//                    if (is_array($this->_schema['remove'])){
+//                        /*
+//                         * Lets remove from the schema
+//                         */
+//                        print_r($this->_schema['remove']);
+//                        die();
+//                    }
                 }
                 
                 // Process config handlers
