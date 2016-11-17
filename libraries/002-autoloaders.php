@@ -33,7 +33,6 @@ defined('ADAPT_STARTED') or die;
 
 function voodoo($class){
     $class_loaded = false;
-    
     /* Get a reference to adapt */
     $adapt = $GLOBALS['adapt'];
     
@@ -125,9 +124,12 @@ function voodoo($class){
                     }
                     
                     eval($class_def);
+                    $class_loaded = true;
                     break;
                 }
             }
         }
     }
+    
+    return $class_loaded;
 }

@@ -31,7 +31,7 @@ namespace adapt{
     /* Prevent Direct Access */
     defined('ADAPT_STARTED') or die;
     
-    class storage_file_system extends base{
+    class storage_file_system extends base implements interfaces\storage_file{
         
         protected $_store_path;
         protected $_store_available = false;
