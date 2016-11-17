@@ -638,14 +638,14 @@ namespace adapt{
          */
         public function has_all_dependencies($bundle_name, $bundle_version = null){
             $required_dependencies = array();
-            //print "<pre>XX {$bundle_name} {$bundle_version}</pre>";
+//            print "<pre>XX {$bundle_name} {$bundle_version}</pre>";
             $bundle = $this->load_bundle($bundle_name, $bundle_version);
             
             if ($bundle->is_loaded){
                 
                 $dependencies = $bundle->depends_on;
                 
-                //print "<pre>Seeking dependencies for: " . print_r($dependencies, true) . "</pre>\n";
+//                print "<pre>Seeking dependencies for: " . print_r($dependencies, true) . "</pre>\n";
                 if ($dependencies && is_array($dependencies)){
                     foreach($dependencies as $name => $versions){
                         $version = self::get_newest_version($versions);
@@ -665,8 +665,6 @@ namespace adapt{
                             }
                         }
                     }
-                }else{
-                    $dependencies = array();
                 }
                 
             }else{
