@@ -1302,6 +1302,21 @@ namespace adapt{
                 }
             }
             
+            // Look at extended properties
+            $extensions = $this->store('adapt.extensions');
+
+            foreach($extensions as $class_name => $data){
+                $class_name = array_pop(explode("\\", $class_name));
+                if ($class_name == array_pop(explode("\\", get_class($this)))){
+                    $methods = array_keys($data);
+                    foreach($methods as $method){
+                        if (substr($method, 0, 5) == 'mget_'){
+                            $hash[substr($method, 5)] = $this->$method();
+                        }
+                    }
+                }
+            }
+            
             $output[$this->table_name] = $hash;
             
             $children = $this->get();
