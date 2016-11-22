@@ -109,6 +109,7 @@ namespace adapt{
         
         /** @ignore */
         protected $_is_loaded;
+        
         /** @ignore */
         protected $_has_changed;
         
@@ -274,20 +275,6 @@ namespace adapt{
             }
             
             return $return;
-            
-            $return = null;
-            
-            $fields = array_keys($this->_data);
-                
-            if (in_array($key, $fields)){
-                
-                /* Format and return the value */
-                return $this->data_source->format($this->_table_name, $key, $this->_data[$key]);
-            }else{
-                $return = parent::__get($key);
-            }
-            
-            return $return;
         }
         
         /** @ignore */
@@ -343,14 +330,6 @@ namespace adapt{
         public function _get_data(){
             return $this->_data;
         }
-        
-        //public function data($key, $value = null){
-        //    if (is_null($value)){
-        //        return $this->_data[$key];
-        //    }else{
-        //        $this->_data[$key] = $value;
-        //    }
-        //}
         
         /**
          * Adds a child model to this model.
@@ -568,11 +547,8 @@ namespace adapt{
                     }
                     
                     /* Lets start to build the sql statement */
-                    $sql = $this->data_source->sql; //Taken from the data_source to ensure it queries the correct data_source
-                    //$sql = new sql(); //This does not guarentee the query will run against the correct source
+                    $sql = $this->data_source->sql; //Taken from the data_source to ensure we query the correct data_source
                     
-                    //$sql->select(new sql('*'))
-                    //    ->from($this->_table_name);
                     $sql->select("*")->from($this->_table_name);
                     
                     
@@ -582,19 +558,14 @@ namespace adapt{
                     if (count($keys) > 1){
                         for($i = 0; $i < count($keys); $i++){
                             $where->add(new sql_cond($keys[$i], sql::EQUALS, sql::q($id[$i])));
-                            //$where_sql->add(new sql_condition(new sql($keys[$i]), '=', $id[$i]));
                         }
-                        
-                        
                     }else{
-                        //$where_sql = new sql_condition(new sql($keys[0]), '=', $id[0]);
                         $where->add(new sql_cond($keys[0], sql::EQUALS, sql::q($id[0])));
                     }
                     
                     /* Do we have a date_deleted field? */
                     if (in_array('date_deleted', $fields)){
                         /* We need to add the date deleted field */
-                        //$where_sql = new sql_and($where_sql, new sql_condition(new sql('date_deleted'), 'is', new sql('null')));
                         $where->add(new sql_cond('date_deleted', sql::IS, new sql_null()));
                     }
                     
@@ -785,18 +756,9 @@ namespace adapt{
                 /* Load children */
                 if ($this->_auto_load_children == true){
                     /* Get a copy of the full schema */
-                    //$schema = $this->data_source->schema;
-                    
-                    //print new html_pre("Dataset list:" . print_r($this->data_source->get_dataset_list(), true));
-                    //$tables = $this->data_source->get_dataset_list();
                     $tables = $this->_auto_load_only_tables;
-                    //$relationships = array();
                     
                     foreach($tables as $table){
-                        //$relationships[] = array_merge(
-                        //    array('table1' => $this->table_name, 'table2' => $table),
-                        //    $this->data_source->get_relationship($this->table_name, $table)
-                        //);
                         $relationship = $this->data_source->get_relationship($this->table_name, $table);
                         
                         $sql = $this->data_source->sql;
@@ -826,12 +788,9 @@ namespace adapt{
                         $priority = $this->data_source->get_field_structure($table, 'priority');
                         
                         if (is_array($priority) && count($priority) > 0){
-                            
                             $sql->order_by('priority');
                         }
                         
-                        
-                        //print new html_pre($sql);
                         /* Execute the statement */
                         if ($sql->execute()){
                             $results = $sql->results();
@@ -839,7 +798,7 @@ namespace adapt{
                             /* Load the models */
                             foreach($results as $result){
                                 $model = "model_" . $table;
-                                //print "<pre>{$model}</pre>";
+                                
                                 if (class_exists($model)){
                                     $model = new $model();
                                     if ($model instanceof model){
@@ -1091,7 +1050,10 @@ namespace adapt{
                             /* Check our primary keys are set */
                             $null = new sql_null();
                             foreach($keys as $key){
-                                if (is_null($this->_data[$key]) || $this->_data[$key] == "" || ($this->_data[$key] instanceof sql && $this->_data[$key]->render() == $null->render())){
+                                if (
+                                    is_null($this->_data[$key]) || $this->_data[$key] == ""
+                                    || ($this->_data[$key] instanceof sql && $this->_data[$key]->render() == $null->render())
+                                ){
                                     $this->error("Failed to save, missing primary key ({$key})");
                                     $return = false;
                                 }

@@ -1480,14 +1480,13 @@ namespace adapt{
                         }
                     }
 
-                    // TODO: review and remove
-//                    if (is_array($this->_schema['remove'])){
-//                        /*
-//                         * Lets remove from the schema
-//                         */
-//                        print_r($this->_schema['remove']);
-//                        die();
-//                    }
+                    if (is_array($this->_schema['remove'])){
+                        /*
+                         * Lets remove from the schema
+                         */
+                        print_r($this->_schema['remove']);
+                        die();
+                    }
                 }
                 
                 // Process config handlers
