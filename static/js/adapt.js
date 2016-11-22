@@ -489,41 +489,8 @@ window.addEventListener('load', function(e){
     }
     
     window.document.addEventListener('focusout', function(e){
-        /*if (e.target.getAttribute('data-datetime-format')) {
-            var formatter = e.target.getAttribute('data-formatter');
-            var value = e.target.value;
-            
-            if (formatter == 'date' || formatter == 'time' || formatter == 'datetime'){
-                value = adapt.date.convert_date(adapt.setting('adapt.default_' + formatter + '_format'), 'YmdHis', value);
-                
-                if (adapt.sanitize.validate(formatter, value)) {
-                    e.target.value = adapt.date.convert_date('YmdHis', adapt.setting('adapt.default_' + formatter + '_format'), value);
-                    e.target.className = e.target.className.replace(/invalid|valid/, '');
-                    e.target.className = e.target.className.trim() + ' valid';
-                    e.target.className = e.target.className.trim();
-                }else{
-                    e.target.className = e.target.className.replace(/invalid|valid/, '');
-                    e.target.className = e.target.className.trim() + ' invalid';
-                    e.target.className = e.target.className.trim();
-                }
-                
-            }else{
-                var format = e.target.getAttribute('data-datetime-format');
-                value = adapt.date.convert_date(format, 'YmdHis', value);
-                
-                if (adapt.sanitize.validate(formatter, value)) {
-                    e.target.value = adapt.date.convert_date('YmdHis', format, value);
-                    e.target.className = e.target.className.replace(/invalid|valid/, '');
-                    e.target.className = e.target.className.trim() + ' valid';
-                    e.target.className = e.target.className.trim();
-                }else{
-                    e.target.className = e.target.className.replace(/invalid|valid/, '');
-                    e.target.className = e.target.className.trim() + ' invalid';
-                    e.target.className = e.target.className.trim();
-                }
-            }
-        }else */if (e.target.getAttribute('data-validator')){
-            if (e.target.nodeName.toUpperCase() == 'INPUT') {
+        if (e.target.getAttribute('data-validator')){
+            if (e.target.nodeName.toUpperCase() == 'INPUT' && e.target.getAttribute('data-ignore') != 'Yes') {
                 var value = e.target.value;
                 
                 if (e.target.getAttribute('data-unformatter')){
