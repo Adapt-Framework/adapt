@@ -689,35 +689,81 @@ namespace adapt{
                                             'fields' => $fields_to_add,
                                             'records' => $records_to_add
                                         );
-                                        //print new html_pre(print_r($fields_to_add, true));
-                                        //print new html_pre(print_r($records_to_add, true));
-                                        
-                                        //
-                                        //
-                                        //if (count($records_to_add)){
-                                        //    foreach($records_to_add as $table_name => $records){
-                                        //        
-                                        //        $sql = $this->data_source->sql;
-                                        //        
-                                        //        $sql->insert_into($table_name, array_keys($records[0]));
-                                        //        
-                                        //        foreach($records as $record){
-                                        //            $sql->values(array_values($record));
-                                        //        }
-                                        //        print $sql;
-                                        //    }
-                                        //    
-                                        //    
-                                        //}
-                                        
-                                        //print_r($fields_to_add);
-                                        //print_r($records_to_add);
-                                        
                                         break;
+                                    
                                     case "remove":
                                         /*
                                          * Remove from the database
                                          */
+                                        $fields_to_remove = array();
+                                        $records_to_remove = array();
+                                        
+                                        $tables = $action->get();
+                                        foreach($tables as $table){
+                                            if ($table instanceof xml && strtolower($table->tag) == 'table'){
+                                                $table_name = $table->attr('name');
+                                                
+                                                $table_children = $table->get();
+                                                foreach($table_children as $child){
+                                                    if ($child instanceof xml){
+                                                        switch(strtolower($child->tag)){
+                                                        case "field":
+                                                            $field_name = $child->attr('name');
+                                                            
+                                                            if (!isset($fields_to_remove[$table_name])){
+                                                                $fields_to_remove[$table_name] = array();
+                                                            }
+                                                            
+                                                            $fields_to_remove[$table_name][] = $field_name;
+                                                            break;
+                                                        
+                                                        case "record":
+                                                            $fields = $child->get();
+                                                                
+                                                            if (!isset($records_to_remove[$table_name])){
+                                                                $records_to_remove[$table_name] = array();
+                                                            }
+                                                            
+                                                            $current_record = array();
+                                                            
+                                                            foreach($fields as $field){
+                                                                if ($field instanceof xml){
+                                                                    $field_name = $field->tag;
+                                                                    
+                                                                    if ($field->attr('get-from')){
+                                                                        $conditions = [];
+                                                                        $attrs = $field->attributes;
+                                                                        foreach($attrs as $key => $value){
+                                                                            $match = [];
+                                                                            if (preg_match("/^where\-([-a-zA-Z0-9]+)\-is$/", $key, $match)){
+                                                                                $conditions[str_replace("-", "_", $match[1])] = $value;
+                                                                            }
+                                                                        }
+                                                                        
+                                                                        $current_record[$field_name] = [
+                                                                            'lookup_from' => $field->attr('get-from'),
+                                                                            'with_conditions' => $conditions
+                                                                        ];
+                                                                    }else{
+                                                                        $field_value = $field->get(0);
+                                                                        $current_record[$field_name] = $field_value;
+                                                                    }
+                                                                }
+                                                            }
+                                                            
+                                                            $records_to_remove[$table_name][] = $current_record;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                
+                                            }
+                                            
+                                            $this->_schema['remove'] = array(
+                                                'fields' => $fields_to_remove,
+                                                'records' => $records_to_remove
+                                            );
+                                        }
                                         
                                         break;
                                     }
@@ -726,59 +772,13 @@ namespace adapt{
                             break;
                         default:
                             /* Do we have a handler to handle the tag? */
-//<<<<<<< HEAD
-//                            $handlers = $this->store("adapt.config_handlers");
-//                            //print "<pre>CONFIG HANDLERS: " . print_r($handlers, true) . "</pre>";
-//                            if (is_array($handlers) && isset($handlers[$child->tag])){
-//                                
-//                                $handler = $handlers[$child->tag];
-//                                
-//                                $bundle = $this->bundles->load_bundle($handler['bundle_name']);
-//                                if ($bundle instanceof bundle && $bundle->name == $handler['bundle_name']){
-//                                    $function = $handler['function'];
-//                                    
-//                                    if (method_exists($bundle, $function)){
-//                                        $bundle->$function($this, $child);
-//                                    }
-//                                    
-//                                }
-//=======
-                            
-                            /**
-                             * The boot and install process require bundles to
-                             * be processed in a particular order, loading does
-                             * not, and so some config handlers may not
-                             * have been defined at this point.
-                             *
-                             * This is a great BIG BUG!
-                             */
-                            
-                            //$handlers = $this->store("adapt.config_handlers") ?: [];
-                            
                             if (!is_array($this->_config_handlers_to_process)) $this->_config_handlers_to_process = [];
                             
                             if (!isset($this->_config_handlers_to_process[$child->tag]) || !is_array($this->_config_handlers_to_process[$child->tag])){
                                 $this->_config_handlers_to_process[$child->tag] = [];
-//>>>>>>> horizon
                             }
                             
                             $this->_config_handlers_to_process[$child->tag][] = $child;
-                            
-                            //print "<pre>CONFIG HANDLERS: " . print_r($handlers, true) . "</pre>";
-                            //if (is_array($handlers) && isset($handlers[$child->tag])){
-                            //    if (!is_array($handlers[$child->tag]['actions'])){
-                            //        $handlers[$child->tag]['actions'] = [];
-                            //    }
-                            //    
-                            //    $handlers[$child->tag]['actions'][] = $child;
-                            //}else{
-                            //    $handlers[$child->tag] = [];
-                            //    $handlers[$child->tag]['actions'] = [$child];
-                            //    
-                            //}
-                            //$this->store('adapt.config_handlers', $handlers);
-                            
-                            
                             break;
                         }
                         
@@ -1484,8 +1484,355 @@ namespace adapt{
                         /*
                          * Lets remove from the schema
                          */
-                        print_r($this->_schema['remove']);
-                        die();
+                        /////
+                        
+                        if (is_array($this->_schema['remove']['fields'])){
+                            /*
+                             * Removing fields and maybe tables
+                             */
+                            if (count($this->_schema['remove']['fields'])){
+                                
+                                foreach($this->_schema['remove']['fields'] as $table_name => $fields){
+                                    /* Does the table already exist? */
+                                    $schema = $this->data_source->get_row_structure($table_name);
+                                    if (is_array($schema)){
+                                        /* Alter existing table */
+                                        
+                                        $schema_by_field_name = [];
+                                        foreach($schema as $field){
+                                            $schema_by_field_name[$field['field_name']] = $field;
+                                        }
+                                        
+                                        // Lose the date fields
+                                        unset($schema_by_field_name['date_created']);
+                                        unset($schema_by_field_name['date_modified']);
+                                        unset($schema_by_field_name['date_deleted']);
+                                        
+                                        foreach($fields as $field_name){
+                                            if (isset($schema_by_field_name[$field_name])){
+                                                if ($schema_by_field_name[$field_name]['bundle_name'] != $this->name){
+                                                    $this->error("Bundle '{$this->name}' attempted to remove the field '{$table_name}.{$field_name}' that was created by the bundle '{$schema_by_field_name[$field_name]['bundle_name']}'");
+                                                    return false;
+                                                }
+                                            }
+                                        }
+                                        
+                                        $sql = $this->data_source->sql;
+                                        if (count(array_keys($schema_by_field_name)) == count($fields)){
+                                            // Drop the table
+                                            $sql->drop_table($table_name)->execute();
+                                            $errors = $sql->errors(true);
+                                            if (count($errors)){
+                                                $this->error($errors);
+                                                return false;
+                                            }else{
+                                                $sql = $this->data_source->sql;
+                                                $sql->update('field')
+                                                    ->set('date_deleted', new sql_now())
+                                                    ->where(
+                                                        new sql_and(
+                                                            new sql_cond('table_name', sql::EQUALS, sql::q($table_name)),
+                                                            new sql_cond('date_deleted', sql::IS, new sql_null())
+                                                        )
+                                                    )
+                                                    ->execute();
+                                                //TODO: Reload the schema
+                                            }
+                                        }else{
+                                            // Drop each field
+                                            $sql->alter_table($table_name);
+                                            foreach($fields as $field_name){
+                                                $sql->drop($field_name);
+                                            }
+                                            print $sql . "\n";
+                                            $sql->execute();
+                                            $errors = $sql->errors(true);
+                                            if (count($errors)){
+                                                $this->error($errors);
+                                                return false;
+                                            }
+                                        }
+                                        
+                                        print_r($schema_by_field_name);
+                                        exit(1);
+                                        
+                                        
+                                        foreach($fields as $field_name => $attributes){
+                                            $data_type = $attributes['data_type'];
+                                            if ($data_type == 'varchar'){
+                                                $data_type .= "({$attributes['max_length']})";
+                                            }elseif(substr($data_type, 0, 4) == "enum"){
+                                                $values = explode("(", $data_type);
+                                                $values = explode(")", $values[1]);
+                                                $values = $values[0];
+                                                
+                                                $values = explode(",", $values);
+                                                
+                                                for($i = 0; $i < count($values); $i++){
+                                                    $values[$i] = preg_replace("/'|\"/", "", $values[$i]);
+                                                    $values[$i] = sql::q(trim($values[$i]));
+                                                    //$values[$i] = sql::q(trim(trim($values[$i], "'"), "\""));
+                                                }
+                                                
+                                                $values = implode(", ", $values);
+                                                $attributes['allowed_values'] = "[" . $values . "]";
+                                                $attributes['data_type'] = "enum";
+                                            }
+                                            
+                                            $nullable = true;
+                                            if (isset($attributes['nullable']) && $attributes['nullable'] == 'No') $nullable = false;
+                                            
+                                            $default_value = null;
+                                            if (isset($attributes['default_value'])) $default_value = $attributes['default_value'];
+                                            
+                                            $sql->add($field_name, $data_type, $nullable, $default_value, false, false, $last_field);
+                                            $last_field = $field_name;
+                                            
+                                            if (isset($attributes['primary_key']) && $attributes['primary_key'] == 'Yes'){
+                                                $auto_increment = true;
+                                                
+                                                if (isset($attributes['auto_increment']) && $attributes['auto_increment'] == 'No'){
+                                                    $auto_increment = false;
+                                                }
+                                                $sql->primary_key($field_name, $auto_increment);
+                                            }
+                                            
+                                            if (isset($attributes['index']) && $attributes['index'] == 'Yes'){
+                                                $index_size = null;
+                                                
+                                                if (isset($attributes['index_size'])){
+                                                    $index_size = $attributes['index_size'];
+                                                }
+                                                $sql->index($field_name, $index_size);
+                                            }
+                                            
+                                            if (isset($attributes['referenced_table_name']) && isset($attributes['referenced_field_name'])){
+                                                $sql->foreign_key($field_name, $attributes['referenced_table_name'], $attributes['referenced_field_name']);
+                                            }
+                                            
+                                            $field_registration = array(
+                                                'bundle_name' => $this->name,
+                                                'table_name' => $table_name,
+                                                'field_name' => $field_name,
+                                                'referenced_table_name' => $attributes['referenced_table_name'],
+                                                'referenced_field_name' => $attributes['referenced_field_name'],
+                                                'label' => $attributes['label'],
+                                                'placeholder_label' => $attributes['placeholder_label'],
+                                                'description' => $attributes['description'],
+                                                'data_type_id' => array('lookup_from' => 'data_type', 'with_conditions' => ['name' => $attributes['data_type']]),
+                                                'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
+                                                'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
+                                                'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",
+                                                'auto_increment' => $attributes['auto_increment'] == "Yes" ? "Yes" : "No",
+                                                'timestamp' => $attributes['timestamp'] == "Yes" ? "Yes" : "No",
+                                                'max_length' => $attributes['max_length'],
+                                                'default_value' => $attributes['default_value'],
+                                                'allowed_values' => $attributes['allowed_values'],
+                                                'lookup_table' => $attributes['lookup_table'],
+                                                'depends_on_table_name' => $attributes['depends_on_table_name'],
+                                                'depends_on_field_name' => $attributes['depends_on_field_name'],
+                                                'depends_on_value' => $attributes['depends_on_value']
+                                            );
+                                            
+                                            $field_registrations[] = $field_registration;
+                                        }
+                                        
+                                        /* We need to make our bundle name available to the sql object
+                                         * so the table can be properly registered.
+                                         */
+                                        $this->store('adapt.installing_bundle', $this->name);
+                                        
+                                        /* Write the table */
+                                        $sql->execute();
+                                        
+                                        /* Register the table */
+                                        $this->data_source->register_table($field_registrations);
+                                        $this->remove_store('adapt.installing_bundle');
+                                        
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (is_array($this->_schema['add']['records'])){
+                            /*
+                             * Adding records
+                             */
+                            $tables = array_keys($this->_schema['add']['records']);
+                            
+                            foreach($tables as $table_name){
+                                $rows = $this->_schema['add']['records'][$table_name];
+                                $field_names = array();
+                                
+                                $schema = $this->data_source->get_row_structure($table_name);
+                                
+                                if (is_null($schema) || !is_array($schema)){
+                                    
+                                    if (isset($this->_schema['add']['records']['field'])){
+                                        $schema = array();
+                                        
+                                        foreach($this->_schema['add']['records']['field'] as $field){
+                                            if ($field['table_name'] == $table_name){
+                                                $schema[] = $field;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                if (is_array($schema)){
+                                    foreach($schema as $field){
+                                        $field_names[] = $field['field_name'];
+                                    }
+                                    foreach($rows as $row){
+                                        $values = [];
+                                        
+                                        /*
+                                         * Before we can proceed we need to resolve the lookups
+                                         */
+                                        foreach($field_names as $field_name){
+                                            $value = $row[$field_name];
+                                            
+                                            if (is_array($value) && isset($value['lookup_from']) && isset($value['with_conditions'])){
+                                                $sql = $this->data_source->sql
+                                                    ->select($value['lookup_from'] . '_id')
+                                                    ->from($value['lookup_from']);
+                                                    
+                                                $where = new sql_and(
+                                                    new sql_cond('date_deleted', sql::IS, new sql_null())
+                                                );
+                                                
+                                                foreach($value['with_conditions'] as $condition => $val){
+                                                    $where->add(new sql_cond($condition, sql::EQUALS, sql::q($val)));
+                                                }
+                                                
+                                                $sql->where($where);
+                                                
+                                                $results = $sql->execute(60 * 60 * 24 * 5)->results();
+                                                $errors = $sql->errors(true);
+                                                
+                                                if (count($errors)){
+                                                    foreach($errors as $error){
+                                                        $this->error($error);
+                                                    }
+                                                    
+                                                    return false;
+                                                }
+                                                
+                                                if (count($results) == 0){
+                                                    foreach($value['with_conditions'] as $condition => $val){
+                                                        $this->error("Unable to lookup value for field '{$field_name}' with value '{$val}'");
+                                                    }
+                                                    return false;
+                                                }elseif(count($results) > 1){
+                                                    $this->error("Multiple values found when looking up value for field {$field_name}");
+                                                    return false;
+                                                }
+                                                $row[$field_name] = $results[0][$value['lookup_from'] . "_id"];
+                                            }
+                                        }
+                                        
+                                        /*
+                                         * We need to check if a row exists, if it has a name
+                                         * field we will use this as a key and update the rest
+                                         * of the row, if it doesn't then we are going to try
+                                         * and match the whole record, if it matches we will
+                                         * ignore the entire record, if it doesn't we will
+                                         * insert it.
+                                         */
+                                        $ignore_record = false;
+                                        
+                                        if (in_array('name', $field_names)){
+                                            // Intentionally we are skipping the
+                                            // date_deleted field on the basis that
+                                            // if this record is deleted, it should
+                                            // remain deleted, that said, still
+                                            // we will update it as required.
+                                            $sql = $this->data_source->sql
+                                                ->select($table_name . '_id')
+                                                ->from($table_name)
+                                                ->where(new sql_cond('name', sql::EQUALS, sql::q($row['name'])));
+                                            
+                                            $results = $sql->execute(60 * 60 * 24 * 7)->results();
+                                            
+                                            if (count($results) == 1){
+                                                // Update the record
+                                                $ignore_record = true;
+                                                
+                                                $sql = $this->data_source->sql;
+                                                $sql->update($table_name);
+                                                foreach($field_names as $field_name){
+                                                    if ($row[$field_name]){
+                                                        $sql->set($field_name, sql::q($row[$field_name]));
+                                                    }
+                                                }
+                                                $sql->where(new sql_cond($table_name, sql::EQUALS, sql::q($row[$field_name])));
+                                                
+                                                $sql->execute();
+                                            }
+                                        }else{
+                                            // Try to match against all fields
+                                            $sql = $this->data_source->sql
+                                                ->select($table_name . '_id')
+                                                ->from($table_name);
+                                            
+                                            $where = new sql_and();
+                                            foreach($field_names as $field_name){
+                                                if ($row[$field_name]){
+                                                    $where->add(new sql_cond($field_name, sql::EQUALS, sql::q($row[$field_name])));
+                                                }
+                                            }
+                                            $sql->where($where);
+                                            
+                                            if (count($sql->execute(60 * 60 * 24 * 7)->results()) == 1){
+                                                $ignore_record = true;
+                                            }
+                                        }
+                                        
+                                        if (!$ignore_record){
+                                            // Insert the record
+                                            foreach($field_names as $field_name){
+                                                switch($field_name){
+                                                case "date_created":
+                                                case "date_modified":
+                                                    $row[$field_name] = new sql_now();
+                                                    break;
+                                                case "guid":
+                                                    $row[$field_name] = guid();
+                                                    break;
+                                                case "bundle_name":
+                                                    $row[$field_name] = $this->name;
+                                                    break;
+                                                }
+                                                
+                                                $values[] = $row[$field_name];
+                                            }
+                                            
+                                            $sql = $this->data_source->sql;
+                                            
+                                            $sql->insert_into($table_name, $field_names)->values($values);
+                                            
+                                            $sql->execute();
+                                            $errors = $sql->errors(true);
+                                            
+                                            if (count($errors)){
+                                                foreach($errors as $error) $this->error($error);
+                                                return false;
+                                            }
+                                            
+                                            if ($table_name == 'data_type' || $table_name == 'field'){
+                                                $this->data_source->load_schema();
+                                            }
+                                        }
+                                        
+                                    }
+                                } else {
+                                    $this->error("Unable to find schema for {$table_name}");
+                                    return false;
+                                }
+                            }
+                        }
+                        
+                        /////
                     }
                 }
                 
