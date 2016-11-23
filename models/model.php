@@ -988,7 +988,6 @@ namespace adapt{
                     if ($reference && is_array($reference) && count($reference)){
                         foreach($children as $child){
                             if ($child instanceof model && $child->table_name == $reference['table_name']){
-                                
                                 if (is_null($this->$field)){
                                     // Only if the child isn't loaded
                                     if (!$child->is_loaded){
@@ -1000,6 +999,9 @@ namespace adapt{
                                             foreach($errors as $error) $this->error($error);
                                             $return = false;
                                         }
+                                    }else{
+                                        $child_id_field = $reference['field_name'];
+                                        $this->$field = $child->$child_id_field;
                                     }
                                     
                                 }else{
@@ -1523,6 +1525,7 @@ namespace adapt{
                 for($i = 0; $i < count($table_names); $i++){
                     $table_name = $table_names[$i];
                     $fields = array_keys($data[$table_name]);
+                    
                     if (is_array($fields)){
                         for($j = 0; $j < count($fields); $j++){
                             $field_name = $fields[$j];
