@@ -561,20 +561,7 @@ namespace adapt{
                                                             
                                                             foreach($attributes as $attr){
                                                                 if ($attr instanceof xml){
-                                                                    /*switch($attr->tag){
-                                                                    case "allowed_values":
-                                                                        $value_nodes = $attr->get();
-                                                                        $values = array();
-                                                                        foreach($value_nodes as $value_node){
-                                                                            if ($value_node instanceof xml && $value_node->tag == 'value'){
-                                                                                $values[] = $value_node->get(0);
-                                                                            }
-                                                                        }
-                                                                        $fields_to_add[$table_name][$field_name][$attr->tag] = $values;
-                                                                        break;
-                                                                    default:*/
-                                                                        $fields_to_add[$table_name][$field_name][$attr->tag] = $attr->get(0);
-                                                                    /*}*/
+                                                                    $fields_to_add[$table_name][$field_name][$attr->tag] = $attr->get(0);
                                                                 }
                                                             }
                                                             
@@ -664,12 +651,6 @@ namespace adapt{
                                                                             'lookup_from' => $field->attr('get-from'),
                                                                             'with_conditions' => $conditions
                                                                         ];
-                                                                        //print_r($current_record);
-                                                                        //if ($field_name == "organisation_id" && $table_name == "host"){
-                                                                        //    print "TABLE: {$table_name}\n";
-                                                                        //    //die;
-                                                                        //}
-                                                                        //$current_record[$field_name] = array('_lookup_table' => $field->attr('get-from'), '_lookup_name' => $field->attr('where-name-is'));
                                                                     }else{
                                                                         $field_value = $field->get(0);
                                                                         $current_record[$field_name] = $field_value;
@@ -792,15 +773,6 @@ namespace adapt{
 
         }
         
-        /**
-         * Saves the bundles bundle.xml
-         *
-         * @ignore
-         * @todo Write this function
-         */
-        public function save(){
-            
-        }
         
         /**
          * Registers a config handler.
@@ -1101,7 +1073,6 @@ namespace adapt{
                                         $this->remove_store('adapt.installing_bundle');
                                         
                                     }else{
-                                        //print "Creating";
                                         /* Create new table */
                                         $field_registrations = array();
                                         
@@ -1125,15 +1096,11 @@ namespace adapt{
                                                 for($i = 0; $i < count($values); $i++){
                                                     $values[$i] = preg_replace("/'|\"/", "", $values[$i]);
                                                     $values[$i] = sql::q(trim($values[$i]));
-                                                    //$values[$i] = sql::q(trim(trim($values[$i], "'"), "\""));
                                                 }
                                                 
                                                 $values = implode(", ", $values);
                                                 $attributes['allowed_values'] = "[" . $values . "]";
                                                 $attributes['data_type'] = "enum";
-                                                //print "<pre>VALUES: {$values}</pre>";
-                                                //exit(1);
-                                                
                                             }
                                             
                                             $nullable = true;
@@ -1484,7 +1451,6 @@ namespace adapt{
                         /*
                          * Lets remove from the schema
                          */
-                        /////
                         
                         if (is_array($this->_schema['remove']['fields'])){
                             /*

@@ -145,9 +145,12 @@ namespace adapt{
             return false;
         }
         
-        public function get_works_with_list($bundle_name, $bundle_versions = array()){
-            
-        }
+        /**
+         * @todo version 2.1 maybe
+         */
+        //public function get_works_with_list($bundle_name, $bundle_versions = array()){
+        //    
+        //}
         
         public function has($bundle_name, $bundle_version = null){
             if (preg_match("/^[a-zA-Z]+[-_a-zA-Z0-9]+[a-zA-Z0-9]+$/", $bundle_name)){
@@ -277,63 +280,48 @@ namespace adapt{
                         $name = trim($name->get(0)->text);
                         $type = trim($type->get(0)->text);
                         $version = trim($version->get(0)->text);
-                        //list($major, $minor, $revision) = explode(".", $version);
-                        
-                        //if (in_array(strtolower($type), array('application', 'extension', 'framework'))){
-                            /* Is this bundle already installed? */
-                            if ($this->bundles->has_bundle($name, $version) === false){
-                                /*
-                                 * The bundle isn't installed so we are going
-                                 * to unbundle it
-                                 */
-                                $path = ADAPT_PATH;
-                                /*switch($type){
-                                case 'application':
-                                    $path = APPLICATION_PATH;
-                                    break;
-                                case 'extension':
-                                    $path = EXTENSION_PATH;
-                                    break;
-                                case 'framework':
-                                    $path = FRAMEWORK_PATH;
-                                    break;
-                                }*/
-                                
-                                mkdir($path . $name);
-                                $path .= $name . '/';
-                                
-                                mkdir($path . $name . "-" . $version);
-                                $path .= $name . '-' . $version . '/';
-                                
-                                /* Reset the bundle file point back to the start of the body */
-                                fseek($fp, strlen($raw_index));
-                                
-                                /* Lets extract the bundle */
-                                foreach($bundle_index as $file){
-                                    $path_parts = explode('/', trim(dirname($file['name']), '/'));
-                                    $new_path = $path;
-                                    foreach($path_parts as $p){
-                                        $new_path .= "/{$p}";
-                                        if (!is_dir($new_path)){
-                                            mkdir($new_path);
-                                        }
-                                    }
-                                    
-                                    $ofp = fopen($path . $file['name'], "w");
-                                    
-                                    if ($ofp){
-                                        fwrite($ofp, fread($fp, $file['length']));
-                                        fclose($ofp);
+
+                        /* Is this bundle already installed? */
+                        if ($this->bundles->has_bundle($name, $version) === false){
+                            /*
+                             * The bundle isn't installed so we are going
+                             * to unbundle it
+                             */
+                            $path = ADAPT_PATH;
+                            
+                            mkdir($path . $name);
+                            $path .= $name . '/';
+                            
+                            mkdir($path . $name . "-" . $version);
+                            $path .= $name . '-' . $version . '/';
+                            
+                            /* Reset the bundle file point back to the start of the body */
+                            fseek($fp, strlen($raw_index));
+                            
+                            /* Lets extract the bundle */
+                            foreach($bundle_index as $file){
+                                $path_parts = explode('/', trim(dirname($file['name']), '/'));
+                                $new_path = $path;
+                                foreach($path_parts as $p){
+                                    $new_path .= "/{$p}";
+                                    if (!is_dir($new_path)){
+                                        mkdir($new_path);
                                     }
                                 }
                                 
-                                fclose($fp);
-                                return $name;
-                            }else{
-                                return $name;
+                                $ofp = fopen($path . $file['name'], "w");
+                                
+                                if ($ofp){
+                                    fwrite($ofp, fread($fp, $file['length']));
+                                    fclose($ofp);
+                                }
                             }
-                        //}
-                        
+                            
+                            fclose($fp);
+                            return $name;
+                        }else{
+                            return $name;
+                        }
                         
                     }else{
                         $this->error("Error unbundling {$bundle_file_path}, unable to read the manifest.");
