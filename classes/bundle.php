@@ -689,35 +689,81 @@ namespace adapt{
                                             'fields' => $fields_to_add,
                                             'records' => $records_to_add
                                         );
-                                        //print new html_pre(print_r($fields_to_add, true));
-                                        //print new html_pre(print_r($records_to_add, true));
-                                        
-                                        //
-                                        //
-                                        //if (count($records_to_add)){
-                                        //    foreach($records_to_add as $table_name => $records){
-                                        //        
-                                        //        $sql = $this->data_source->sql;
-                                        //        
-                                        //        $sql->insert_into($table_name, array_keys($records[0]));
-                                        //        
-                                        //        foreach($records as $record){
-                                        //            $sql->values(array_values($record));
-                                        //        }
-                                        //        print $sql;
-                                        //    }
-                                        //    
-                                        //    
-                                        //}
-                                        
-                                        //print_r($fields_to_add);
-                                        //print_r($records_to_add);
-                                        
                                         break;
+                                    
                                     case "remove":
                                         /*
                                          * Remove from the database
                                          */
+                                        $fields_to_remove = array();
+                                        $records_to_remove = array();
+                                        
+                                        $tables = $action->get();
+                                        foreach($tables as $table){
+                                            if ($table instanceof xml && strtolower($table->tag) == 'table'){
+                                                $table_name = $table->attr('name');
+                                                
+                                                $table_children = $table->get();
+                                                foreach($table_children as $child){
+                                                    if ($child instanceof xml){
+                                                        switch(strtolower($child->tag)){
+                                                        case "field":
+                                                            $field_name = $child->attr('name');
+                                                            
+                                                            if (!isset($fields_to_remove[$table_name])){
+                                                                $fields_to_remove[$table_name] = array();
+                                                            }
+                                                            
+                                                            $fields_to_remove[$table_name][] = $field_name;
+                                                            break;
+                                                        
+                                                        case "record":
+                                                            $fields = $child->get();
+                                                                
+                                                            if (!isset($records_to_remove[$table_name])){
+                                                                $records_to_remove[$table_name] = array();
+                                                            }
+                                                            
+                                                            $current_record = array();
+                                                            
+                                                            foreach($fields as $field){
+                                                                if ($field instanceof xml){
+                                                                    $field_name = $field->tag;
+                                                                    
+                                                                    if ($field->attr('get-from')){
+                                                                        $conditions = [];
+                                                                        $attrs = $field->attributes;
+                                                                        foreach($attrs as $key => $value){
+                                                                            $match = [];
+                                                                            if (preg_match("/^where\-([-a-zA-Z0-9]+)\-is$/", $key, $match)){
+                                                                                $conditions[str_replace("-", "_", $match[1])] = $value;
+                                                                            }
+                                                                        }
+                                                                        
+                                                                        $current_record[$field_name] = [
+                                                                            'lookup_from' => $field->attr('get-from'),
+                                                                            'with_conditions' => $conditions
+                                                                        ];
+                                                                    }else{
+                                                                        $field_value = $field->get(0);
+                                                                        $current_record[$field_name] = $field_value;
+                                                                    }
+                                                                }
+                                                            }
+                                                            
+                                                            $records_to_remove[$table_name][] = $current_record;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                
+                                            }
+                                            
+                                            $this->_schema['remove'] = array(
+                                                'fields' => $fields_to_remove,
+                                                'records' => $records_to_remove
+                                            );
+                                        }
                                         
                                         break;
                                     }
@@ -726,59 +772,13 @@ namespace adapt{
                             break;
                         default:
                             /* Do we have a handler to handle the tag? */
-//<<<<<<< HEAD
-//                            $handlers = $this->store("adapt.config_handlers");
-//                            //print "<pre>CONFIG HANDLERS: " . print_r($handlers, true) . "</pre>";
-//                            if (is_array($handlers) && isset($handlers[$child->tag])){
-//                                
-//                                $handler = $handlers[$child->tag];
-//                                
-//                                $bundle = $this->bundles->load_bundle($handler['bundle_name']);
-//                                if ($bundle instanceof bundle && $bundle->name == $handler['bundle_name']){
-//                                    $function = $handler['function'];
-//                                    
-//                                    if (method_exists($bundle, $function)){
-//                                        $bundle->$function($this, $child);
-//                                    }
-//                                    
-//                                }
-//=======
-                            
-                            /**
-                             * The boot and install process require bundles to
-                             * be processed in a particular order, loading does
-                             * not, and so some config handlers may not
-                             * have been defined at this point.
-                             *
-                             * This is a great BIG BUG!
-                             */
-                            
-                            //$handlers = $this->store("adapt.config_handlers") ?: [];
-                            
                             if (!is_array($this->_config_handlers_to_process)) $this->_config_handlers_to_process = [];
                             
                             if (!isset($this->_config_handlers_to_process[$child->tag]) || !is_array($this->_config_handlers_to_process[$child->tag])){
                                 $this->_config_handlers_to_process[$child->tag] = [];
-//>>>>>>> horizon
                             }
                             
                             $this->_config_handlers_to_process[$child->tag][] = $child;
-                            
-                            //print "<pre>CONFIG HANDLERS: " . print_r($handlers, true) . "</pre>";
-                            //if (is_array($handlers) && isset($handlers[$child->tag])){
-                            //    if (!is_array($handlers[$child->tag]['actions'])){
-                            //        $handlers[$child->tag]['actions'] = [];
-                            //    }
-                            //    
-                            //    $handlers[$child->tag]['actions'][] = $child;
-                            //}else{
-                            //    $handlers[$child->tag] = [];
-                            //    $handlers[$child->tag]['actions'] = [$child];
-                            //    
-                            //}
-                            //$this->store('adapt.config_handlers', $handlers);
-                            
-                            
                             break;
                         }
                         
@@ -1484,43 +1484,231 @@ namespace adapt{
                         /*
                          * Lets remove from the schema
                          */
-                        print_r($this->_schema['remove']);
-                        die();
+                        /////
+                        
+                        if (is_array($this->_schema['remove']['fields'])){
+                            /*
+                             * Removing fields and maybe tables
+                             */
+                            if (count($this->_schema['remove']['fields'])){
+                                
+                                foreach($this->_schema['remove']['fields'] as $table_name => $fields){
+                                    /* Does the table already exist? */
+                                    $schema = $this->data_source->get_row_structure($table_name);
+                                    if (is_array($schema)){
+                                        /* Alter existing table */
+                                        
+                                        $schema_by_field_name = [];
+                                        foreach($schema as $field){
+                                            $schema_by_field_name[$field['field_name']] = $field;
+                                        }
+                                        
+                                        // Lose the date fields
+                                        unset($schema_by_field_name['date_created']);
+                                        unset($schema_by_field_name['date_modified']);
+                                        unset($schema_by_field_name['date_deleted']);
+                                        
+                                        foreach($fields as $field_name){
+                                            if (isset($schema_by_field_name[$field_name])){
+                                                if ($schema_by_field_name[$field_name]['bundle_name'] != $this->name){
+                                                    $this->error("Bundle '{$this->name}' attempted to remove the field '{$table_name}.{$field_name}' that was created by the bundle '{$schema_by_field_name[$field_name]['bundle_name']}'");
+                                                    return false;
+                                                }
+                                            }
+                                        }
+                                        
+                                        $sql = $this->data_source->sql;
+                                        if (count(array_keys($schema_by_field_name)) == count($fields)){
+                                            // Drop the table
+                                            $this->store('adapt.installing_bundle', $this->name);
+                                            $sql->drop_table($table_name)->execute();
+                                            $this->remove_store('adapt.installing_bundle');
+                                            
+                                            $errors = $sql->errors(true);
+                                            if (count($errors)){
+                                                $this->error($errors);
+                                                return false;
+                                            }else{
+                                                $sql = $this->data_source->sql;
+                                                $sql->update('field')
+                                                    ->set('date_deleted', new sql_now())
+                                                    ->where(
+                                                        new sql_and(
+                                                            new sql_cond('table_name', sql::EQUALS, sql::q($table_name)),
+                                                            new sql_cond('date_deleted', sql::IS, new sql_null())
+                                                        )
+                                                    )
+                                                    ->execute();
+                                                
+                                                // Reload the schema
+                                                $this->data_source->load_schema();
+                                            }
+                                        }else{
+                                            // Drop each field
+                                            $sql->alter_table($table_name);
+                                            foreach($fields as $field_name){
+                                                $sql->drop($field_name);
+                                            }
+                                            
+                                            $this->store('adapt.installing_bundle', $this->name);
+                                            $sql->execute();
+                                            $this->remove_store('adapt.installing_bundle');
+                                            
+                                            $errors = $sql->errors(true);
+                                            if (count($errors)){
+                                                $this->error($errors);
+                                                return false;
+                                            }else{
+                                                // Update the field table
+                                                $sql = $this->data_source->sql;
+                                                
+                                                $sql->update('field')
+                                                    ->set('date_deleted', new sql_now())
+                                                    ->where(
+                                                        new sql_and(
+                                                            new sql_cond('table_name', sql::EQUALS, sql::q($table_name)),
+                                                            new sql_cond('field_name', sql::EQUALS, sql::q($field_name)),
+                                                            new sql_cond('date_deleted', sql::IS, new sql_null())
+                                                        )
+                                                    );
+                                                
+                                                $sql->execute();
+                                                
+                                                // Reload the schema
+                                                $this->data_source->load_schema();
+                                                
+                                                $errors = $sql->errors(true);
+                                                if (count($errors)){
+                                                    $this->error($errors);
+                                                    return false;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (is_array($this->_schema['remove']['records'])){
+                            /*
+                             * Removing records
+                             */
+                            $tables = array_keys($this->_schema['remove']['records']);
+                            
+                            foreach($tables as $table_name){
+                                $rows = $this->_schema['remove']['records'][$table_name];
+                                $field_names = array();
+                                
+                                $schema = $this->data_source->get_row_structure($table_name);
+                                
+                                if (is_null($schema) || !is_array($schema)){
+                                    
+                                    if (isset($this->_schema['remove']['records']['field'])){
+                                        $schema = array();
+                                        
+                                        foreach($this->_schema['remove']['records']['field'] as $field){
+                                            if ($field['table_name'] == $table_name){
+                                                $schema[] = $field;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                if (is_array($schema)){
+                                    foreach($schema as $field){
+                                        $field_names[] = $field['field_name'];
+                                    }
+                                    foreach($rows as $row){
+                                        $values = [];
+                                        
+                                        /*
+                                         * Before we can proceed we need to resolve the lookups
+                                         */
+                                        foreach($field_names as $field_name){
+                                            $value = $row[$field_name];
+                                            
+                                            if (is_array($value) && isset($value['lookup_from']) && isset($value['with_conditions'])){
+                                                $sql = $this->data_source->sql
+                                                    ->select($value['lookup_from'] . '_id')
+                                                    ->from($value['lookup_from']);
+                                                    
+                                                $where = new sql_and(
+                                                    new sql_cond('date_deleted', sql::IS, new sql_null())
+                                                );
+                                                
+                                                foreach($value['with_conditions'] as $condition => $val){
+                                                    $where->add(new sql_cond($condition, sql::EQUALS, sql::q($val)));
+                                                }
+                                                
+                                                $sql->where($where);
+                                                
+                                                $results = $sql->execute(60 * 60 * 24 * 5)->results();
+                                                $errors = $sql->errors(true);
+                                                
+                                                if (count($errors)){
+                                                    foreach($errors as $error){
+                                                        $this->error($error);
+                                                    }
+                                                    
+                                                    return false;
+                                                }
+                                                
+                                                // Should this error on remove?
+                                                if (count($results) == 0){
+                                                    foreach($value['with_conditions'] as $condition => $val){
+                                                        $this->error("Unable to lookup value for field '{$field_name}' with value '{$val}'");
+                                                    }
+                                                    return false;
+                                                }elseif(count($results) > 1){
+                                                    $this->error("Multiple values found when looking up value for field {$field_name}");
+                                                    return false;
+                                                }
+                                                $row[$field_name] = $results[0][$value['lookup_from'] . "_id"];
+                                            }
+                                        }
+                                        
+                                        // Remove the record
+                                        $sql = $this->data_source->sql;
+                                        
+                                        $sql->update($table_name)
+                                            ->set('date_deleted', new sql_now());
+                                        
+                                        $where = new sql_and();
+                                        foreach($row as $field_name => $value){
+                                            $where->add(new sql_cond($field_name, sql::EQUALS, sql::q($value)));
+                                        }
+                                        
+                                        $sql->where($where);
+                                        $sql->execute();
+                                        
+                                        $errors = $sql->errors(true);
+                                        
+                                        if (count($errors)) {
+                                            $this->error($errors);
+                                            return false;
+                                        }
+                                    }
+                                } else {
+                                    $this->error("Unable to find schema for {$table_name}");
+                                    return false;
+                                }
+                            }
+                        }
                     }
                 }
-                
-                // Process config handlers
-                //$handlers = $this->store("adapt.config_handlers") ?: [];
-                //foreach($handlers as $tag => $handler){
-                //    print "<pre>Handling tag {$tag}:{$handler['bundle_name']}:{$handler['function']}</pre>";
-                //    $bundle = $this->bundles->load_bundle($handler['bundle_name']);
-                //    if ($bundle instanceof bundle && $bundle->name == $handler['bundle_name']){
-                //        $function = $handler['function'];
-                //        
-                //        if (method_exists($bundle, $function)){
-                //            foreach($handler['actions'] as $child){
-                //                $bundle->$function($this, $child);
-                //            }
-                //            unset($handler['actions']);
-                //        }
-                //        
-                //    }
                 
                 /* Process config handlers */
                 $handlers = $this->store("adapt.config_handlers") ?: [];
                 foreach($this->_config_handlers_to_process as $tag => $children){
-                    //print "<pre>Seeking handler for {$tag}</pre>";
-                    //print "<pre>" . print_r($handlers, true) . "</pre>";
+                    
                     if (is_array($handlers[$tag])){
-                        //print "<pre>foo</pre>";
                         $bundle = $this->bundles->load_bundle($handlers[$tag]['bundle_name']);
                         if ($bundle instanceof bundle && $bundle->name == $handlers[$tag]['bundle_name']){
-                            //print "<pre>bar</pre>";
+                            
                             $function = $handlers[$tag]['function'];
                             
                             if (method_exists($bundle, $function)){
                                 foreach($children as $child){
-                                    //print "<pre>foobar {$child->tag}</pre>";
                                     $bundle->$function($this, $child);
                                 }
                             }
@@ -1529,38 +1717,13 @@ namespace adapt{
                 
                 }
                 
-                //print "<pre>" . print_r($this->_schema, true) . "</pre>";
-//<<<<<<< HEAD
                 if ($this->data_source && $this->data_source instanceof data_source_sql){   
                     /* Add the bundle to bundle_version if it isn't already */
                     $model = new model_bundle_version();
                     if (!$model->load_by_name_and_version($this->name, $this->version)){
                         $errors = $model->errors(true);
-                        //print "<pre>" . print_r($errors, true) . "</pre>";
                         foreach($errors as $error) $this->error("Model 'bundle_version' return the error \"{$error}\"");
                     }
-//=======
-//                
-//                /* Add the bundle to bundle_version if it isn't already */
-//                $model = new model_bundle_version();
-//                if (!$model->load_by_name_and_version($this->name, $this->version)){
-//                    $errors = $model->errors(true);
-//                    //print "<pre>" . print_r($errors, true) . "</pre>";
-//                    foreach($errors as $error) $this->error("Model 'bundle_version' return the error \"{$error}\"");
-//                }
-//                
-//                $model->name = $this->name;
-//                $model->type = $this->type;
-//                $model->version = $this->version;
-//                $model->local = "Yes";
-//                $model->installed = "Yes";
-//                if ($model->save()){
-//                    $errors = $model->errors(true);
-//                    //print "<pre>" . print_r($errors, true) . "</pre>";
-//                    //print "<pre>Saved {$this->name}-{$this->version}</pre>";
-//                    $this->_is_installed = true;
-//                    $this->bundles->set_bundle_installed($this->name, $this->version);
-//>>>>>>> horizon
                     
                     $model->name = $this->name;
                     $model->type = $this->type;
@@ -1575,7 +1738,7 @@ namespace adapt{
                         
                         /* Process install handlers */
                         $handlers = $this->store('adapt.install_handlers');
-                        //print "<pre>Handlers: " . print_r($handlers, true) . "</pre>";
+                        
                         if (is_array($handlers) && is_array($handlers[$this->name])){
                             foreach($handlers[$this->name] as $handler){
                                 $bundle = $this->bundles->load_bundle($handler['bundle_name']);
@@ -1591,7 +1754,6 @@ namespace adapt{
                         return true;
                     }else{
                         $errors = $model->errors(true);
-                        //print "<pre>" . print_r($errors, true) . "</pre>";
                         foreach($errors as $error) $this->error("Model 'bundle_version' returned the error \"{$error}\"");
                         return false;
                     }
