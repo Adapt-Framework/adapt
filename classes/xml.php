@@ -429,9 +429,9 @@ namespace adapt{
         }
         public static function parse($data, $return_as_document = false, $alternative_first_node_object = null){
             if (is_string($data) && self::is_xml($data)){
-                
                 /* We are going to use SimpleXML to parse the data */
                 $sxml = simplexml_load_string($data);
+                //TODO: Check return value
                 $xml = new xml((string)$sxml->getName());
                 
                 self::SimpleXML2xml($xml, $sxml);
