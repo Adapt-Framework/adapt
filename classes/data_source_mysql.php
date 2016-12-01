@@ -51,7 +51,7 @@ namespace adapt{
          * A SQL statement.
          * @param boolean
          * Is this statement writing data?
-         * @return resource
+         * @return boolean|resource
          * Returns a statement handle.
          */
         public function query($sql, $write = false){
