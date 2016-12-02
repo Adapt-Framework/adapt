@@ -485,7 +485,6 @@ namespace adapt{
             
             foreach($classes as $class){
                 if ($this instanceof $class){
-                    print '<pre>' . print_r(array_keys($event_handlers[$class]), true) . $event_type . '</pre>';
                     if (isset($event_handlers[$class][$event_type])){
                         foreach($event_handlers[$class][$event_type] as $handler){
                             $data = array(
@@ -496,8 +495,6 @@ namespace adapt{
                             );
                             $function = $handler['function'];
                             call_user_func($function, $data);
-                            //call_user_func_array($function, $data);
-                            //$function($data);
                         }
                     }
                 }
