@@ -120,11 +120,13 @@ namespace adapt{
          * The password for the username for the SQL server.
          * @param string
          * The database name
-         * $param boolean
+         * @param string
+         * The database port
+         * @param boolean
          * Should the host be treated as read-only?  This is useful for Master/slave
          * database set ups.
          */
-        public function __construct($host = null, $username = null, $password = null, $schema = null, $read_only = false){
+        public function __construct($host = null, $username = null, $password = null, $schema = null, $port = null, $read_only = false){
             parent::__construct();
             
             /* Kill the schema */
@@ -135,10 +137,9 @@ namespace adapt{
             $this->_hosts = array();
             
             if (!is_null($host) && !is_null($username) && !is_null($password) && !is_null($schema)){
-                $this->add_host($host, $username, $password, $schema, $read_only);
+                $this->add_host($host, $username, $password, $schema, $port, $read_only);
                 $this->load_schema();
             }
-            
         }
         
         /*
@@ -346,16 +347,19 @@ namespace adapt{
          * The password for the username for the SQL server.
          * @param string
          * The database name
-         * $param boolean
+         * @param string
+         * The database port
+         * @param boolean
          * Should the host be treated as read-only?  This is useful for Master/slave
          * database set ups.
          */
-        public function add_host($host, $username, $password, $schema, $read_only = false){
+        public function add_host($host, $username, $password, $schema, $port, $read_only = false){
             $this->_hosts[] = array(
                 'host' => $host,
                 'username' => $username,
                 'password' => $password,
                 'schema' => $schema,
+                'port' => $port,
                 'read_only' => $read_only
             );
             
@@ -528,7 +532,7 @@ namespace adapt{
                             //}
                             
                             if (!is_null($max_length) && is_integer($max_length) && strlen($value) > $max_length){
-                                $this->error("Maximum field size is {$max_size}");
+                                $this->error("Maximum field size is {$max_length}");
                                 $valid = false;
                             }
                             

@@ -32,7 +32,7 @@ namespace adapt\interfaces{
     defined('ADAPT_STARTED') or die;
     
     interface data_source_sql extends data_source{
-        public function __construct($host = null, $username = null, $password = null, $schema = null, $read_only = false);
+        public function __construct($host = null, $username = null, $password = null, $schema = null, $port = null, $read_only = false);
         
         /*
          * Properties
@@ -51,7 +51,7 @@ namespace adapt\interfaces{
         /*
          * Host management
          */
-        public function add_host($host, $username, $password, $schema, $read_only = false);
+        public function add_host($host, $username, $password, $schema, $port, $read_only = false);
         public function connect($host);
         public function disconnect($host);
         public function get_host($writable = false);

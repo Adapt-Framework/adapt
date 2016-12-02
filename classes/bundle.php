@@ -1241,7 +1241,7 @@ namespace adapt{
                                          * so the table can be properly registered.
                                          */
                                         $this->store('adapt.installing_bundle', $this->name);
-                                        
+
                                         /* Write the table */
                                         $sql->execute();
                                         
@@ -1716,7 +1716,7 @@ namespace adapt{
                                 }
                             }
                         }
-                        
+
                         return true;
                     }else{
                         $errors = $model->errors(true);

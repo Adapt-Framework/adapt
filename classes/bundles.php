@@ -340,7 +340,7 @@ namespace adapt{
                     /* Connect any data sources we have */
                     $drivers = $this->get_global_setting('datasource.driver');
                     $hosts = $this->get_global_setting('datasource.host');
-                    $posts = $this->get_global_setting('datasource.port');
+                    $ports = $this->get_global_setting('datasource.port');
                     $usernames = $this->get_global_setting('datasource.username');
                     $passwords = $this->get_global_setting('datasource.password');
                     $schemas = $this->get_global_setting('datasource.schema');
@@ -359,14 +359,14 @@ namespace adapt{
                                     //print "Adding host";
                                     /* Connect a new host */
                                     if ($this->data_source instanceof $drivers[$i]){
-                                        $this->data_source->add($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+                                        $this->data_source->add($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $ports[$i], $writables[$i] == 'Yes' ? false : true);
                                     }
                                 }else{
                                     //print "Creating datasource";
                                     /* Create a new data source */
                                     $driver = $drivers[$i];
                                     //print "<pre>Using driver{$driver}</pre>";
-                                    $this->data_source = new $driver($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+                                    $this->data_source = new $driver($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $ports[$i], $writables[$i] == 'Yes' ? false : true);
                                     if (!$this->data_source instanceof $driver){
                                         $errors = $this->data_source->errors(true);
                                         
