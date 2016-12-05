@@ -449,6 +449,7 @@ namespace adapt{
         }
         
         public function group_by($field, $ascending = true, $with_rollup = false){
+            if (is_array($field)) foreach($field as $f) $this->group_by ($f);
             $this->_grouping[] = array(
                 'field' => $field,
                 'ascending' => $ascending,
