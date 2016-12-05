@@ -574,12 +574,12 @@ namespace adapt{
                             if ($value instanceof \adapt\sql){
                                 $statement .= "(" . $this->render_sql($value) . ")";
                             }else{
-                                $statement .= $value;
+                                $statement .= "\"" . $value . "\"";
                             }
 
                             $statement .= " AS {$keys[0]}\n";
                         }else{
-                            $statement .= "FROM {$from[0]}\n";
+                            $statement .= "FROM \"{$from[0]}\"\n";
                         }
                     }
 
@@ -608,7 +608,7 @@ namespace adapt{
                             if ($join['table'] instanceof \adapt\sql){
                                 $statement .= "(" . $this->render_sql($join['table']) . ")";
                             }else{
-                                $statement .= $join['table'];
+                                $statement .= "\"" . $join['table'] . "\"";
                             }
 
                             if (!is_null($join['alias']) && $join['alias'] != ""){
@@ -718,8 +718,8 @@ namespace adapt{
                 /* Update statement */
                 if (count($sql->update_tables) > 0){
                     /* Update */
-                    $statement = "UPDATE ";
-                    $tables = $sql->update_tables;
+                    $statement = "UPDATE \"";
+                    $tables = $sql->update_tables . "\"";
                     $first = true;
                     foreach($tables as $key => $value){
                         if (!$first) $statement .= ", ";
@@ -825,7 +825,7 @@ namespace adapt{
                     /*
                      * Create database
                      */
-                    $statement = "DROP TABLE " . $this->escape($sql->drop_table_name) . ";\n";
+                    $statement = "DROP TABLE \"" . $this->escape($sql->drop_table_name) . "\";\n";
                     return $statement;
                 }
 
@@ -913,16 +913,12 @@ namespace adapt{
                             $index_name .= $index['field_name'];
                         }
 
-                        $statement .= "\nCREATE INDEX {$sql->create_table_name}_{$index_name}_index ON {$sql->create_table_name} (";
-                        $first = true;
+
                         foreach ($indexes as $index) {
-                            if (!$first) {
-                                $statement .= ", ";
-                                $first = false;
-                            }
+                            $statement .= "\nCREATE INDEX {$sql->create_table_name}_{$index['field_name']}_index ON {$sql->create_table_name} (";
                             $statement .= "{$index['field_name']}";
+                            $statement .= ");\n";
                         }
-                        $statement .= ");\n";
                     }
 
                     return $statement;
@@ -932,35 +928,83 @@ namespace adapt{
                  * Alter table
                  */
                 if (!is_null($sql->alter_table_name)){
-                    $statement = "ALTER TABLE {$sql->alter_table_name}\n";
+
                     $fields = $sql->alter_table_fields;
+                    // Create enums
+                    for ($i = 0; $i < count($fields); $i++) {
+                        if (strtoupper(substr($fields[$i]['data_type'], 0, 4)) == 'ENUM') {
+                            $matches = array();
+                            if (preg_match("/\((.*)\)/", $fields[$i]['data_type'], $matches)) {
+                                $enum_values = explode(',',
+                                    str_replace("\"", '', str_replace("'", '', str_replace(' ', '', $matches[1]))));
+                                $statement .= "CREATE TYPE {$sql->alter_table_name}_{$fields[$i]['field_name']} AS ENUM (";
+                                $first = true;
+                                foreach ($enum_values as $enum_value) {
+                                    if (!$first) {
+                                        $statement .= ", ";
+                                    }
+                                    $statement .= "'" . $enum_value . "'";
+                                    $first = false;
+                                }
+                                $statement .= ");\n\n";
+                            }
+                        }
+                    }
+
                     $first = true;
 
                     foreach($fields as $field){
                         if (!$first) $statement .= ",\n";
 
+                        // Postgres does not implement the AFTER keyword
                         switch($field['_type']){
                             case "add":
-                                $statement .= "ADD " . $field['field_name'] . " " . $this->convert_data_type($field['data_type'], $field['signed']);
-                                if ($field['nullable'] === false) $statement .= " NOT NULL";
-                                if (!is_null($field['default_value'])) $statement .= " DEFAULT '" . $this->escape($field['default_value']) . "'";
-                                if (!is_null($field['_after'])) $statement .= " AFTER {$field['_after']}";
+                                $statement .= "ALTER TABLE \"{$sql->alter_table_name}\"\n" . "ADD " . $field['field_name'] . " ";
+                                if (strtoupper(substr($field['data_type'], 0, 4)) == 'ENUM') {
+                                    $statement .= $sql->alter_table_name . "_" . $field['field_name'];
+                                } else {
+                                    $statement .= $this->convert_data_type($field['data_type']);
+                                }
+                                $statement .= ";\n";
+                                if ($field['nullable'] === false) {
+                                    $statement .= "ALTER TABLE \"{$sql->alter_table_name}\"\n" . " ALTER " . $field['field_name'] . " SET NOT NULL;\n";
+                                } else {
+                                    $statement .= "ALTER TABLE \"{$sql->alter_table_name}\"\n" . " ALTER " . $field['field_name'] . " DROP NOT NULL;\n";
+                                }
+                                if (!is_null($field['default_value'])) {
+                                    $statement .= "ALTER TABLE \"{$sql->alter_table_name}\"\n" . " ALTER " . $field['field_name'] . " SET DEFAULT '" . $this->escape($field['default_value']) . "'";
+                                } else {
+                                    $statement .= "ALTER TABLE \"{$sql->alter_table_name}\"\n" . " ALTER " . $field['field_name'] . " DROP DEFAULT;\n";
+                                }
                                 break;
                             case "change":
-                                $statement .= "CHANGE {$field['old_field_name']} " . $field['field_name'] . " " . $this->convert_data_type($field['data_type'], $field['signed']);
-                                if ($field['nullable'] === false) $statement .= " NOT NULL";
-                                if (!is_null($field['default_value'])) $statement .= " DEFAULT '" . $this->escape($field['default_value']) . "'";
-                                if (!is_null($field['_after'])) $statement .= " AFTER {$field['_after']}";
+                                $statement .= "ALTER TABLE \"{$sql->alter_table_name}\"\n" . "RENAME {$field['old_field_name']} TO " . $field['field_name'] . ";\n";
+                                $statement .= "ALTER TABLE \"{$sql->alter_table_name}\"\n SET DATA TYPE ";
+                                if (strtoupper(substr($field['data_type'], 0, 4)) == 'ENUM') {
+                                    $statement .= $sql->alter_table_name . "_" . $field['field_name'];
+                                } else {
+                                    $statement .= $this->convert_data_type($field['data_type']);
+                                }
+                                $statement .= ";\n";
+                                if ($field['nullable'] === false) {
+                                    $statement .= "ALTER TABLE \"{$sql->alter_table_name}\"\n" . " ALTER " . $field['field_name'] . " SET NOT NULL;\n";
+                                } else {
+                                    $statement .= "ALTER TABLE \"{$sql->alter_table_name}\"\n" . " ALTER " . $field['field_name'] . " DROP NOT NULL;\n";
+                                }
+                                if (!is_null($field['default_value'])) {
+                                    $statement .= "ALTER TABLE \"{$sql->alter_table_name}\"\n" . " ALTER " . $field['field_name'] . " SET DEFAULT '" . $this->escape($field['default_value']) . "'";
+                                } else {
+                                    $statement .= "ALTER TABLE \"{$sql->alter_table_name}\"\n" . " ALTER " . $field['field_name'] . " DROP DEFAULT;\n";
+                                }
                                 break;
                             case "drop":
-                                $statement .= "DROP " . $field['field_name'];
+                                $statement .= "ALTER TABLE \"{$sql->alter_table_name}\"\n" . "DROP " . $field['field_name'] . ";\n";
                                 break;
                         }
 
                         $first = false;
                     }
 
-                    $statement .= ";\n";
                     return $statement;
                 }
             }
@@ -982,6 +1026,10 @@ namespace adapt{
          * Returns an array containing the data type structure.
          */
         public function convert_data_type($type, $signed = true, $zero_fill = false){
+            // Postgres has no concept of UNSIGNED or ZEROFILL
+            $signed = true;
+            $zero_fill = false;
+
             $params = array();
 
             if (mb_stripos($type, "(") !== false){
@@ -1036,7 +1084,6 @@ namespace adapt{
                         //Throw error
                         return;
                     }
-                    if (!$signed) $type .= " UNSIGNED";
                     if ($zero_fill) $type .= " ZEROFILL";
                     return $type;
 
@@ -1048,7 +1095,6 @@ namespace adapt{
                         //Throw error
                         return;
                     }
-                    if (!$signed) $type .= " UNSIGNED";
                     if ($zero_fill) $type .= " ZEROFILL";
                     return $type;
 
