@@ -891,7 +891,7 @@ namespace adapt{
                 
                 if ($this->type == 'application'){
                     $dependency_list = $this->bundles->get_dependency_list($this->name, $this->version);
-                    //print "Bundle: {$this->name}\n";
+                    //print "Bundle: {$this->name}\n";ob_flush();
                     //print_r($dependency_list);die();
                     if (is_array($dependency_list)){
                         
@@ -946,7 +946,7 @@ namespace adapt{
                 
                 /* Mark as installing */
                 $this->file_store->set("adapt/installation/{$this->name}-{$this->version}", "true", "text/plain");
-                
+                //print "Installing {$this->name}\n";ob_flush();
                 if (is_array($this->_schema) && $this->data_source instanceof data_source_sql){
                     /*
                      * We have a schema
