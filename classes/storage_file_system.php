@@ -98,7 +98,7 @@ namespace adapt{
         
         public function error($error){
             if (!$this->_suppress_errors){
-                return parent::error($error);
+                parent::error($error);
             }
         }
         
