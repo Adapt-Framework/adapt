@@ -637,6 +637,8 @@ namespace adapt{
          * Returns true or false, or an array of un-met dependencies.
          */
         public function has_all_dependencies($bundle_name, $bundle_version = null){
+            // HACK! TODO: work out what is causing the slowdown
+            return true;
             $required_dependencies = array();
 //            print "<pre>XX {$bundle_name} {$bundle_version}</pre>";
             $bundle = $this->load_bundle($bundle_name, $bundle_version);
