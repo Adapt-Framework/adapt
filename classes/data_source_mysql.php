@@ -51,7 +51,7 @@ namespace adapt{
          * A SQL statement.
          * @param boolean
          * Is this statement writing data?
-         * @return resource
+         * @return boolean|resource
          * Returns a statement handle.
          */
         public function query($sql, $write = false){
@@ -89,6 +89,7 @@ namespace adapt{
          * The statement handle returned from read(), write() or query().
          * @param integer
          * How should the data be fetched? See the constants prefixed FETCH_
+         * @return boolean|array
          */
         public function fetch($statement_handle, $fetch_type = self::FETCH_ASSOC){
             if (is_object($statement_handle)){
@@ -154,6 +155,7 @@ namespace adapt{
          * @access public
          * @param array
          * An array representing the host.
+         * @return boolean|mixed
          */
         public function connect($host){
             //$mysql = new mysqli($host['host'], $host['username'], $host['password'], $host['schema']);
@@ -502,7 +504,7 @@ namespace adapt{
                                 $keys = $insert_fields;
                             }else{
                                 //Get the fields for this table
-                                $keys = array_keys($schema); //BUG: $schema is not defined!
+                                $keys = array_keys($schema); //TODO: BUG: $schema is not defined!
                             }
                             
                             //print new html_pre('Keys: ' . print_r($keys, true));
@@ -1221,9 +1223,5 @@ namespace adapt{
                 //TODO: References
             }
         }
-        
     }
-
 }
-
-?>

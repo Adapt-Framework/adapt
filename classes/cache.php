@@ -116,7 +116,7 @@ namespace adapt{
          * The dataset or null.
          */
         public function get_sql($key){
-            return $this->get("adapt/sql/" . md5($sql));
+            return $this->get("adapt/sql/" . md5($key));
         }
         
         /**

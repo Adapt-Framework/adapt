@@ -33,12 +33,13 @@ namespace adapt{
     
     class storage_file_system extends base implements interfaces\storage_file{
         
+        protected $_suppress_errors;
         protected $_store_path;
         protected $_store_available = false;
         
         public function  __construct(){
             parent::__construct();
-            
+            $this->_suppress_errors = false;
             $this->_store_path = $this->setting('adapt.file_store_path');
             
             if (!file_exists($this->_store_path)){
@@ -64,6 +65,14 @@ namespace adapt{
             }
         }
         
+        public function pget_suppress_errors(){
+            return $this->_suppress_errors;
+        }
+        
+        public function pset_suppress_errors($value){
+            $this->_suppress_errors = $value;
+        }
+        
         public function pget_available(){
             return $this->_store_available;
         }
@@ -86,6 +95,12 @@ namespace adapt{
         //    $path = substr($this->_store_path, strlen($_SERVER['DOCUMENT_ROOT']));
         //    return $path . $key;
         //}
+        
+        public function error($error){
+            if (!$this->_suppress_errors){
+                parent::error($error);
+            }
+        }
         
         public function is_key_valid($key){
             if (!strpos($key, "..")){
@@ -271,10 +286,8 @@ namespace adapt{
         }
         
         public function write_to_file($key, $path = null){
-            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
             if ($this->is_key_valid($key)){
                 if (is_null($path)) $path = TEMP_PATH . $this->get_new_key();
-                
                 if (file_exists($this->_store_path . "private/" . $key) || file_exists($this->_store_path . "public/" . $key)){
                     if (is_writable(dirname($path))){
                         $fp = fopen($path, "w");
