@@ -414,7 +414,7 @@ namespace adapt{
                         }
                         
                         if ($dependencies_resolved){
-                            $this->cache->set($cache_key, 1);
+                            $this->cache->set($cache_key, 1, 60 * 60 * 24 * 365);
                             /* Set the running application for the auto loader */
                             $this->setting("adapt.running_application", $application->namespace);
                             
