@@ -146,7 +146,7 @@ namespace adapt{
         }
         
         /**
-         * @todo version 2.1 maybe
+         * @todo
          */
         //public function get_works_with_list($bundle_name, $bundle_versions = array()){
         //    
@@ -339,6 +339,9 @@ namespace adapt{
             return false;
         }
         
+        public function bundle($bundle_name, $bundle_version){
+            
+        }
     }
 }
 
