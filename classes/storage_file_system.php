@@ -226,7 +226,7 @@ namespace adapt{
                 $this->error("File system file storage is unavailable.");
             }
             
-            return;
+            return false;
             //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
             print "<pre>KEY: {$key}</pre>";
             if ($this->available){
