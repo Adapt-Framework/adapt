@@ -116,7 +116,8 @@ namespace adapt{
          * The dataset or null.
          */
         public function get_sql($key){
-            return $this->get("adapt/sql/" . md5($key));
+            $results = $this->get("adapt/sql/" . md5($key));
+            return $results;
         }
         
         /**
@@ -150,9 +151,7 @@ namespace adapt{
          */
         public function set($key, $data, $expires = 300, $content_type = null){
             if (strtolower($this->setting('adapt.disable_caching')) != 'yes'){
-                //print "<pre>{$key} becomes ";
                 $key = $this->_get_key($key);
-                //print "{$key}</pre>";
                 $this->file_store->set($key, $data, $content_type);
                 $date = new date();
                 $date->goto_seconds($expires);
@@ -165,7 +164,7 @@ namespace adapt{
          *
          * @access public
          * @param string
-         * The key identifing the data to be removed.
+         * The key identifying the data to be removed.
          */
         public function delete($key){
             $key = $this->_get_key($key);
@@ -181,7 +180,7 @@ namespace adapt{
          * @param array
          * An array holding the SQL result.
          * @param integer
-         * Optiona. How many seconds should the result be cached for?
+         * Optional. How many seconds should the result be cached for?
          * When missing the value held against the setting 'adapt.sql_cache_expires_after'
          * is used.
          */
@@ -191,7 +190,9 @@ namespace adapt{
                 $expires = $this->setting('adapt.sql_cache_expires_after');
             }
             
-            $this->set($key, serialize($sql_results), $expires, 'application/octet-stream');
+            if ($expires > 0){
+                $this->set($key, serialize($sql_results), $expires, 'application/octet-stream');
+            }
         }
         
         /**
@@ -224,7 +225,7 @@ namespace adapt{
          * @param string|xml|html|view|page
          * The page to cache
          * @param integer
-         * Optiona. How many seconds should the page be cached for?
+         * Optional. How many seconds should the page be cached for?
          * When missing the value held against the setting 'adapt.page_cache_expires_after'
          * is used.
          */
