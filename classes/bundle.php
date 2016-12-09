@@ -952,7 +952,7 @@ namespace adapt{
                      * We have a schema
                      */
                     if (is_array($this->_schema['add'])){
-                        
+//                        print_r($this->_schema);
                         /*
                          * Lets add to the schema
                          */
@@ -1305,7 +1305,7 @@ namespace adapt{
                                          */
                                         foreach($field_names as $field_name){
                                             $value = $row[$field_name];
-                                            
+//                                            print_r($value);
                                             if (is_array($value) && isset($value['lookup_from']) && isset($value['with_conditions'])){
                                                 $sql = $this->data_source->sql
                                                     ->select($value['lookup_from'] . '_id')
@@ -1320,6 +1320,8 @@ namespace adapt{
                                                 }
                                                 
                                                 $sql->where($where);
+                                                
+                                                $string_sql = $sql->render();
                                                 
                                                 $results = $sql->execute(60 * 60 * 24 * 5)->results();
                                                 $errors = $sql->errors(true);
@@ -1338,7 +1340,7 @@ namespace adapt{
                                                     }
                                                     return false;
                                                 }elseif(count($results) > 1){
-                                                    $this->error("Multiple values found when looking up value for field {$field_name}");
+                                                    $this->error("Multiple values found when looking up value {$val} for field {$field_name} using statement '{$string_sql}'");
                                                     return false;
                                                 }
                                                 $row[$field_name] = $results[0][$value['lookup_from'] . "_id"];
