@@ -87,7 +87,84 @@ namespace adapt{
         }
         
         public function extract_all($path){
+            if (!$this->is_loaded){
+                $this->error('Bundle not loaded');
+                return false;
+            }
             
+            if (!is_dir($path)){
+                $this->error("The path {$path} does not exist");
+                return false;
+            }
+            
+            $file_path = $this->file_store->write_to_file($this->_file_key);
+                
+            if (!$file_path || file_size($file_path) == 0){
+                $this->error('Unable to open bundle');
+                return false;
+            }
+            
+            // Open the bundle
+            $fp = fopen($file_path, "r");
+            
+            // Check the file opened
+            if (!$fp){
+                $this->error("Unable to read the temp file {$file_path}");
+                return false;
+            }
+            
+            // Extract the bundles manifest
+            $bundle_manifest = fgets($fp);
+
+            // Check we have something
+            if (strlen($bundle_manifest) == 0){
+                $this->error("Unable to read the bundles manifest");
+                return false;
+            }
+
+            // Check it's json
+            if (!is_json($bundle_manifest)){
+                $this->error("Bundle manifest is not valid JSON");
+                return false;
+            }
+
+            // Parse the JSON
+            $files_index = json_decode($bundle_manifest, true);
+
+            // Check the index is an array
+            if (!is_array($files_index)){
+                $this->error("The file index is not valid");
+                return false;
+            }
+
+            foreach($files_index as $file){
+                if (!isset($file['name']) || !isset($file['size'])){
+                    $this->error('Unable to read files from the bundle');
+                    return false;
+                }
+                
+                $output_file_name = rtrim($path, '/') . '/' . $file['name'];
+                $output_file_path = explode('/', $output_file_name);
+                array_pop($output_file_path);
+                $output_file_path = '/' . implode('/', $output_file_path);
+                
+                if (!$this->make_dir($output_file_path)){
+                    $this->error('Unable to create the directory ' . $output_file_path);
+                    return false;
+                }
+                
+                $ofp = fopen($output_file_name, "w");
+                if (!$ofp){
+                    $this->error("Unable to write to '{$output_file_name}'");
+                    return true;
+                }
+                
+                fwrite($ofp, fread($fp, $file['size']));
+                fclose($ofp);
+            }
+
+            // Close the file
+            fclose($fp);
         }
         
         public function extract_file($file_name){
@@ -100,7 +177,7 @@ namespace adapt{
                 }
                 
                 // Open the file
-                $ftp = fopen($file_path, "r");
+                $fp = fopen($file_path, "r");
 
                 // Check the file opened
                 if (!$fp){
@@ -236,13 +313,31 @@ namespace adapt{
             if ($this->is_loaded){
                 foreach($this->file_index as $file){
                     if ($file['name'] == $file_name){
-                        return $file['size'];
+                        return $file['size'];   
                     }
                 }
             }
             
             $this->error("{$file_name} was not found in this bundle.");
             return false;
+        }
+        
+        public function make_dir($dir){
+            if (!is_string($dir) || !strlen($dir) > 0){
+                $this->error('Invalid directory name');
+                return false;
+            }
+            
+            $path = '/';
+            $parts = explode('/', $dir);
+            foreach($parts as $part){
+                $path .= $part;
+                if (!is_dir($path)){
+                    mkdir($path);
+                }
+            }
+            
+            return true;
         }
         
     }
