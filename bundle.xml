@@ -11,8 +11,22 @@
     <description>Adapt framework is designed for rapid application and web deployment, built to scale it can meet the needs of the most demanding websites.</description>
     <copyright>2016 Matt Bruton</copyright>
     <license>MIT</license>
-    <vendor>Adapt Framework</vendor>
-    <vendor_website>https://www.adaptframework.com</vendor_website>
+    <vendor>
+        <name>Adapt Framework</name>
+        <website>https://www.adaptframework.com</website>
+    </vendor>
+    <authors>
+        <author>
+            <name>Matt Bruton</name>
+            <email>matt.bruton@gmail.com</email>
+        </author>
+    </authors>
+    <contributers>
+        <contributer>
+            <name>Joe Hockaday</name>
+            <email></email>
+        </contributer>
+    </contributers>
     <settings>
       <category name="XML &amp; HTML Settings">
         <setting>

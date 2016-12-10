@@ -38,7 +38,7 @@ namespace adapt{
             }
             
             // Open the file
-            $ftp = fopen($file_path, "r");
+            $fp = fopen($file_path, "r");
             
             // Check the file opened
             if (!$fp){
@@ -76,6 +76,9 @@ namespace adapt{
             // Set to loaded
             $this->_is_loaded = true;
             
+            // Set the file key
+            $this->_file_key = $file_key;
+            
             // Close the file
             fclose($fp);
             
@@ -98,8 +101,7 @@ namespace adapt{
             }
             
             $file_path = $this->file_store->write_to_file($this->_file_key);
-                
-            if (!$file_path || file_size($file_path) == 0){
+            if (!$file_path || filesize($file_path) == 0){
                 $this->error('Unable to open bundle');
                 return false;
             }
@@ -138,7 +140,7 @@ namespace adapt{
             }
 
             foreach($files_index as $file){
-                if (!isset($file['name']) || !isset($file['size'])){
+                if (!isset($file['name']) || !isset($file['length'])){
                     $this->error('Unable to read files from the bundle');
                     return false;
                 }
@@ -159,7 +161,7 @@ namespace adapt{
                     return true;
                 }
                 
-                fwrite($ofp, fread($fp, $file['size']));
+                fwrite($ofp, fread($fp, $file['length']));
                 fclose($ofp);
             }
 
@@ -169,9 +171,10 @@ namespace adapt{
         
         public function extract_file($file_name){
             if ($this->is_loaded){
+                
                 $file_path = $this->file_store->write_to_file($this->_file_key);
                 
-                if (!$file_path || file_size($file_path) == 0){
+                if (!$file_path || filesize($file_path) == 0){
                     $this->error('Unable to open bundle');
                     return false;
                 }
@@ -202,7 +205,9 @@ namespace adapt{
 
                 // Parse the JSON
                 $files_index = json_decode($bundle_manifest, true);
-
+                $seek_offset = strlen($bundle_manifest);
+                fseek($fp, $seek_offset);
+                
                 // Check the index is an array
                 if (!is_array($files_index)){
                     $this->error("The file index is not valid");
@@ -210,19 +215,20 @@ namespace adapt{
                 }
                 
                 foreach($files_index as $file){
-                    if (!isset($file['name']) || !isset($file['size'])){
+                    if (!isset($file['name']) || !isset($file['length'])){
                         $this->error('Unable to read files from the bundle');
                         return false;
                     }
                     
                     if ($file['name'] == $file_name){
-                        $file_content = fread($fp, $file['size']);
+                        $file_content = fread($fp, $file['length']);
                         fclose($fp);
                         unlink($file_path);
                         return $file_content;
-                    }else{
-                        fseek($fp, $file['size']);
                     }
+                    
+                    $seek_offset += $file['length'];
+                    fseek($fp, $seek_offset);
                 }
 
                 // Close the file
@@ -241,7 +247,7 @@ namespace adapt{
             if ($this->is_loaded){
                 $file_path = $this->file_store->write_to_file($this->_file_key);
                 
-                if (!$file_path || file_size($file_path) == 0){
+                if (!$file_path || filesize($file_path) == 0){
                     $this->error('Unable to open bundle');
                     return false;
                 }
@@ -272,6 +278,8 @@ namespace adapt{
 
                 // Parse the JSON
                 $files_index = json_decode($bundle_manifest, true);
+                $seek_offset = strlen($bundle_manifest);
+                fseek($fp, $seek_offset);
 
                 // Check the index is an array
                 if (!is_array($files_index)){
@@ -280,21 +288,22 @@ namespace adapt{
                 }
                 
                 foreach($files_index as $file){
-                    if (!isset($file['name']) || !isset($file['size'])){
+                    if (!isset($file['name']) || !isset($file['length'])){
                         $this->error('Unable to read files from the bundle');
                         return false;
                     }
                     
                     if ($file['name'] == $file_name_to_extract){
                         $ofp = fopen($file_path_to_output, "r");
-                        fwrite($ofp, fread($fp, $file['size']));
+                        fwrite($ofp, fread($fp, $file['length']));
                         fclose($ofp);
                         fclose($fp);
                         unlink($file_path);
                         return true;
-                    }else{
-                        fseek($fp, $file['size']);
                     }
+                    
+                    $seek_offset += $file['length'];
+                    fseek($fp, $seek_offset);
                 }
 
                 // Close the file
@@ -313,7 +322,7 @@ namespace adapt{
             if ($this->is_loaded){
                 foreach($this->file_index as $file){
                     if ($file['name'] == $file_name){
-                        return $file['size'];   
+                        return $file['length'];   
                     }
                 }
             }
