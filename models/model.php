@@ -573,7 +573,7 @@ namespace adapt{
                     $sql->where($where);
                     
                     /* Execute the query and get the results */
-                    $results = $sql->execute()->results();
+                    $results = $sql->execute(0)->results();
                     
                     /* Make sure we have results */
                     if (isset($results) && is_array($results)){
@@ -642,7 +642,7 @@ namespace adapt{
                     }
                     
                     /* Get the results */
-                    $results = $sql->execute()->results();
+                    $results = $sql->execute(0)->results();
                     
                     if (count($results) == 1){
                         $this->trigger(self::EVENT_ON_LOAD_BY_NAME);
@@ -701,7 +701,7 @@ namespace adapt{
                     }
                     
                     /* Get the results */
-                    $results = $sql->execute()->results();
+                    $results = $sql->execute(0)->results();
                     
                     if (count($results) == 1){
                         $this->trigger(self::EVENT_ON_LOAD_BY_GUID);
@@ -792,7 +792,7 @@ namespace adapt{
                         }
                         
                         /* Execute the statement */
-                        if ($sql->execute()){
+                        if ($sql->execute(0)){
                             $results = $sql->results();
                             
                             /* Load the models */
@@ -927,7 +927,7 @@ namespace adapt{
                     $sql->where($where_sql);
                     
                     /* Get the results */
-                    $results = $sql->execute()->results();
+                    $results = $sql->execute(0)->results();
                     
                     /* Do we have any results? */
                     if (is_array($results) && count($results)){

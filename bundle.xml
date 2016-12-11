@@ -6,7 +6,7 @@
     <version>2.0.0</version>
     <version_status>release</version_status>
     <availability>public</availability>
-    <type>framework</type>
+    <type>php_framework</type>
     <namespace>\adapt</namespace>
     <description>Adapt framework is designed for rapid application and web deployment, built to scale it can meet the needs of the most demanding websites.</description>
     <copyright>2016 Matt Bruton</copyright>
