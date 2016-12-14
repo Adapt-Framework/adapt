@@ -21,12 +21,12 @@
             <email>matt.bruton@gmail.com</email>
         </author>
     </authors>
-    <contributers>
-        <contributer>
+    <contributors>
+        <contributor>
             <name>Joe Hockaday</name>
-            <email></email>
-        </contributer>
-    </contributers>
+            <email>jdhockad@hotmail.com</email>
+        </contributor>
+    </contributors>
     <settings>
       <category name="XML &amp; HTML Settings">
         <setting>
