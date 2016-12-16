@@ -330,8 +330,13 @@ namespace adapt{
          */
         public function route($url, $is_action = false){
             $url = trim($url);
-            $this->_url_mount_point = '/' . trim(substr($this->request['url'], 0, strlen($this->request['url']) - strlen($url)), '/'); // << Wrong!
-            
+            if($is_action){
+                $controllers = explode("/", $url);
+                $action = array_pop($controllers);
+                $this->_url_mount_point = trim($this->request['url'] . '/' . $action , '/');
+            }else{
+                $this->_url_mount_point = trim(($this->request['url']), '/');
+            }
             if (!isset($url) || $url == ""){
                 $url = "default";
             }
