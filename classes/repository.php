@@ -24,58 +24,41 @@ namespace adapt{
         }
         
         protected function _request($uri){
-            $response =  $this->_http->get($this->_url . $uri);
+            $response = $this->_http->get($this->_url . $uri);
             
-            if ($response['status'] == 200 && $response['headers']['content-type'] == "application/xml"){
-                $content = xml::parse($response['content']);
-                if ($content instanceof xml){
-                    if (!isset($this->_session_token)){
-                        $this->_session_token = $content->find('repository')->attr('session-key');
-                    }
-                    
-                    return $content;
-                }
+            if ($response['status'] == 200){
+                return $content;
             }
             
             return false;
         }
         
-        protected function _post($uri, $data, $content_type = "application/xml"){
-            $response = $this->_http->post($this->_url . $uri, $data, ['content-type' => $content_type]);
-            //print_r($response);
-            if ($response['status'] == 200 && $response['headers']['content-type'] == "application/xml"){
-                $content = xml::parse($response['content']);
-                if ($content instanceof xml){
-                    if (!isset($this->_session_token)){
-                        $this->_session_token = $content->find('repository')->attr('session-key');
-                        
-                    }
-                    
-                    return $content;
-                }
+        protected function _post($uri, $data, $content_type = "application/json", $headers = []){
+            $response = $this->_http->post($this->_url . $uri, $data, array_merage($headers, ['content-type' => $content_type]));
+            
+            if ($response['status'] == 200){    
+                return $content;
             }
             
             return false;
         }
         
         public function login($username, $password){
-            $uri = "?actions=api/login";
-            $data = new xml_action(
-                [
-                    new xml_username($username),
-                    new xml_password($password)
-                ],
-                ['name' => 'api/login']
-            );
+            $uri = "/login";
+            $data =  [
+                'email_address' => $username,
+                'password' => $password
+            ];
             
-            $response = $this->_post($uri, new xml_adapt_framework($data));
+            $response = $this->_post($uri, $data);
             
-            if ($response !== false){
-                if ($response instanceof xml){
-                    if ($response->find('[name="api/login"] success')->size() == 1){
+            if (is_json($response)){
+                $response = json_decode($response, true);
+                if (is_array($response)){
+                    $keys = array_keys($response);
+                    if (in_array('success', $keys)){
+                        $this->_session_token = $response['success']['token'];
                         return true;
-                    }else{
-                        return false;
                     }
                 }
             }
@@ -88,10 +71,30 @@ namespace adapt{
                 $content = file_get_contents($bundle_file);
                 
                 if ($content){
-                    $uri = "?actions=api/bundles/post";
+                    $uri = "/bundles/upload";
+                    $response = $this->_post($uri, $content, "application/x-bundle", ['token' => $this->_session_token]);
                     
-                    $response = $this->_post($uri, $content, "application/octet-stream");
-                    print $response;
+                    if (is_array($response)){
+                        $keys = array_keys($response);
+                        
+                        if (in_array('success', $keys)){
+                            return true;
+                        }elseif (in_array('error', $keys)){
+                            switch($response['error']['code']){
+                            case "unable_to_load":
+                            case "unable_to_store":
+                                $this->error("Repository error: {$response['error']['message']}");
+                                break;
+                            case "bundle_already_loaded":
+                                $this->error("The repository cannot process your request at present.");
+                                break;
+                            case "unable_to_process_bundle":
+                                $this->error("Repository error: {$response['error']['message']}");
+                                $this->error($response['error']['error']);
+                                break;
+                            }
+                        }
+                    }
                 }else{
                     $this->error("Unable to read file or file is empty");
                 }
