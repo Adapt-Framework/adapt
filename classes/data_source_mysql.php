@@ -169,7 +169,7 @@ namespace adapt{
                         /* Still unable to connect so we are going to bail */
                     }else{
                         /* Connected, can we create a database? */
-                        if (mysqli_real_query($mysql, "create database {$host['schema']};") && mysqli_real_query("use {$host['schema']};")){
+                        if (mysqli_real_query($mysql, "create database {$host['schema']} character set = {$this->setting('mysql.default_character_set')} collate = {$this->setting('mysql.default_collation')};") && mysqli_real_query($mysql, "use {$host['schema']};")) {
                             /* We did it! */
                             $this->trigger(self::EVENT_HOST_CONNECT, array('host' => $host));
                             return $mysql;
