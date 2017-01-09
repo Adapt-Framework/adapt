@@ -65,6 +65,7 @@ namespace adapt{
         const NOT_EQUALS = "!=";
         const NOT_LIKE = "NOT LIKE";
         const NOT = "!";
+        const NULL = "NULL";
         const LOGICAL_OR = "||";
         const ADD = "+";
         const RIGHT_SHIFT = ">>";
