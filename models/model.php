@@ -1620,7 +1620,7 @@ namespace adapt{
                     
                 }
                 
-                /* Do we have anything for our chilren? */
+                /* Do we have anything for our children? */
                 foreach($table_names as $table_name){
                     if ($this->table_name != $table_name && in_array($table_name, $this->_auto_load_only_tables)){
                         
@@ -2076,5 +2076,3 @@ namespace adapt{
     }
 
 }
-
-?>
