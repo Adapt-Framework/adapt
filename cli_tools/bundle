@@ -24,7 +24,7 @@ if (is_dir($argv[1])){
 }
 
 function process_directory($dir, $path, &$file_list){
-    $dir = trim($dir, "/");
+    $dir = rtrim($dir, "/");
     $files = scandir($dir);
     
     foreach($files as $file){
