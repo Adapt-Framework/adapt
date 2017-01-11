@@ -949,7 +949,7 @@ namespace adapt{
                     if (isset($collation)) $statement .= " COLLATE={$collation}";
                     
                     $statement .= ";\n";
-                    //echo "<pre>" . $statement . "</pre>\n"; 
+
                     return $statement;
                 }
                 
@@ -984,8 +984,23 @@ namespace adapt{
                         
                         $first = false;
                     }
-                    
+
+                    // Add in any foreign keys needed
+                    foreach ($sql->foreign_keys as $foreign_key) {
+                        if (!$first) {
+                            $statement .= ",\n";
+                            $first = false;
+                        }
+                        $statement .= "ADD FOREIGN KEY ({$foreign_key['field_name']})\n";
+                        $statement .= "REFERENCES {$foreign_key['reference_table_name']}({$foreign_key['reference_field_name']})\n";
+                        $statement .= "ON DELETE {$foreign_key['on_delete']}\n";
+                        $statement .= "ON UPDATE CASCADE\n"; // TODO - we might want to think about this but there is no on_update captured in the $foreign_key array
+                    }
+
                     $statement .= ";\n";
+
+                    // TODO - thought needs to go into what happens when an FK is removed or the columns involved are altered
+
                     return $statement;
                 }
             }
