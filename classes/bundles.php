@@ -396,7 +396,7 @@ namespace adapt{
                         if (!$dependencies_resolved){
                             $dependencies_resolved = $this->has_all_dependencies($application->name, $application->version);
                             $in_error = false;
-                            
+
                             while(!$in_error && is_array($dependencies_resolved)){
                                 
                                 /* Fetch from the repository */
@@ -453,7 +453,7 @@ namespace adapt{
          * @return boolean
          */
         public function fetch_bundle($bundle_name, $bundle_version = null){
-            if ($this->repository->has($bundle_name, $bundle_version)){
+            if ($bundle_version = $this->repository->has($bundle_name, $bundle_version)){
                 if ($this->repository->get($bundle_name, $bundle_version) !== false){
                     return true;
                 }else{

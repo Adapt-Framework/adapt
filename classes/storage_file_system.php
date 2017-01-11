@@ -131,7 +131,7 @@ namespace adapt{
                 if ($this->is_key_valid($key)){
                     $path = $this->_store_path . ($public ? "public/" : "private/");
                     $namespaces = explode("/", $key);
-                    
+
                     if (count($namespaces) > 1){
                         for($i = 0; $i < count($namespaces) - 1; $i++){
                             $path .= $namespaces[$i] . "/";
@@ -144,7 +144,7 @@ namespace adapt{
                     }else{
                         $path .= $namespaces[0];
                     }
-                    
+
                     $fp = fopen($path, "w");
                     if ($fp){
                         fwrite($fp, $data);
@@ -224,35 +224,6 @@ namespace adapt{
                 }
             }else{
                 $this->error("File system file storage is unavailable.");
-            }
-            
-            return false;
-            //if (preg_match("/^[^A-Za-z0-9]+$/", $key)) $key = md5($key);
-            print "<pre>KEY: {$key}</pre>";
-            if ($this->available){
-                
-                if ($this->is_key_valid($key)){
-                    if (file_exists($path)){
-                        $store_path = $this->_store_path . ($public ? "public/" : "private/");
-                        $fp = fopen($store_path . $key, "w");
-                        if ($fp){
-                            fwrite($fp, file_get_contents($path));
-                            fclose($fp);
-                            
-                            if (!is_null($content_type)) $this->set_content_type($key, $content_type);
-                            
-                            return true;
-                        }else{
-                            $this->error("Unable to write file {$this->_store_path}{$key}");
-                        }
-                    }else{
-                        $this->error("Unable to find {$path}");
-                    }
-                }else{
-                    $this->error("Invalid file storage key '{$key}'");
-                }
-            }else{
-                $this->error("Unable to store the file, storage unavailable");
             }
             
             return false;

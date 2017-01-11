@@ -25,19 +25,17 @@ namespace adapt{
         
         protected function _request($uri){
             $response = $this->_http->get($this->_url . $uri);
-            
             if ($response['status'] == 200){
-                return $content;
+                return $response['content'];
             }
             
             return false;
         }
         
         protected function _post($uri, $data, $content_type = "application/json", $headers = []){
-            $response = $this->_http->post($this->_url . $uri, $data, array_merage($headers, ['content-type' => $content_type]));
-            
+            $response = $this->_http->post($this->_url . $uri, $data, array_merge($headers, ['content-type' => $content_type]));
             if ($response['status'] == 200){    
-                return $content;
+                return $response['content'];
             }
             
             return false;
@@ -50,8 +48,7 @@ namespace adapt{
                 'password' => $password
             ];
             
-            $response = $this->_post($uri, $data);
-            
+            $response = $this->_post($uri, json_encode($data));
             if (is_json($response)){
                 $response = json_decode($response, true);
                 if (is_array($response)){
@@ -158,7 +155,7 @@ namespace adapt{
         public function has($bundle_name, $bundle_version = null){
             if (preg_match("/^[a-zA-Z]+[-_a-zA-Z0-9]+[a-zA-Z0-9]+$/", $bundle_name)){
                 
-                $uri = "/bundles/{$bundle_name}";
+                $uri = "/bundles/bundle/{$bundle_name}";
                 if ($bundle_version){
                     if (preg_match("/^[0-9]+(\.[0-9]+){0,2}$/", $bundle_version)){
                         $uri .= "/{$bundle_version}";
@@ -171,8 +168,9 @@ namespace adapt{
                 }
                 
                 $response = $this->_request($uri);
-                if($response instanceof xml){
-                    return $response->find('bundles > bundle > version')->get(0)->get(0);
+                if (is_json($response)){
+                    $response = json_decode($response, true);
+                    return $response['repository_bundle_version']['version'];
                 }
                 
             }else{
@@ -228,21 +226,20 @@ namespace adapt{
         public function get($bundle_name, $bundle_version = null){
             if ($version = $this->has($bundle_name, $bundle_version)){
                 /* Download the bundle */
-                $uri = $this->_url . "/bundles/{$bundle_name}/{$version}/download";
+                $uri = $this->_url . "/bundles/bundle/{$bundle_name}/{$version}/download";
                 
                 /* We need to use the HTTP object because this is non-standard output */
                 $response = $this->_http->get($uri);
-                
+
                 if (is_array($response) && $response['status'] == 200){
                     /* Store the bundle */
                     $key = "adapt/repository/{$bundle_name}-{$version}.bundle";
                     $this->file_store->set($key, $response['content'], "application/octet-stream");
-                    
                     $path = $this->file_store->get_file_path($key);
-                    
+
                     if ($path !== false){
                         /* Lets unbundle the bundle */
-                        $this->unbundle($path);
+                        return $this->unbundle($path);
                     }else{
                         $this->error("Unable to store bundle '{$bundle_name}' version '{$version}'");
                     }
