@@ -688,7 +688,7 @@ namespace adapt{
          * The name of the bundle
          * @param string $bundle_version
          * The version of the bundle.
-         * @return array
+         * @return array|boolean
          * Returns an array of dependencies.
          */
         public function get_dependency_list($bundle_name, $bundle_version){
@@ -767,7 +767,7 @@ namespace adapt{
                             );
                         }
                         
-                        $this->cache->serialize($cache_key, $list, 60 * 60 * 24 * 7);
+                        $this->cache->serialize($cache_key, $list, 604800); // A week
                         
                     }else{
                         $this->error("Unable to load bundle {$bundle_name}-{$bundle_version}");
@@ -775,8 +775,8 @@ namespace adapt{
                     }
                 }else{
                     
-                    foreach($required_bundles as $requried_bundle => $required_versions){
-                        $this->error("Unable to find {$requried_bundle}");
+                    foreach($required_bundles as $required_bundle => $required_versions){
+                        $this->error("Unable to find {$required_bundle}");
                     }
                     return false;
                 }
@@ -811,7 +811,7 @@ namespace adapt{
          * The name of the bundle
          * @param string $bundle_version
          * Optionally. The version of the bundle.
-         * @return bundle
+         * @return bundle|boolean
          * Returns a bundle.
          */
         public function load_bundle($bundle_name, $bundle_version = null){
@@ -1061,20 +1061,17 @@ namespace adapt{
         public static function matches_version($version_1, $version_2){
             $v1 = array('major' => '', 'minor' => '', 'revision' => '');
             $v2 = array('major' => '', 'minor' => '', 'revision' => '');
-            
-            $matches = array();
-            
-            if (preg_match_all("/^(\d+)(\.(\d+))?(\.(\d+))?$/", $version_1, $matches)){
-                $v1['major'] = $matches[1][0] == "" ? '0' : $matches[1][0];
-                $v1['minor'] = $matches[3][0] == "" ? '0' : $matches[3][0];
-                $v1['revision'] = $matches[5][0] == "" ? '0' : $matches[5][0];
-            }
-            
-            if (preg_match_all("/^(\d+)(\.(\d+))?(\.(\d+))?$/", $version_2, $matches)){
-                $v2['major'] = $matches[1][0] == "" ? '0' : $matches[1][0];
-                $v2['minor'] = $matches[3][0] == "" ? '0' : $matches[3][0];
-                $v2['revision'] = $matches[5][0] == "" ? '0' : $matches[5][0];
-            }
+
+            $exploded1 = explode('.', $version_1);
+            $exploded2 = explode('.', $version_2);
+
+            $v1['major'] = isset($exploded1[0]) ? $exploded1[0] : '0';
+            $v1['minor'] = isset($exploded1[1]) ? $exploded1[1] : '0';
+            $v1['revision'] = isset($exploded1[2]) ? $exploded1[1] : '0';
+
+            $v2['major'] = isset($exploded2[0]) ? $exploded2[0] : '0';
+            $v2['minor'] = isset($exploded2[1]) ? $exploded2[1] : '0';
+            $v2['revision'] = isset($exploded2[2]) ? $exploded2[1] : '0';
             
             if ($v1['major'] == $v2['major'] && $v1['minor'] == $v2['minor']){
                 return true;
