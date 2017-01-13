@@ -852,6 +852,10 @@ namespace adapt{
                 )
                 ->execute(0)
                 ->results();
+
+            for ($i = 0; $i < count($this->schema); $i++) {
+                $this->schema[$i]['lcase_table_name'] = strtolower($this->schema[$i]['table_name']);
+            }
             
             /*$this->schema = $this->sql
                 ->select(new sql('*'))

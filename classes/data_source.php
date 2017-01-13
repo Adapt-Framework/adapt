@@ -106,7 +106,7 @@ namespace adapt{
          * Get a list of datasets
          *
          * @access public
-         * @return string[]
+         * @return string[]|null
          * Returns a list of datasets. For a SQL database this will be a list of
          * tables.
          */
@@ -123,8 +123,6 @@ namespace adapt{
             
             $this->error('Schema not found');
             return null;
-            
-            //return array_keys($this->schema['tables']);
         }
         
         /**
@@ -139,7 +137,7 @@ namespace adapt{
          * @return integer
          */
         public function get_number_of_rows($dataset_index){
-            
+            return 0;
         }
         
         /**
@@ -151,14 +149,16 @@ namespace adapt{
          * @access public
          * @param string
          * The dataset index or name
-         * @return array
+         * @return array|null
          */
         public function get_row_structure($dataset_index){
-            
+
+            $dataset_index = strtolower($dataset_index);
+
             if (is_array($this->_schema)){
                 $fields = array();
                 foreach($this->_schema as $field){
-                    if (strtolower($field['table_name']) == strtolower($dataset_index)){
+                    if (strtolower($field['table_name']) == $dataset_index){
                         $fields[] = $field;
                     }
                 }
@@ -186,7 +186,7 @@ namespace adapt{
          * The dataset index or name
          * @param string
          * The field name
-         * @return array
+         * @return array|null
          */
         public function get_field_structure($dataset_index, $field_name){
             $row = $this->get_row_structure($dataset_index);
