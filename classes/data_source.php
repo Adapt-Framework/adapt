@@ -111,6 +111,7 @@ namespace adapt{
          * tables.
          */
         public function get_dataset_list(){
+            return array_keys($this->_schema);
             $tables = array();
             
             if (is_array($this->schema)){
@@ -152,7 +153,18 @@ namespace adapt{
          * @return array|null
          */
         public function get_row_structure($dataset_index){
-
+            
+            if (isset($this->_schema[$dataset_index])){
+                return $this->_schema[$dataset_index];
+            }else{
+                $this->error("Dataset '{$dataset_index}' does not exist");
+            }
+            
+            return null;
+            
+            print_r($this->_schema);
+            exit(1);
+            
             $dataset_index = strtolower($dataset_index);
 
             if (is_array($this->_schema)){
@@ -219,6 +231,22 @@ namespace adapt{
         public function get_reference($table_name, $field_name){
             $output = array();
             
+            $field_name = strtolower($field_name);
+            
+            $schema = $this->_schema[$table_name];
+            if (is_array($schema)){
+                foreach($schema as $field){
+                    if ($field['field_name'] == $field_name){
+                        $output = array(
+                            'table_name' => $field['referenced_table_name'],
+                            'field_name' => $field['referenced_field_name']
+                        );
+                    }
+                }
+            }
+            
+            return $output;
+            
             if (is_array($this->_schema)){
                 foreach($this->_schema as $field){
                     if (strtolower($field['table_name']) == strtolower($table_name)){
@@ -255,6 +283,21 @@ namespace adapt{
             $output = array();
             
             if (is_array($this->_schema)){
+                foreach($this->_schema as $table => $fields){
+                    foreach($fields as $field){
+                        if ($field['referenced_table_name'] == $table && $field['referenced_field_name'] == $field_name){
+                            $output[] = [
+                                'table_name' => $field['table_name'],
+                                'field_name' => $field['field_name']
+                            ];
+                        }
+                    }
+                }
+            }
+            
+            return $output;
+            
+            if (is_array($this->_schema)){
                 foreach($this->_schema as $field){
                     if (strtolower($field['referenced_table_name']) == strtolower($table_name)){
                         if (strtolower($field['referenced_field_name']) == strtolower($field_name)){
@@ -283,7 +326,33 @@ namespace adapt{
          * **field1** is the field from $table1 that related to **field2** from $table2
          */
         public function get_relationship($table1, $table2){
-            $schema = $this->_schema;
+            $fields = $this->_schema[$table1];
+            
+            if (is_array($fields)){
+                foreach($fields as $field){
+                    if ($field['referenced_table_name'] == $table2){
+                        return array(
+                            'field1' => $field['field_name'],
+                            'field2' => $field['referenced_field_name']
+                        );
+                    }
+                }
+            }
+            
+            $fields = $this->_schema[$table2];
+            
+            if (is_array($fields)){
+                foreach($fields as $field){
+                    if ($field['referenced_table_name'] == $table1){
+                        return array(
+                            'field2' => $field['field_name'],
+                            'field1' => $field['referenced_field_name']
+                        );
+                    }
+                }
+            }
+            
+            return;
             
             if (is_array($schema)){
                 foreach($this->_schema as $field){

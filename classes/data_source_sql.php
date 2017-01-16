@@ -830,11 +830,30 @@ namespace adapt{
             }
             
             //print "<pre>INSERT SQL: {$sql}</pre>\n";
-            
+            //exit(1);
             if ($sql->execute()){
-                $this->schema = array_merge($this->schema, $schema);
+                if (is_array($this->_schema[$schema[0]['table_name']])){ 
+                    $this->_schema[$schema[0]['table_name']] = array_merge($this->_schema[$schema[0]['table_name']], $schema);
+                }else{
+                    $this->_schema[$schema[0]['table_name']] = $schema;
+                }
+                //print_r($schema);
+                //print "Current table: {$schema[0]['table_name']}\n";
+                //$this->_schema[$schema[0]['table_name']] = $schema;
+                //print "Known schema: " . print_r(array_keys($this->_schema), true) . "\n";
+                //if (!is_array($this->schema[$record['table_name']])){
+                //    $this->schema[$record['table_name']] = [];
+                //}
+                //$this->schema[$record['table_name']][] = $record;
+                //print_r($record);
+                //print_r($this->schema);
+                //exit(1);
+                //$this->schema = array_merge($this->schema, $schema);
                 return true;
-            }
+            }/*else{
+                print "Failed on something\n";
+                exit(1);
+            }*/
             
             return false;
         }
@@ -843,6 +862,34 @@ namespace adapt{
          * Loads the schema for the data source
          */
         public function load_schema(){
+            $this->_schema = [];
+            
+            $sql = $this->sql;
+            $sql->select('*')->from('field')->where(new sql_cond('date_deleted', sql::IS, new sql_null()));
+            
+            $results = $sql->execute(0)->results();
+            
+            foreach($results as $result){
+                if (!is_array($this->_schema[$result['table_name']])){
+                    $this->_schema[$result['table_name']] = [];
+                }
+                $this->_schema[$result['table_name']][] = $result;
+            }
+            $array = array_keys($this->_schema);
+            sort($array);
+            print_r($array);
+            $this->data_types = $this->sql
+                ->select("*")
+                ->from('data_type')
+                ->where(
+                    new sql_cond('date_deleted', sql::IS, new sql_null())
+                )
+                ->execute(0)
+                ->results();
+            
+            return;
+            print_r($this->_schema);
+            exit(1);
             
             $this->schema = $this->sql
                 ->select("*")
