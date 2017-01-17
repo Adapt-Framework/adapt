@@ -1426,7 +1426,6 @@ namespace adapt{
                                             $sql = $this->data_source->sql;
                                             
                                             $sql->insert_into($table_name, $field_names)->values($values);
-                                            print $sql . "\n";
                                             
                                             $sql->execute();
                                             $errors = $sql->errors(true);

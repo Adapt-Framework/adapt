@@ -161,30 +161,6 @@ namespace adapt{
             }
             
             return null;
-            
-            print_r($this->_schema);
-            exit(1);
-            
-            $dataset_index = strtolower($dataset_index);
-
-            if (is_array($this->_schema)){
-                $fields = array();
-                foreach($this->_schema as $field){
-                    if (strtolower($field['table_name']) == $dataset_index){
-                        $fields[] = $field;
-                    }
-                }
-                
-                if (count($fields)){
-                    return $fields;
-                }else{
-                    $this->error("Dataset '{$dataset_index}' does not exist");
-                    return null;
-                }
-            }
-            
-            $this->error('Schema not found');
-            return null;
         }
         
         /**
@@ -246,23 +222,6 @@ namespace adapt{
             }
             
             return $output;
-            
-            if (is_array($this->_schema)){
-                foreach($this->_schema as $field){
-                    if (strtolower($field['table_name']) == strtolower($table_name)){
-                        if (strtolower($field['field_name']) == strtolower($field_name)){
-                            $output = array(
-                                'table_name' => $field['referenced_table_name'],
-                                'field_name' => $field['referenced_field_name']
-                            );
-                        }
-                    }
-                }
-            }
-            
-            if (!isset($output['table_name'])) $output = array();
-            
-            return $output;
         }
         
         /**
@@ -285,26 +244,11 @@ namespace adapt{
             if (is_array($this->_schema)){
                 foreach($this->_schema as $table => $fields){
                     foreach($fields as $field){
-                        if ($field['referenced_table_name'] == $table && $field['referenced_field_name'] == $field_name){
+                        if ($field['referenced_table_name'] == $table_name && $field['referenced_field_name'] == $field_name){
                             $output[] = [
                                 'table_name' => $field['table_name'],
                                 'field_name' => $field['field_name']
                             ];
-                        }
-                    }
-                }
-            }
-            
-            return $output;
-            
-            if (is_array($this->_schema)){
-                foreach($this->_schema as $field){
-                    if (strtolower($field['referenced_table_name']) == strtolower($table_name)){
-                        if (strtolower($field['referenced_field_name']) == strtolower($field_name)){
-                            $output[] = array(
-                                'table_name' => $field['table_name'],
-                                'field_name' => $field['field_name']
-                            );
                         }
                     }
                 }
@@ -348,28 +292,6 @@ namespace adapt{
                             'field2' => $field['field_name'],
                             'field1' => $field['referenced_field_name']
                         );
-                    }
-                }
-            }
-            
-            return;
-            
-            if (is_array($schema)){
-                foreach($this->_schema as $field){
-                    if (strtolower($field['table_name']) == strtolower($table1)){
-                        if (strtolower($field['referenced_table_name']) == strtolower($table2)){
-                            return array(
-                                'field1' => $field['field_name'],
-                                'field2' => $field['referenced_field_name']
-                            );
-                        }
-                    }elseif (strtolower($field['table_name']) == strtolower($table2)){
-                        if (strtolower($field['referenced_table_name']) == strtolower($table1)){
-                            return array(
-                                'field2' => $field['field_name'],
-                                'field1' => $field['referenced_field_name']
-                            );
-                        }
                     }
                 }
             }

@@ -553,13 +553,6 @@ namespace adapt{
                 $this->error("Field {$table_name}.{$field_name} not found");
             }
             
-            //if ($valid){
-            //    print new html_pre("Validation passed");
-            //}else{
-            //    print new html_pre("Validation FAILED");
-            //    print new html_pre(print_r($this->errors(true)));
-            //}
-            
             return $valid;
         }
         
@@ -637,67 +630,18 @@ namespace adapt{
          */
         public function unformat($table_name, $field_name, $value){
             if (is_object($value) && $value instanceof sql) return $value;
-            //if ($table_name == 'vacancy'){
-            //    print new html_pre("data_source_sql.unformat: {$field_name} set to '{$value}'");
-            //}
+            
             $field = $this->get_field_structure($table_name, $field_name);
             
             if (is_array($field) && is_assoc($field)){
                 $data_type = $this->get_data_type($field['data_type_id']);
                 if (is_array($data_type)){
                     $unformatter = $data_type['unformatter'];
-                    
-                    
-                    //$date_format = $data_type['datetime_format'];
-                    //
-                    //if (!is_null($date_format)){
-                    //    $base = $this->get_data_type($data_type['based_on_data_type']);
-                    //    if (is_array($base) && $base['data_type_id'] != $data_type['data_type_id']){
-                    //        $base_dateformat = $base['datetime_format'];
-                    //        if (!is_null($base_dateformat)){
-                    //            $date = new date();
-                    //            $date->set_date($value, $date_format);
-                    //            $value = $date->date($base_dateformat);
-                    //        }
-                    //    }else{
-                    //        /* Lets unformat using adapt.default_xxx_format */
-                    //        $default_data_type = null;
-                    //        switch($data_type['name']){
-                    //        case 'date':
-                    //        case 'time':
-                    //        case 'datetime':
-                    //            $default_data_type = $this->setting("adapt.default_{$data_type['name']}_format");
-                    //            break;
-                    //        }
-                    //        
-                    //        if (!is_null($default_data_type)){
-                    //            $default_data_type = $this->get_data_type($default_data_type);
-                    //            $date = new date();
-                    //            $date->set_date($value, $default_data_type['datetime_format']);
-                    //            $value = $date->date($data_type['datetime_format']);
-                    //        }
-                    //    }
-                    //}elseif (!is_null($unformatter)){
-                        $value = $this->sanitize->unformat($unformatter, $value);
-                    //}
+                    $value = $this->sanitize->unformat($unformatter, $value);
                 }
             }
             
             return $value;
-            //
-            //$structure = $this->get_field_structure($table_name, $field_name);
-            //if (is_array($structure) && isset($structure['data_type'])){
-            //    if (isset($this->schema['data_types'][$structure['data_type']])){
-            //        $data_type = $this->schema['data_types'][$structure['data_type']];
-            //        $unformatter = $data_type['unformatter'];
-            //        
-            //        if (!is_null($unformatter)){
-            //            $value = $this->sanitize->unformat($unformatter, $value);
-            //        }
-            //    }
-            //}
-            //
-            //return $value;
         }
         
         /**
@@ -777,20 +721,16 @@ namespace adapt{
                         
                         foreach($field_keys as $field_key){
                             if (!in_array($field_key, $allowed_keys)){
-                                //print "<pre>register_table failed 1</pre>";
                                 return false;
                             }
                         }
                     }else{
-                        //print "<pre>register_table failed 2</pre>";
                         return false;
                     }
                 }
             }else{
-                //print "<pre>register_table failed 3</pre>";
                 return false;
             }
-            //print "<pre>Proceeding to register</pre>";
             
             $sql = $this->sql;
             $sql->insert_into('field', $allowed_keys);
@@ -824,36 +764,19 @@ namespace adapt{
                     }
                 }
                 $record['date_created'] = new sql_now();
-                //print "<pre>" . print_r(array_values($record), true) . "</pre>";
                 $sql->values(array_values($record));
                 $schema[] = $record;
             }
             
-            //print "<pre>INSERT SQL: {$sql}</pre>\n";
-            //exit(1);
             if ($sql->execute()){
                 if (is_array($this->_schema[$schema[0]['table_name']])){ 
                     $this->_schema[$schema[0]['table_name']] = array_merge($this->_schema[$schema[0]['table_name']], $schema);
                 }else{
                     $this->_schema[$schema[0]['table_name']] = $schema;
                 }
-                //print_r($schema);
-                //print "Current table: {$schema[0]['table_name']}\n";
-                //$this->_schema[$schema[0]['table_name']] = $schema;
-                //print "Known schema: " . print_r(array_keys($this->_schema), true) . "\n";
-                //if (!is_array($this->schema[$record['table_name']])){
-                //    $this->schema[$record['table_name']] = [];
-                //}
-                //$this->schema[$record['table_name']][] = $record;
-                //print_r($record);
-                //print_r($this->schema);
-                //exit(1);
-                //$this->schema = array_merge($this->schema, $schema);
+                
                 return true;
-            }/*else{
-                print "Failed on something\n";
-                exit(1);
-            }*/
+            }
             
             return false;
         }
@@ -875,42 +798,6 @@ namespace adapt{
                 }
                 $this->_schema[$result['table_name']][] = $result;
             }
-            $array = array_keys($this->_schema);
-            sort($array);
-            print_r($array);
-            $this->data_types = $this->sql
-                ->select("*")
-                ->from('data_type')
-                ->where(
-                    new sql_cond('date_deleted', sql::IS, new sql_null())
-                )
-                ->execute(0)
-                ->results();
-            
-            return;
-            print_r($this->_schema);
-            exit(1);
-            
-            $this->schema = $this->sql
-                ->select("*")
-                ->from('field')
-                ->where(
-                    new sql_cond('date_deleted', sql::IS, new sql_null())
-                )
-                ->execute(0)
-                ->results();
-
-            for ($i = 0; $i < count($this->schema); $i++) {
-                $this->schema[$i]['lcase_table_name'] = strtolower($this->schema[$i]['table_name']);
-            }
-            
-            /*$this->schema = $this->sql
-                ->select(new sql('*'))
-                ->from('field')
-                ->where(new sql_condition(new sql('date_deleted'), 'is', new sql('null')))
-                ->execute(0)
-                ->results();
-            */
             
             $this->data_types = $this->sql
                 ->select("*")
@@ -920,88 +807,6 @@ namespace adapt{
                 )
                 ->execute(0)
                 ->results();
-            
-            /*$this->data_types = $this->sql
-                ->select(new sql('*'))
-                ->from('data_type')
-                ->where(new sql_condition(new sql('date_deleted'), 'is', new sql('null')))
-                ->execute(0)
-                ->results();
-            print "<pre>Loading schema</pre>";
-            */
-            return;
-            ///*
-            // * Cretae a new sql object
-            // */
-            //$sql = new \adapt\sql(null, $this);
-            //
-            //
-            ///*
-            // * Create a new blank schema
-            // */
-            //$schema = array(
-            //    'tables' => array(),
-            //    'references' => array(),
-            //    'data_types' => array()
-            //);
-            //
-            ///*
-            // * Get the table structures
-            // */
-            //$results = $sql
-            //    ->select(new sql('*'))
-            //    ->from('adapt_field')
-            //    ->where(
-            //        new sql_condition(new sql('date_deleted'), 'is', new sql('null'))
-            //    )
-            //    ->execute()
-            //    ->results();
-            //
-            //foreach($results as $r){
-            //    $key = $r['table_name'];
-            //    $field = $r['field_name'];
-            //    if (!isset($schema['tables'][$key])) $schema['tables'][$key] = array();
-            //    
-            //    unset($r['table_name']);
-            //    unset($r['field_name']);
-            //    
-            //    $schema['tables'][$key][$field] = $r;
-            //}
-            //
-            ///*
-            // * Get the references
-            // */
-            //$schema['references'] = $sql
-            //    ->select(new sql('*'))
-            //    ->from('adapt_reference')
-            //    ->where(
-            //        new sql_condition(new sql('date_deleted'), 'is', new sql('null'))
-            //    )
-            //    ->execute()
-            //    ->results();
-            //
-            ///*
-            // * Get data types
-            // */
-            //$results = $sql
-            //    ->select(new sql('*'))
-            //    ->from('adapt_data_type')
-            //    ->where(
-            //        new sql_condition(new sql('date_deleted'), 'is', new sql('null'))
-            //    )
-            //    ->execute()
-            //    ->results();
-            //
-            //foreach($results as $result){
-            //    $key = $result['name'];
-            //    //unset($result['name']);
-            //    $schema['data_types'][$key] = $result;
-            //}
-            //
-            ///*
-            // * Set the schema
-            // */
-            //$this->_schema = $schema;
         }
     }
 

@@ -246,7 +246,7 @@ namespace adapt{
          * @param mixed
          * The data to cache
          * @param integer
-         * Optiona. How many seconds should the data be cached for?
+         * Optional. How many seconds should the data be cached for?
          */
         public function serialize($key, $object, $expires = null){
             $this->set($key, serialize($object), $expires, 'application/octet-stream');
