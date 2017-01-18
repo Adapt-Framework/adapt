@@ -125,4 +125,13 @@ function guid(){
     return $guidv4;
 }
 
+/**
+ * Defines the gettext method if it isn't already available
+ */
+if (!function_exists('gettext')){
+    function gettext($string){
+        return $string;
+    }
+}
+
 ?>
