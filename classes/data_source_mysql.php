@@ -949,7 +949,7 @@ namespace adapt{
                     if (isset($collation)) $statement .= " COLLATE={$collation}";
                     
                     $statement .= ";\n";
-
+                    
                     return $statement;
                 }
                 
