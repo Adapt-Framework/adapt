@@ -342,6 +342,40 @@ namespace adapt{
         public function bundle($bundle_name, $bundle_version){
             
         }
+        
+        public function check_for_updates(){
+            $checked = [];
+            if ($this->data_source && $this->data_source instanceof data_source_sql){
+                $sql = $this->data_source->sql;
+                
+                $sql->select('name', 'version', 'type')->from('bundle_version')->where(new sql_cond('date_deleted', sql::IS, new sql_null()));
+                
+                $results = $sql->execute()->results();
+                
+                foreach($results as $result){
+                    list($major, $minor, $revision) = explode(".", $result['version']);
+                    $version = "{$major}.{$minor}";
+                    $array_key = "{$result['name']}-{$version}";
+                    if (!in_array($array_key, $checked)){
+                        $latest_revision = $this->has($result['name'], $version);
+                        if (bundles::matches_version($result['version'], $latest_revision)){
+                            if (bundles::get_newest_version($result['version'], $latest_revision) == $latest_revision){
+                                // Add the bundle to the bundle version table
+                                $model = new model_bundle_version();
+                                $model->name = $revision['name'];
+                                $model->version = $latest_revision;
+                                $model->type = $result['type'];
+                                $model->local = 'No';
+                                $model->installed = 'No';
+                                if ($model->save()){
+                                    $checked[] = $array_key;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
