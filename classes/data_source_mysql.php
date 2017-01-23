@@ -148,7 +148,7 @@ namespace adapt{
          * Example usage.
          * <code>
          * $source = new data_source_mysql();
-         * $source->add_host('hostname', 'username', 'password', 'schema', true);
+         * $source->add_host('hostname', 'username', 'password', 'schema', 3306, true);
          * $source->connect($source->get_host(true));
          * </code>
          *
@@ -159,12 +159,12 @@ namespace adapt{
          */
         public function connect($host){
             //$mysql = new mysqli($host['host'], $host['username'], $host['password'], $host['schema']);
-            $mysql = mysqli_connect($host['host'], $host['username'], $host['password'], $host['schema']/*, $host['port']*/);
+            $mysql = mysqli_connect($host['host'], $host['username'], $host['password'], $host['schema'], $host['port']);
             if ($error = mysqli_connect_error($mysql)){
                 
                 if ($error == "Unknown database '{$host['schema']}'"){
                     /* Try and create it */
-                    $mysql = mysqli_connect($host['host'], $host['username'], $host['password'], ""/*, $host['port']*/);
+                    $mysql = mysqli_connect($host['host'], $host['username'], $host['password'], "", $host['port']);
                     if ($error = mysqli_connect_error($mysql)){
                         /* Still unable to connect so we are going to bail */
                     }else{
@@ -195,7 +195,7 @@ namespace adapt{
          * Example usage.
          * <code>
          * $source = new data_source_mysql();
-         * $source->add_host('hostname', 'username', 'password', 'schema', true);
+         * $source->add_host('hostname', 'username', 'password', 'schema', 3306, true);
          * $source->disconnect($source->get_host(true));
          * </code>
          *

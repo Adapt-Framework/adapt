@@ -97,7 +97,7 @@ namespace adapt{
          * @param html|xml|view
          * The document to query, leave blank to query the DOM.
          * @param string
-         * A well formed CSS selector, or a comma seperated list of selectors.
+         * A well formed CSS selector, or a comma separated list of selectors.
          * @param html|xml|view
          * Optional. The parent of the currently selected element.
          * @param html|xml|view
@@ -115,9 +115,8 @@ namespace adapt{
             
             $this->_parent = $parent;
             
-            if (is_null($document)) $document = $this->dom;
-            
-            if (!is_array($document)) $document = array($document);
+            if (is_null($document)){ $document = $this->dom; }            
+            if (!is_array($document)){ $document = array($document); }
             
             foreach($document as $d){
                 if (is_string($d)){
@@ -128,10 +127,8 @@ namespace adapt{
                     $this->_elements[] = $d;
                 }
             }
-            //print_r($this->_elements);
+            
             if ($selector){
-                //print_r($selector);
-                //print_r($this->_elements);
                 $this->_elements = $this->find($selector)->elements;
             }
         }
@@ -160,7 +157,7 @@ namespace adapt{
          * @return aquery
          * Returns itself with the newly modified elements.
          */
-        public function add_class($class_name){ //TESTED
+        public function add_class($class_name){
             foreach($this->elements as $e){
                 $classes = $e->attribute('class');
                 if (!$classes) $classes = "";
@@ -185,7 +182,7 @@ namespace adapt{
          * When $value is present, returns null. Otherwise returns
          * the value of the property as it currently is.
          */
-        public function css($property, $value = null){ //TESTED
+        public function css($property, $value = null){
             foreach($this->elements as $e){
                 if ($e instanceof xml){
                     $style = $e->attribute('style');
@@ -224,7 +221,7 @@ namespace adapt{
          * @return aquery
          * Returns itself with the modified elements.
          */
-        public function remove_class($class_name){ //TESTED
+        public function remove_class($class_name){
             foreach($this->elements as $e){
                 $classes = $e->attribute('class');
                 if (is_string($classes) && preg_match("/\b{$class_name}\b/", $classes)){
@@ -244,10 +241,12 @@ namespace adapt{
          * CSS class name
          * @return boolean
          */
-        public function has_class($class_name){ //TESTED
+        public function has_class($class_name){
             foreach($this->elements as $e){
                 $classes = $e->attribute('class');
-                if (is_string($classes)) return preg_match("/\b{$class_name}\b/", $classes);
+                if (is_string($classes)){
+                    return preg_match("/\b{$class_name}\b/", $classes);
+                }
             }
             
             return false;
@@ -264,7 +263,7 @@ namespace adapt{
          * will be added if it isn't, or removed if it is.
          * @return aquery
          */
-        public function toggle_class($class_name, $switch = null){ //TESTED
+        public function toggle_class($class_name, $switch = null){
             foreach($this->elements as $e){
                 if ($switch === true || $switch === false){
                     $a = new aquery($e);
@@ -401,7 +400,7 @@ namespace adapt{
          * @return aquery
          * Returns itself.
          */
-        public function remove_attr($attribute){ //TESTED
+        public function remove_attr($attribute){
             $attributes = explode(" ", $attribute);
             foreach($attributes as $a){
                 $a = trim($a);
@@ -421,8 +420,7 @@ namespace adapt{
          * @return aquery
          * Returns self.
          */
-        public function after($content){ //TESTED
-            
+        public function after($content){
             foreach($this->elements as $e){
                 if ($e->parent instanceof xml){
                     $found = false;
@@ -468,7 +466,7 @@ namespace adapt{
          * @return aquery
          * Returns self.
          */
-        public function append($content){ //TESTED
+        public function append($content){
             foreach($this->elements as $e){
                 if ($e instanceof xml){
                     $e->_add($content);
@@ -487,7 +485,7 @@ namespace adapt{
          * @return aquery
          * Returns self.
          */
-        public function before($content){ //TESTED
+        public function before($content){
             if (!is_array($content)) $content = array($content);
             foreach($this->elements as $e){
                 if ($e->parent instanceof xml){
@@ -503,23 +501,6 @@ namespace adapt{
             }
             
             return $this;
-            
-            //From the original framework before xml was changed
-            //if (!is_array($content)) $content = array($content);
-            //foreach($this->elements as $e){
-            //    if ($e->parent instanceof xml){
-            //        $children = $e->parent->children;
-            //        $e->parent->children = array();
-            //        foreach($children as $child){
-            //            if ($child === $e){
-            //                $e->parent->_add($content);
-            //            }
-            //            $e->parent->_add($child);
-            //        }
-            //    }
-            //}
-            //
-            //return $this;
         }
         
         /**
@@ -529,7 +510,7 @@ namespace adapt{
          * @return aquery
          * A new aquery object containing the removed elements.
          */
-        public function detach($selector = null){ //TESTED
+        public function detach($selector = null){
             if ($selector) $selector = $this->sanitize_selector($selector);
             $output = array();
             
@@ -566,7 +547,7 @@ namespace adapt{
          * @return aquery
          * Returns self.
          */
-        public function clear(){ //TESTED
+        public function clear(){
             foreach($this->elements as $e){
                 $e->clear();
             }
@@ -584,7 +565,7 @@ namespace adapt{
          * @return aquery
          * Returns self.
          */
-        public function prepend($content){ //TESTED
+        public function prepend($content){
             foreach($this->elements as $e){
                 if ($e instanceof xml){
                     $children = $e->get();
@@ -604,7 +585,7 @@ namespace adapt{
          * @return aquery
          * Returns self.
          */
-        public function remove($selector = null){ //TESTED
+        public function remove($selector = null){
             if ($selector){
                 $selector = $this->sanitize_selector($selector);
                 $final = array();
@@ -632,11 +613,6 @@ namespace adapt{
             return $this;
         }
         
-        /* Not supported */
-        // public function replace_all($target){
-        //     
-        // }
-        
         /**
          * Replace each element in the set of matched elements with the provided
          * new content and return the set of elements that was removed.
@@ -645,7 +621,7 @@ namespace adapt{
          * @return aquery
          * Returns self.
          */
-        public function replace_with($content){ //TESTED
+        public function replace_with($content){
             foreach($this->elements as $e){
                 if ($e->parent instanceof xml){
                     $children = $e->parent->get();
@@ -672,7 +648,7 @@ namespace adapt{
          * @return aquery
          * Returns self
          */
-        public function unwrap(){ //TESTED
+        public function unwrap(){
             foreach ($this->elements as $e){
                 if ($e->parent instanceof xml && $e->parent->parent instanceof xml){
                     $children = $e->parent->parent->get();
@@ -726,11 +702,6 @@ namespace adapt{
             return $this;
         }
         
-        /* Not supported... yet */
-        //public function wrap_all($wrapper){
-        //    
-        //}
-        
         /**
          * Wrap an HTML structure around the content of each element in the set of matched
          * elements.
@@ -741,7 +712,7 @@ namespace adapt{
          * @return aquery
          * Returns self
          */
-        public function wrap_inner($wrapper){ //TESTED
+        public function wrap_inner($wrapper){
             if ($wrapper instanceof xml) $wrapper = strval($wrapper->render());
             
             foreach($this->elements as $e){
@@ -765,8 +736,7 @@ namespace adapt{
          * @return array|string|xml|html|view
          * Returns the element at $index or an array of elements.
          */
-        public function get($index = null){ //TESTED
-            
+        public function get($index = null){
             if (!is_null($index)){
                 if ($index >= 0 && $index < count($this->elements)){
                     return $this->elements[$index];
@@ -788,7 +758,7 @@ namespace adapt{
          * @return array
          * Returns an array of matched elements.
          */
-        public function to_array(){ //TESTED
+        public function to_array(){
             return $this->_elements;
         }
         
@@ -798,7 +768,7 @@ namespace adapt{
          * @access public
          * @return integer
          */
-        public function size(){ //TESTED
+        public function size(){
             return count($this->_elements);
         }
         
@@ -811,13 +781,13 @@ namespace adapt{
          * @return aquery
          * Returns either itself or a new aquery object
          */
-        public function eq($index){ //TESTED
+        public function eq($index){
             if (!is_null($index)){
                 if ($index >= 0 && $index < count($this->elements)){
                     return new aquery($this->elements[$index], null, $this, $this->_root);
                 }elseif($index < 0){
                     $i = count($this->elements) + $index;
-                    //print "i = {$i}\n";
+                    
                     if ($i >= 0 && $i < count($this->elements)){
                         return new aquery($this->elements[$i], null, $this, $this->_root);
                     }
@@ -836,7 +806,7 @@ namespace adapt{
          * @return aquery
          * Returns an aquery object containing the matched set
          */
-        public function filter($selector){ //TESTED
+        public function filter($selector){
             $selector = $this->sanitize_selector($selector);
             $output = array();
             
@@ -860,7 +830,7 @@ namespace adapt{
          * @return aquery
          * Returns a new aquery object containing the foltered set.
          */
-        public function find($selector){ //TESTED
+        public function find($selector){
             $selector = $this->sanitize_selector($selector);
             $output = array();
             
@@ -896,7 +866,7 @@ namespace adapt{
          * @access public
          * @return string|xml|html|view
          */
-        public function first(){ //TESTED
+        public function first(){
             return $this->eq(0);
         }
         
@@ -910,7 +880,7 @@ namespace adapt{
          * @return aquery
          * Returns a new aquery object
          */
-        public function has($selector){ //TESTED
+        public function has($selector){
             $selector = $this->sanitize_selector($selector);
             $output = array();
             foreach($selector as $s){
@@ -933,7 +903,7 @@ namespace adapt{
          * A CSS selector
          * @return boolean
          */
-        public function is($selector){ //TESTED
+        public function is($selector){
             $selector = $this->sanitize_selector($selector);
             foreach($selector as $s){
                 foreach($this->elements as $e){
@@ -952,15 +922,8 @@ namespace adapt{
          * @access public
          * @return string|xml|html|view
          */
-        public function last(){ //TESTED
+        public function last(){
             return $this->eq(-1);
-        }
-        
-        /**
-         * @ignore
-         */
-        public function map(){
-            //TODO
         }
         
         /**
@@ -971,7 +934,7 @@ namespace adapt{
          * A CSS selector
          * @return aquery
          */
-        public function not($selector){ //TESTED
+        public function not($selector){
             $selector = $this->sanitize_selector($selector);
             $output = array();
             
@@ -1011,7 +974,7 @@ namespace adapt{
             if ($end >= count($this->elements)) $end = count($this->elements) - 1;
             
             $output = array();
-            //print "START={$start}\nEND={$end}\n";
+            
             for($i = 0; $i < count($this->elements); $i++){
                 if ($i >= $start && $i <= $end){
                     $output[] = $this->elements[$i];
@@ -1055,21 +1018,13 @@ namespace adapt{
         }
         
         /**
-         * @ignore
-         * @todo Write this function
-         */
-        public function contents(){
-            //TODO
-        }
-        
-        /**
          * End the most recent filtering operation in the current chain and return the set of matched
          * elements to its previous state.
          *
          * @access public
          * @return aquery
          */
-        public function end(){ //TESTED
+        public function end(){
             if ($this->_parent instanceof aquery){
                 return $this->_parent;
             }
@@ -1086,7 +1041,7 @@ namespace adapt{
          * Optional CSS selector to filter the children
          * @return aquery
          */
-        public function children($selector = null){ //TESTED
+        public function children($selector = null){
             $output = array();
             
             if ($selector){
@@ -1129,7 +1084,7 @@ namespace adapt{
          * A CSS selector
          * @return aquery
          */
-        public function closest($selector){ //TESTED
+        public function closest($selector){
             $selector = $this->sanitize_selector($selector);
             
             foreach($selector as $s){
@@ -1208,7 +1163,7 @@ namespace adapt{
          * Optional CSS selector to filter the siblings.
          * @return aquery
          */
-        public function next_all($selector = null){ //TESTED
+        public function next_all($selector = null){
             $output = array();
             
             if ($selector){
@@ -1250,14 +1205,6 @@ namespace adapt{
         }
         
         /**
-         * @ignore
-         * @todo Write this function
-         */
-        public function next_until($selector, $filter){ //TODO
-            
-        }
-        
-        /**
          * Get the parent of each element in the current set of matched elements, optionally filtered
          * by a selector.
          *
@@ -1266,7 +1213,7 @@ namespace adapt{
          * Optional CSS selector to filter the parent(s)
          * @return aquery
          */
-        public function parent($selector = null){ //TESTED
+        public function parent($selector = null){
             $output = array();
             
             if ($selector){
@@ -1300,7 +1247,7 @@ namespace adapt{
          * Optional CSS selector
          * @return aquery
          */
-        public function parents($selector = null){ //TESTED
+        public function parents($selector = null){
             $output = array();
             
             if ($selector){
@@ -1331,14 +1278,6 @@ namespace adapt{
         }
         
         /**
-         * @ignore
-         * @todo Write this function
-         */
-        public function parents_until($selector, $filter){ //TODO
-            
-        }
-        
-        /**
          * Get the immediately preceding sibling of each element in the set of matched elements. If a
          * selector is provided, it retrieves the previous sibling only if it matches that selector.
          *
@@ -1347,7 +1286,7 @@ namespace adapt{
          * Optional CSS selector
          * @return aquery
          */
-        public function prev($selector = null){ //TESTED
+        public function prev($selector = null){
             if ($selector){
                 $selector = $this->sanitize_selector($selector);
                 foreach($selector as $s){
@@ -1428,14 +1367,6 @@ namespace adapt{
         }
         
         /**
-         * @ignore
-         * @todo Write this function
-         */
-        public function prev_until($selector, $filter){ //TODO
-            
-        }
-        
-        /**
          * Get the siblings of each element in the set of matched elements, optionally filtered by
          * a selector.
          *
@@ -1444,7 +1375,7 @@ namespace adapt{
          * Optional CSS selector
          * @return aquery
          */
-        public function siblings($selector = null){ //TESTED
+        public function siblings($selector = null){
             $prev = $this->prev_all($selector);
             $next = $this->next_all($selector);
             
@@ -1585,4 +1516,3 @@ namespace adapt{
 
 }
 
-?>
