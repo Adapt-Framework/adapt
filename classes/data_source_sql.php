@@ -346,13 +346,16 @@ namespace adapt{
          * The password for the username for the SQL server.
          * @param string
          * The database name
+         * @param int
+         * The port number to connect on.
          * $param boolean
          * Should the host be treated as read-only?  This is useful for Master/slave
          * database set ups.
          */
-        public function add_host($host, $username, $password, $schema, $read_only = false){
+        public function add_host($host, $username, $password, $schema, $port = null, $read_only = false){
             $this->_hosts[] = array(
                 'host' => $host,
+                'port' => $port,
                 'username' => $username,
                 'password' => $password,
                 'schema' => $schema,
@@ -373,7 +376,7 @@ namespace adapt{
          * Example usage.
          * <code>
          * $source = new data_source_mysql();
-         * $source->add_host('hostname', 'username', 'password', 'schema', true);
+         * $source->add_host('hostname', 'username', 'password', 'schema', 0, true);
          * $source->connect($source->get_host(true));
          * </code>
          *
@@ -397,7 +400,7 @@ namespace adapt{
          * Example usage.
          * <code>
          * $source = new data_source_mysql();
-         * $source->add_host('hostname', 'username', 'password', 'schema', true);
+         * $source->add_host('hostname', 'username', 'password', 'schema', 0, true);
          * $source->disconnect($source->get_host(true));
          * </code>
          *

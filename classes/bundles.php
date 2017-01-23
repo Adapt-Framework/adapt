@@ -108,7 +108,6 @@ namespace adapt{
                 $this->_global_settings = array();
                 
                 $settings_path = ADAPT_PATH . "settings.xml";
-                //print "Settings path: " . $settings_path;
                 if (file_exists($settings_path)){
                     $settings_data = file_get_contents($settings_path);
                     
@@ -116,7 +115,6 @@ namespace adapt{
                         $settings_data = xml::parse($settings_data);
                         
                         if ($settings_data instanceof xml){
-                            
                             $children = $settings_data->get(0)->get();
                             
                             foreach($children as $child){
@@ -161,7 +159,6 @@ namespace adapt{
                             /* Cache the settings */
                             $this->cache->serialize("adapt/global.settings", $this->_global_settings, 60 * 60 * 24 * 5);
                         }
-                        
                     }
                 }
             }
@@ -332,7 +329,6 @@ namespace adapt{
                 /* If we don't have a valid application at this point
                  * then we are going to have to bail
                  */
-                
                 if (is_null($application_name)){
                     $this->error("Unable to find a valid application to boot.");
                     return false;
@@ -340,13 +336,12 @@ namespace adapt{
                     /* Connect any data sources we have */
                     $drivers = $this->get_global_setting('datasource.driver');
                     $hosts = $this->get_global_setting('datasource.host');
-                    $posts = $this->get_global_setting('datasource.port');
+                    $ports = $this->get_global_setting('datasource.port');
                     $usernames = $this->get_global_setting('datasource.username');
                     $passwords = $this->get_global_setting('datasource.password');
                     $schemas = $this->get_global_setting('datasource.schema');
                     $writables = $this->get_global_setting('datasource.writable');
-                    //print_r($drivers);
-                    //print_r($hosts);
+                    
                     if (is_array($drivers) && is_array($hosts) && is_array($schemas)
                         && is_array($usernames) && is_array($passwords) && is_array($writables)
                         && count($drivers) == count($hosts) && count($drivers) == count($schemas)
@@ -356,39 +351,35 @@ namespace adapt{
                         for($i = 0; $i < count($drivers); $i++){
                             if (class_exists($drivers[$i])){
                                 if (isset($this->data_source)){
-                                    //print "Adding host";
                                     /* Connect a new host */
                                     if ($this->data_source instanceof $drivers[$i]){
-                                        $this->data_source->add($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+                                        $this->data_source->add($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $ports[$i], $writables[$i] == 'Yes' ? false : true);
                                     }
                                 }else{
-                                    //print "Creating datasource";
                                     /* Create a new data source */
                                     $driver = $drivers[$i];
-                                    //print "<pre>Using driver{$driver}</pre>";
-                                    $this->data_source = new $driver($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $writables[$i] == 'Yes' ? false : true);
+                                    $this->data_source = new $driver($hosts[$i], $usernames[$i], $passwords[$i], $schemas[$i], $ports[$i], $writables[$i] == 'Yes' ? false : true);
                                     if (!$this->data_source instanceof $driver){
                                         $errors = $this->data_source->errors(true);
                                         
-                                        foreach($errors as $error) $this->error("Database error: {$error}");
-                                        
-                                        //print "<pre>Database driver not set set</pre>";
+                                        foreach($errors as $error){
+                                            $this->error("Database error: {$error}");
+                                        }
                                     }
                                 }
                             }
                         }
                         
                     }else{
-                        //print "No data source";
                         $this->error('Unable to connect to the database, the data source settings in settings.xml are not valid.');
                     }
+                    
+//                    $updates = self::download_updates();
                     
                     /* Load the application */
                     $application = $this->load_bundle($application_name, $application_version);
                     
                     if ($application instanceof bundle && $application->is_loaded){
-                        //print "<pre>Loaded application {$application->name}</pre>";
-                        
                         //Maybe impletement boot statergies here, if (we have one){...}
                         $cache_key = "dependencies-resolved-{$application->name}-{$application->version}";
                         $dependencies_resolved = $this->cache->get($cache_key);
@@ -546,8 +537,6 @@ namespace adapt{
          * @return boolean
          */
         public function is_bundle_installed($bundle_name, $bundle_version){
-            //print "<pre>DS: " . print_r($this->data_source, true) . "</pre>";
-            //print "<pre>Checking if {$bundle_name}-{$bundle_version} is installed... ";
             if ($this->data_source && $this->data_source instanceof data_source_sql){
                 
                 if (!is_array($this->_data_source_bundle_cache)){
@@ -582,19 +571,13 @@ namespace adapt{
                 if (is_array($this->_data_source_bundle_cache)){
                     foreach($this->_data_source_bundle_cache as $bundle){
                         if ($bundle['name'] == $bundle_name && $bundle['version'] == $bundle_version){
-                            //print "Intalled</pre>";
                             return true;
                         }
                     }
                     
                 }
-                
-                //print "Not intalled</pre>";
                 return false;
-                //print "<pre>Data source connected in bundles::is_bundle_installed</pre>";
             }
-            
-            //print "Unknown - assuming not.</pre>";
             return false;
         }
         
@@ -638,14 +621,11 @@ namespace adapt{
          */
         public function has_all_dependencies($bundle_name, $bundle_version = null){
             $required_dependencies = array();
-//            print "<pre>XX {$bundle_name} {$bundle_version}</pre>";
             $bundle = $this->load_bundle($bundle_name, $bundle_version);
             
             if ($bundle->is_loaded){
-                
                 $dependencies = $bundle->depends_on;
                 
-//                print "<pre>Seeking dependencies for: " . print_r($dependencies, true) . "</pre>\n";
                 if ($dependencies && is_array($dependencies)){
                     foreach($dependencies as $name => $versions){
                         $version = self::get_newest_version($versions);
@@ -692,20 +672,16 @@ namespace adapt{
          * Returns an array of dependencies.
          */
         public function get_dependency_list($bundle_name, $bundle_version){
-            //print "<pre>get_dependency_list($bundle_name, $bundle_version)</pre>";
             $cache_key = "adapt/dependency.list.{$bundle_name}-{$bundle_version}";
             if (is_null($bundle_version) || $bundle_version == ""){
                 $cache_key = "adapt/dependency.list.{$bundle_name}";
             }
             
             $list = $this->cache->get($cache_key);
-            //print "List: " . print_r($list, true);
             if (!is_array($list)){
                 $list = array();
-                //print "Inner\n";
                 $required_bundles = $this->has_all_dependencies($bundle_name, $bundle_version);
                 if ($required_bundles === true){
-                    //print "All dependencies met\n";
                     $bundle = $this->load_bundle($bundle_name, $bundle_version);
                     
                     if ($bundle->is_loaded){
@@ -741,8 +717,6 @@ namespace adapt{
                             }
                         }
                         
-                        //print "<pre>" . print_r($list, true) . "</pre>";
-                        
                         /* Clean the list */
                         $final = array();
                         
@@ -755,8 +729,6 @@ namespace adapt{
                             }
                         }
                         
-                        //print "<pre>FINAL:" . print_r($final, true) . "</pre>";
-                        
                         $final = array_reverse($final);
                         $list = array();
                         
@@ -767,7 +739,7 @@ namespace adapt{
                             );
                         }
                         
-                        $this->cache->serialize($cache_key, $list, 604800); // A week
+                        $this->cache->serialize($cache_key, $list, rand(60 * 60 * 24 * 5, 60 * 60 * 24 * 10)); // Between 5 and 10 days
                         
                     }else{
                         $this->error("Unable to load bundle {$bundle_name}-{$bundle_version}");
@@ -788,7 +760,7 @@ namespace adapt{
         /**
          * Loads a bundle
          *
-         * This is the prefered way to load a bundle because the function
+         * This is the preferred way to load a bundle because the function
          * caches and so performs much better than:
          *
          * <code>
@@ -816,10 +788,8 @@ namespace adapt{
          */
         public function load_bundle($bundle_name, $bundle_version = null){
             if (!is_array($this->_bundle_cache)){
-                
-                //$this->_bundle_cache = $this->cache->get("adapt/bundles.cache");
-                
                 $data = $this->cache->get("adapt/bundle_objects");
+                
                 if (is_array($data)){
                     $this->_bundle_class_paths = $data['paths'];
                     if (is_array($this->_bundle_class_paths)){
@@ -838,13 +808,10 @@ namespace adapt{
                     if ($bundle_name == $bundle){
                         
                         $version_keys = array_keys($versions);
-                        //print "<pre>Bundles loading {$bundle_name} {$bundle_version}</pre>";
                         if (is_null($bundle_version)){
                             $version = self::get_newest_version($version_keys);
-                            //print "<pre>Using version {$version}</pre>";
                             $bundle = $versions[$version];
                             $this->register_namespace($bundle->namespace, $bundle_name, $version);
-                            //print "<pre>" . print_r($bundle, true) . "</pre>";
                             return $bundle;
                         }else{
                             $matched_versions = array();
@@ -916,10 +883,8 @@ namespace adapt{
                     $this->register_namespace($namespace, $bundle_name, $selected_version);
                     
                     $class = "{$namespace}\\bundle_{$bundle_name}";
-                    //$class = "bundle";
                     
                     $object = new $class($data);
-                    //$object = new bundle($bundle_name, $data);
                     if ($object && $object instanceof bundle){
                         $this->_bundle_cache[$bundle_name][$selected_version] = $object;
                         $this->_bundle_cache_changed = true;
@@ -939,7 +904,6 @@ namespace adapt{
             }
         }
         
-        
         /**
          * Saves the internal bundle cache for faster
          * performance in the future.
@@ -957,6 +921,121 @@ namespace adapt{
                 $this->_data_source_bundle_cache_changed = false;
                 $this->cache->serialize("adapt/data_source/bundle.cache", $this->_data_source_bundle_cache, 60 * 60 * 24 * 3);
             }
+        }
+        
+        /**
+         * Checks the repository for updates and application upgrades
+         * 
+         * @return boolean
+         * Indicates that updates are available
+         */
+        public function check_for_updates(){
+            $checked = [];
+            if ($this->data_source && $this->data_source instanceof data_source_sql){
+                $sql = $this->data_source->sql;
+                $sql->select('name', 'version', 'type')->from('bundle_version')->where(new sql_cond('date_deleted', sql::IS, new sql_null()));
+                $results = $sql->execute()->results();
+                foreach($results as $result){
+                    list($major, $minor, $revision) = explode(".", $result['version']);
+                    $version = "{$major}.{$minor}";
+                    $array_key = "{$result['name']}-{$version}";
+                    if (!in_array($array_key, $checked)){
+                        if($result['type'] == 'application'){
+                            $latest_version = $this->repository->has($result['name']);
+                            if (self::get_newest_version($result['version'], $latest_version) != $result['version']){
+                                // Add the bundle to the bundle version table
+                                $model = new model_bundle_version();
+                                $model->name = $result['name'];
+                                $model->version = $latest_version;
+                                $model->type = $result['type'];
+                                $model->local = 'No';
+                                $model->installed = 'No';
+                                if ($model->save()){
+                                    $checked[] = $array_key;
+                                }
+                            }
+                        }
+                        // Updating revisions
+                        $latest_revision = $this->repository->has($result['name'], $version);
+                        //  print "latest {$result['name']} revision {$latest_revision} \n";
+                        if (self::matches_version($result['version'], $latest_revision)){
+                            if (self::get_newest_version($result['version'], $latest_revision) != $result['version'] ){
+                                print self::get_newest_version($result['version'], $latest_revision);
+                                // Add the bundle to the bundle version table
+                                $model = new model_bundle_version();
+                                $model->name = $result['name'];
+                                $model->version = $latest_revision;
+                                $model->type = $result['type'];
+                                $model->local = 'No';
+                                $model->installed = 'No';
+                                if ($model->save()){
+                                    $checked[] = $array_key;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if(count($checked)){
+                return $checked;
+            }else{
+                return false;
+            }
+        }
+        
+        
+        /**
+         * Downloads updates
+         * This method downloads new versions listed
+         * in bundle_version.
+         * 
+         * @return boolean
+         * Indicates that updates have been downloaded
+         */
+        public function download_updates(){
+            $updates = self::check_for_updates();
+            if($updates){
+                $paths = [];
+                foreach ($updates as $update){
+                    $bundle = explode('-', $update);
+                    $path = $this->repository->get($bundle[0],$bundle[1],false);
+                    if($path){
+                        $model = new model_bundle_version();
+                        $model->load_by_name_and_version($bundle[0],$bundle[1]);
+                        $model->local = Yes;
+                        if($model->save()){
+                            $paths[] = $path;
+                        }
+                    }
+                    
+                }
+                
+            }
+            return false;
+        }
+        
+        /**
+         * Updates the system
+         * Applies any updates that have been downloaded,
+         * this method only updates revisions and does not
+         * upgrade to new major or minor versions.
+         */
+        public function update_system(){
+            
+        }
+        
+        /**
+         * Upgrades an application to a newer version
+         * 
+         * @param string
+         * The name of the application to be upgraded
+         * @param string
+         * The version to upgrade too.
+         * @return boolean
+         * If the update succeeded
+         */
+        public function upgrade_application($application_name, $application_version){
+            
         }
         
         /**
@@ -1105,7 +1184,7 @@ namespace adapt{
                     $selected_version = $version_1[0];
                     
                     for($i = 1; $i < count($version_1); $i++){
-                        $selected_version = self::get_newest_version($selected_version, $version_1[0]);
+                        $selected_version = self::get_newest_version($selected_version, $version_1[$i]);
                     }
                     
                     return $selected_version;

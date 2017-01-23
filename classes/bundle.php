@@ -114,6 +114,7 @@ namespace adapt{
         protected $_local_install_handlers;
         /** @ignore */
         protected $_config_handlers_to_process;
+        
         /**
          * Constructor
          *
@@ -364,7 +365,6 @@ namespace adapt{
                     $this->register_install_handler($handler['bundle_name'], $target, $handler['function']);
                 }
             }
-            
         }
         
         /**
@@ -380,7 +380,7 @@ namespace adapt{
         }
         
         /**
-         * Loads a bunble
+         * Loads a bundle
          *
          * @access public
          * @param string $bundle_name
@@ -389,7 +389,6 @@ namespace adapt{
          * The contents of the bundles bundle.xml file.
          */
         public function load($bundle_name, $data){
-            //print "<pre>Loading: {$bundle_name}</pre>";
             if ($data instanceof xml){
                 $this->_data = $data;
                 
@@ -397,10 +396,8 @@ namespace adapt{
                 
                 for($i = 0; $i < $children->count(); $i++){
                     $child = $children->get($i);
-                    //print "<pre>{$child->tag}</pre>";
                     
                     if ($child instanceof xml){
-                        
                         switch (strtolower($child->tag)){
                         case "name":
                             $this->_name = $child->get(0);
@@ -454,7 +451,6 @@ namespace adapt{
                                         }
                                     }
                                 }
-                                //print $dependency;
                             }
                             
                             break;
@@ -637,7 +633,7 @@ namespace adapt{
                                                                 if ($field instanceof xml){
                                                                     $field_name = $field->tag;
                                                                     
-                                                                    if ($field->attr('get-from')/* && $field->attr('where-name-is')*/){
+                                                                    if ($field->attr('get-from')){
                                                                         $conditions = [];
                                                                         $attrs = $field->attributes;
                                                                         foreach($attrs as $key => $value){
@@ -770,12 +766,11 @@ namespace adapt{
                 
                 $this->_is_loaded = true;
             }
-
         }
         
         
         /**
-         * Registers a config handler.
+         * Registers a configuration handler.
          * This allows bundles to extend bundle.xml and add there own tags. Upon parsing the
          * bundle.xml file any tags defined by this function will be parsed to the function
          * named $function_name for processing.
@@ -789,7 +784,6 @@ namespace adapt{
          * The name of the function to process the tag.
          */
         public function register_config_handler($bundle_name, $tag_name, $function_name){
-            
             $handler = array(
                 'bundle_name' => $bundle_name,
                 'function' => $function_name
@@ -803,7 +797,7 @@ namespace adapt{
             }else{
                 $handlers = array($tag_name => $handler);
             }
-            //print "<pre>register_config_handler: " . print_r($handlers, true) . "</pre>";
+            
             $this->store("adapt.config_handlers", $handlers);
         }
         
@@ -822,7 +816,6 @@ namespace adapt{
          * The name of the function to process the tag.
          */
         public function register_install_handler($bundle_name, $target_bundle, $function_name){
-            
             $handler = array(
                 'bundle_name' => $bundle_name,
                 'function' => $function_name
@@ -844,7 +837,7 @@ namespace adapt{
             }else{
                 $handlers = array($target_bundle => array($handler));
             }
-            //print "<pre>register_config_handler: " . print_r($handlers, true) . "</pre>";
+            
             $this->store("adapt.install_handlers", $handlers);
         }
         
@@ -891,10 +884,8 @@ namespace adapt{
                 
                 if ($this->type == 'application'){
                     $dependency_list = $this->bundles->get_dependency_list($this->name, $this->version);
-                    //print "Bundle: {$this->name}\n";ob_flush();
-                    //print_r($dependency_list);die();
-                    if (is_array($dependency_list)){
-                        
+                    
+                    if (is_array($dependency_list)){    
                         $dependency_list = array_reverse($dependency_list);
                         
                         foreach($dependency_list as $bundle_data){
@@ -904,7 +895,6 @@ namespace adapt{
                                 if (!$bundle->boot()){
                                     $this->error("Unable to boot '{$bundle_data['name']}'");
                                     $this->error($bundle->errors(true));
-                                    
                                     return false;
                                 }
                             }else{
@@ -919,11 +909,9 @@ namespace adapt{
                         $this->error("Unable to boot '{$this->name}'");
                         $errors = $this->bundles->errors(true);
                         foreach($errors as $error) $this->error($error);
-                        
                         return false;
                     }
                 }
-                
             }
             
             if (!$this->is_installed()){
@@ -946,23 +934,20 @@ namespace adapt{
                 
                 /* Mark as installing */
                 $this->file_store->set("adapt/installation/{$this->name}-{$this->version}", "true", "text/plain");
-                //print "Installing {$this->name}\n";ob_flush();
+                
                 if (is_array($this->_schema) && $this->data_source instanceof data_source_sql){
                     /*
                      * We have a schema
                      */
                     if (is_array($this->_schema['add'])){
-//                        print_r($this->_schema);
                         /*
                          * Lets add to the schema
                          */
-                        
                         if (is_array($this->_schema['add']['fields'])){
                             /*
                              * Adding tables
                              */
                             if (count($this->_schema['add']['fields'])){
-                                
                                 foreach($this->_schema['add']['fields'] as $table_name => $fields){
                                     /* Does the table already exist? */
                                     $schema = $this->data_source->get_row_structure($table_name);
@@ -971,7 +956,6 @@ namespace adapt{
                                         $field_registrations = array();
                                         
                                         $sql = $this->data_source->sql;
-                                        
                                         $sql->alter_table($table_name);
                                         
                                         $last_field = null;
@@ -988,13 +972,11 @@ namespace adapt{
                                                 $values = explode("(", $data_type);
                                                 $values = explode(")", $values[1]);
                                                 $values = $values[0];
-                                                
                                                 $values = explode(",", $values);
                                                 
                                                 for($i = 0; $i < count($values); $i++){
                                                     $values[$i] = preg_replace("/'|\"/", "", $values[$i]);
                                                     $values[$i] = sql::q(trim($values[$i]));
-                                                    //$values[$i] = sql::q(trim(trim($values[$i], "'"), "\""));
                                                 }
                                                 
                                                 $values = implode(", ", $values);
@@ -1071,18 +1053,13 @@ namespace adapt{
                                         /* Register the table */
                                         $this->data_source->register_table($field_registrations);
                                         $this->remove_store('adapt.installing_bundle');
-                                        
                                     }else{
                                         /* Create new table */
                                         $field_registrations = array();
-                                        
                                         $sql = $this->data_source->sql;
-                                        
                                         $sql->create_table($table_name);
                                         
                                         foreach($fields as $field_name => $attributes){
-                                            
-                                            
                                             $data_type = $attributes['data_type'];
                                             if ($data_type == 'varchar'){
                                                 $data_type .= "({$attributes['max_length']})";
@@ -1090,7 +1067,6 @@ namespace adapt{
                                                 $values = explode("(", $data_type);
                                                 $values = explode(")", $values[1]);
                                                 $values = $values[0];
-                                                
                                                 $values = explode(",", $values);
                                                 
                                                 for($i = 0; $i < count($values); $i++){
@@ -1235,7 +1211,6 @@ namespace adapt{
                                             'depends_on_field_name' => null,
                                             'depends_on_value' => null
                                         );
-                                        
                                         
                                         /* We need to make our bundle name available to the sql object
                                          * so the table can be properly registered.
@@ -1465,7 +1440,6 @@ namespace adapt{
                                     $schema = $this->data_source->get_row_structure($table_name);
                                     if (is_array($schema)){
                                         /* Alter existing table */
-                                        
                                         $schema_by_field_name = [];
                                         foreach($schema as $field){
                                             $schema_by_field_name[$field['field_name']] = $field;

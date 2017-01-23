@@ -62,12 +62,12 @@ namespace adapt{
      * @property bundles $bundles
      * Shared property giving access to the bundle management system.
      * @property-read array $request
-     * Shared property, equivilant to $_REQUEST
+     * Shared property, equivalent to $_REQUEST
      * @property-read array $response
      * Shared property giving access to the response.  Think of this as the opposite
      * to $_REQUEST.
      * @property sanitizer $sanitize
-     * Shared property giving access to the sanitizer.
+     * Shared property giving access to the sanitiser.
      */
     class base{
         
@@ -83,7 +83,7 @@ namespace adapt{
         const EVENT_READY = 'adapt.ready';
         
         /**
-         * A unique instance id identifing this class
+         * A unique instance id identifying this class
          * within Adapt framework.
          *
          * This property is read-only and
@@ -98,7 +98,7 @@ namespace adapt{
         protected $_instance_id;
         
         /**
-         * An array of all errors that have occured during the
+         * An array of all errors that have occurred during the
          * life of this object, the list is reset whenever the
          * method error is called with a single parameter set
          * to true.
@@ -157,7 +157,7 @@ namespace adapt{
          * as properties.  To create a getter you simply
          * define a function prefixed with 'pget_'.
          *
-         * To create a propery on 'test_class' with the name
+         * To create a property on 'test_class' with the name
          * 'foobar' you simply do the following:
          * 
          * <code>
@@ -212,7 +212,7 @@ namespace adapt{
          * as properties.  To create a setter you simply
          * define a function prefixed with 'pset_'.
          *
-         * To create a propery on 'test_class' with the name
+         * To create a property on 'test_class' with the name
          * 'foobar' you simply do the following:
          * 
          * <code>
@@ -294,7 +294,6 @@ namespace adapt{
          * </code>
          */
         public function __call($name, $args){
-            //print new html_pre("Calling: {$name}");
             /* Check extensions */
             $extensions = $this->store('adapt.extensions');
             
@@ -380,7 +379,7 @@ namespace adapt{
          *
          * @access public
          * @param string
-         * An informative string describing the error that has occured.
+         * An informative string describing the error that has occurred.
          */
         public function error($error){
             if (isset($error)){
@@ -394,7 +393,7 @@ namespace adapt{
         }
         
         /**
-         * Returns a list of errors that have occured until now.
+         * Returns a list of errors that have occurred until now.
          *
          * @access public
          * @param boolean
@@ -447,7 +446,13 @@ namespace adapt{
         /**
          * Listens for events in the global space
          * 
-         * 
+         * @access public
+         * @param string
+         * The event to listen for.
+         * @param function
+         * A function to call when the event is triggered.
+         * @para mixed
+         * Data to pass into the called function.
          */
         public static function listen($event_type, $function, $data = null){
             $adapt = $GLOBALS['adapt'];
@@ -501,21 +506,6 @@ namespace adapt{
                 }
             }
             
-            
-//            if (isset($event_handlers[$class_name][$event_type]) && is_array($event_handlers[$class_name][$event_type])){
-//                foreach($event_handlers[$class_name][$event_type] as $handler){
-//                    $data = array(
-//                        'event_type' => $event_type,
-//                        'event_data' => $event_data,
-//                        'object' => $this,
-//                        'data' => $handler['data']
-//                    );
-//                    
-//                    $function = $handler['function'];
-//                    $function($data);
-//                }
-//            }
-//            
             // Trigger local events
             if (isset($this->_event_handlers[$event_type]) && is_array($this->_event_handlers[$event_type])){
                 foreach($this->_event_handlers[$event_type] as $handler){
@@ -799,7 +789,7 @@ namespace adapt{
         
         /**
          * Returns an instance of \adapt\bundles.
-         * The bundles object is used to manange bundles within Adapt. This
+         * The bundles object is used to manage bundles within Adapt. This
          * object is shared between all instances of \adapt\base.
          *
          * @access public
@@ -987,7 +977,7 @@ namespace adapt{
         /**
          * Gets or sets a cookie.
          *
-         * When only the first param is specified this method acts as a getter
+         * When only the first parameter is specified this method acts as a getter
          * and returns the cookie identified by $key.  When $value is set this
          * method acts as a getter.
          *
@@ -1016,14 +1006,14 @@ namespace adapt{
         }
         
         /**
-         * Property for accessing the sanitizer.
+         * Property for accessing the sanitiser.
          *
          * This property is shared between all instances of
          * \adapt\base.
          *
          * @access public
          * @return \adapt\sanitizer
-         * Returns the global sanitizer object.
+         * Returns the global sanitiser object.
          */
         public function pget_sanitize(){
             $sanitizer = $this->store('adapt.sanitizer');
@@ -1089,18 +1079,10 @@ namespace adapt{
                 if (!isset($extension[$class_name])){
                     $extension[$class_name] = array();
                 }
-                //if (!isset($extension[$class_name][$name])){
-                    $extension[$class_name][$name] = $function;
-                //}
+                $extension[$class_name][$name] = $function;
                 
                 $GLOBALS['adapt']->store("adapt.extensions", $extension);
             }
         }
-        
-        
-        
     }
 }
-
-
-?>
