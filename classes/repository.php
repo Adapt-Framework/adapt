@@ -223,7 +223,7 @@ namespace adapt{
             return $bundle_types;
         }
         
-        public function get($bundle_name, $bundle_version = null){
+        public function get($bundle_name, $bundle_version = null, $install = true){
             if ($version = $this->has($bundle_name, $bundle_version)){
                 /* Download the bundle */
                 $uri = $this->_url . "/bundles/bundle/{$bundle_name}/{$version}/download";
@@ -238,8 +238,13 @@ namespace adapt{
                     $path = $this->file_store->get_file_path($key);
 
                     if ($path !== false){
-                        /* Lets unbundle the bundle */
-                        return $this->unbundle($path);
+                        if($install){
+                            /* Lets unbundle the bundle */
+                            return $this->unbundle($path);
+                        }else{
+                            return $path;
+                        }
+                            
                     }else{
                         $this->error("Unable to store bundle '{$bundle_name}' version '{$version}'");
                     }

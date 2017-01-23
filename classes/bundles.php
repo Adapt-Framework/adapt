@@ -374,6 +374,8 @@ namespace adapt{
                         $this->error('Unable to connect to the database, the data source settings in settings.xml are not valid.');
                     }
                     
+//                    $updates = self::download_updates();
+                    
                     /* Load the application */
                     $application = $this->load_bundle($application_name, $application_version);
                     
@@ -928,8 +930,59 @@ namespace adapt{
          * Indicates that updates are available
          */
         public function check_for_updates(){
-            
+            $checked = [];
+            if ($this->data_source && $this->data_source instanceof data_source_sql){
+                $sql = $this->data_source->sql;
+                $sql->select('name', 'version', 'type')->from('bundle_version')->where(new sql_cond('date_deleted', sql::IS, new sql_null()));
+                $results = $sql->execute()->results();
+                foreach($results as $result){
+                    list($major, $minor, $revision) = explode(".", $result['version']);
+                    $version = "{$major}.{$minor}";
+                    $array_key = "{$result['name']}-{$version}";
+                    if (!in_array($array_key, $checked)){
+                        if($result['type'] == 'application'){
+                            $latest_version = $this->repository->has($result['name']);
+                            if (self::get_newest_version($result['version'], $latest_version) != $result['version']){
+                                // Add the bundle to the bundle version table
+                                $model = new model_bundle_version();
+                                $model->name = $result['name'];
+                                $model->version = $latest_version;
+                                $model->type = $result['type'];
+                                $model->local = 'No';
+                                $model->installed = 'No';
+                                if ($model->save()){
+                                    $checked[] = $array_key;
+                                }
+                            }
+                        }
+                        // Updating revisions
+                        $latest_revision = $this->repository->has($result['name'], $version);
+                        //  print "latest {$result['name']} revision {$latest_revision} \n";
+                        if (self::matches_version($result['version'], $latest_revision)){
+                            if (self::get_newest_version($result['version'], $latest_revision) != $result['version'] ){
+                                print self::get_newest_version($result['version'], $latest_revision);
+                                // Add the bundle to the bundle version table
+                                $model = new model_bundle_version();
+                                $model->name = $result['name'];
+                                $model->version = $latest_revision;
+                                $model->type = $result['type'];
+                                $model->local = 'No';
+                                $model->installed = 'No';
+                                if ($model->save()){
+                                    $checked[] = $array_key;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if(count($checked)){
+                return $checked;
+            }else{
+                return false;
+            }
         }
+        
         
         /**
          * Downloads updates
@@ -940,7 +993,25 @@ namespace adapt{
          * Indicates that updates have been downloaded
          */
         public function download_updates(){
-            
+            $updates = self::check_for_updates();
+            if($updates){
+                $paths = [];
+                foreach ($updates as $update){
+                    $bundle = explode('-', $update);
+                    $path = $this->repository->get($bundle[0],$bundle[1],false);
+                    if($path){
+                        $model = new model_bundle_version();
+                        $model->load_by_name_and_version($bundle[0],$bundle[1]);
+                        $model->local = Yes;
+                        if($model->save()){
+                            $paths[] = $path;
+                        }
+                    }
+                    
+                }
+                
+            }
+            return false;
         }
         
         /**
@@ -1113,7 +1184,7 @@ namespace adapt{
                     $selected_version = $version_1[0];
                     
                     for($i = 1; $i < count($version_1); $i++){
-                        $selected_version = self::get_newest_version($selected_version, $version_1[0]);
+                        $selected_version = self::get_newest_version($selected_version, $version_1[$i]);
                     }
                     
                     return $selected_version;
