@@ -347,6 +347,12 @@ namespace adapt{
                             $output['headers'][$key] = $value;
                         }
                         
+                        /* connection has been close from the server*/
+                        if(isset($output['headers']['connection']) && $output['headers']['connection'] == 'close'){
+                            $this->close_connection($url['host'], $url['port']);
+                            return null;
+                        }
+                        
                         /* Parse and store any cookies in the cookie jar */
                         if (isset($output['headers']['set-cookie'])){
                             $cookies = $output['headers']['set-cookie'];
@@ -419,7 +425,7 @@ namespace adapt{
                                 }
                             }
                         }
-                        
+
                         /* Decompress the content if needed */
                         if (!is_null($output['content'])){
                             if (isset($output['headers']['content-encoding'])){
@@ -461,14 +467,12 @@ namespace adapt{
                                 }
                             }
                         }
-                        
+
                         return $output;
                         
                     }else{
                         $this->error('Unknown response');
-                    }
-                    
-                    
+                    }   
                 }else{
                     $this->error('Unsupported request type');
                 }
@@ -523,7 +527,23 @@ namespace adapt{
             
             return null;
         }
-        
+        /**
+         * Closes a connection to a server.
+         *
+         * @access public
+         * @param string $host
+         * The host name you wish to close your connection to.
+         * @param integer $port
+         * The port to close the connection on
+         * @return null|resource
+         * When successful the socket handle is returned.
+         */
+        public function close_connection($host, $port){
+            $key = $host . ":" . $port;
+            if(isset($this->_connections[$key])){
+                unset($this->_connections[$key]);
+            }
+        }
         /**
          * Breaks a URL down into it's composite parts and returns
          * as an array.

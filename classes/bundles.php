@@ -374,7 +374,7 @@ namespace adapt{
                         $this->error('Unable to connect to the database, the data source settings in settings.xml are not valid.');
                     }
                     
-//                    $updates = self::download_updates();
+//                    $updates = $this->download_updates();
                     
                     /* Load the application */
                     $application = $this->load_bundle($application_name, $application_version);
@@ -931,6 +931,7 @@ namespace adapt{
          */
         public function check_for_updates(){
             $checked = [];
+            $updates = [];
             if ($this->data_source && $this->data_source instanceof data_source_sql){
                 $sql = $this->data_source->sql;
                 $sql->select('name', 'version', 'type')->from('bundle_version')->where(new sql_cond('date_deleted', sql::IS, new sql_null()));
@@ -952,15 +953,17 @@ namespace adapt{
                                 $model->installed = 'No';
                                 if ($model->save()){
                                     $checked[] = $array_key;
+                                    $updates[] ="{$result['name']}-{$latest_version}";
                                 }
                             }
                         }
                         // Updating revisions
                         $latest_revision = $this->repository->has($result['name'], $version);
-                        //  print "latest {$result['name']} revision {$latest_revision} \n";
+//                          print "latest {$result['name']} revision {$latest_revision} \n";
+//                          die();
                         if (self::matches_version($result['version'], $latest_revision)){
                             if (self::get_newest_version($result['version'], $latest_revision) != $result['version'] ){
-                                print self::get_newest_version($result['version'], $latest_revision);
+//                                print self::get_newest_version($result['version'], $latest_revision) ." version " .$result['version'] ;
                                 // Add the bundle to the bundle version table
                                 $model = new model_bundle_version();
                                 $model->name = $result['name'];
@@ -970,14 +973,15 @@ namespace adapt{
                                 $model->installed = 'No';
                                 if ($model->save()){
                                     $checked[] = $array_key;
+                                    $updates[] ="{$result['name']}-{$latest_revision}";
                                 }
                             }
                         }
                     }
                 }
             }
-            if(count($checked)){
-                return $checked;
+            if(count($updates)){
+                return $updates;
             }else{
                 return false;
             }
@@ -993,23 +997,26 @@ namespace adapt{
          * Indicates that updates have been downloaded
          */
         public function download_updates(){
-            $updates = self::check_for_updates();
+            $updates = $this->check_for_updates();
+//            print_r($updates);
             if($updates){
-                $paths = [];
+                $names = [];
                 foreach ($updates as $update){
                     $bundle = explode('-', $update);
-                    $path = $this->repository->get($bundle[0],$bundle[1],false);
-                    if($path){
+                    print_r($bundle);
+                    $name = $this->repository->get($bundle[0],$bundle[1]);
+                    var_dump($name);
+//                    die();
+                    if($name){
                         $model = new model_bundle_version();
                         $model->load_by_name_and_version($bundle[0],$bundle[1]);
-                        $model->local = Yes;
+                        $model->local = 'Yes';
                         if($model->save()){
-                            $paths[] = $path;
+                            $names[] = $name;
                         }
                     }
-                    
                 }
-                
+                return $names;
             }
             return false;
         }

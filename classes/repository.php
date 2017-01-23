@@ -223,7 +223,7 @@ namespace adapt{
             return $bundle_types;
         }
         
-        public function get($bundle_name, $bundle_version = null, $install = true){
+        public function get($bundle_name, $bundle_version = null){
             if ($version = $this->has($bundle_name, $bundle_version)){
                 /* Download the bundle */
                 $uri = $this->_url . "/bundles/bundle/{$bundle_name}/{$version}/download";
@@ -238,13 +238,8 @@ namespace adapt{
                     $path = $this->file_store->get_file_path($key);
 
                     if ($path !== false){
-                        if($install){
-                            /* Lets unbundle the bundle */
-                            return $this->unbundle($path);
-                        }else{
-                            return $path;
-                        }
-                            
+                        /* Lets unbundle the bundle */
+                        return $this->unbundle($path);
                     }else{
                         $this->error("Unable to store bundle '{$bundle_name}' version '{$version}'");
                     }
@@ -262,13 +257,16 @@ namespace adapt{
              * We need to extract the manifest
              * to get the type and name.
              */
+            print "starting unbundle\n";
             $fp = fopen($bundle_file_path, "r");
             if ($fp){
+                print "opened \n";
                 $raw_index = fgets($fp);
                 $bundle_index = json_decode($raw_index, true);
                 $offset = strlen($raw_index);
                 
                 if (is_array($bundle_index) && count($bundle_index)){
+                    print "in array\n";
                     foreach($bundle_index as $file){
                         if ($file['name'] == 'bundle.xml'){
                             fseek($fp, $offset);
@@ -278,6 +276,7 @@ namespace adapt{
                     }
                     
                     if (xml::is_xml($manifest)){
+                        print "is xml";
                         $manifest = xml::parse($manifest);
                         $name = $manifest->find('name');
                         $type = $manifest->find('type');
@@ -285,9 +284,11 @@ namespace adapt{
                         $name = trim($name->get(0)->text);
                         $type = trim($type->get(0)->text);
                         $version = trim($version->get(0)->text);
-
+                        
+                        print "does it have bundle {$name}-{$version}\n";
                         /* Is this bundle already installed? */
                         if ($this->bundles->has_bundle($name, $version) === false){
+                            print 'doesnt have this bundle';
                             /*
                              * The bundle isn't installed so we are going
                              * to unbundle it
