@@ -36,6 +36,7 @@ namespace adapt{
     class xml extends base{
         
         /* Events */
+        const EVENT_RENDER = 'adapt.render';
         const EVENT_RENDERED = 'adapt.rendered';
         const EVENT_CHILD_ADDED = ' adapt.child_added';
         const EVENT_CHILD_REMOVED = 'adapt.child_removed';
@@ -334,6 +335,7 @@ namespace adapt{
         
         /* This function exists so that children can more easily override the default behaviour */
         public function _render($close_all_empty_tags = false, $add_slash_to_empty_tags = true, $depth = 0){
+            $this->trigger(self::EVENT_RENDER);
             $readable = strtolower($this->setting('xml.readable')) == 'yes' ? true : false;
             $tag = $this->_tag;
             
