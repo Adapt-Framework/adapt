@@ -235,13 +235,26 @@ namespace adapt{
                     /* Store the bundle */
                     $key = "adapt/repository/{$bundle_name}-{$version}.bundle";
                     $this->file_store->set($key, $response['content'], "application/octet-stream");
-                    $path = $this->file_store->get_file_path($key);
-
-                    if ($path !== false){
-                        /* Lets unbundle the bundle */
-                        return $this->unbundle($path);
+                    
+                    $unbundler = new unbundler();
+                    if ($unbundler->load($key)){
+                        $bundle_xml = xml::parse($unbundler->extract_file("bundle.xml"));
+                        if ($bundle_xml instanceof xml){
+                            $name = $bundle_xml->find('bundle > name')->first()->text();
+                            $version = $bundle_xml->find('bundle > version')->first()->text();
+                            $path = ADAPT_PATH . $name . "/" . $name . "-" . $version;
+                            $unbundler->make_dir($path);
+                            $unbundler->extract_all($path);
+                            
+                            return $name;
+                        }else{
+                            $this->error("Unable to read bundle.xml for {$bundle_name} v{$bundle_version}");
+                            return false;
+                        }
                     }else{
-                        $this->error("Unable to store bundle '{$bundle_name}' version '{$version}'");
+                        $this->error("Unable to process bundle.");
+                        $this->error($unbundler->errors(true));
+                        return false;
                     }
                     
                 }else{
@@ -250,103 +263,6 @@ namespace adapt{
             }
             
             return false;
-        }
-        
-        public function unbundle($bundle_file_path){
-            /*
-             * We need to extract the manifest
-             * to get the type and name.
-             */
-            print "starting unbundle\n";
-            $fp = fopen($bundle_file_path, "r");
-            if ($fp){
-                print "opened \n";
-                $raw_index = fgets($fp);
-                $bundle_index = json_decode($raw_index, true);
-                $offset = strlen($raw_index);
-                
-                if (is_array($bundle_index) && count($bundle_index)){
-                    print "in array\n";
-                    foreach($bundle_index as $file){
-                        if ($file['name'] == 'bundle.xml'){
-                            fseek($fp, $offset);
-                            $manifest = fread($fp, $file['length']);
-                        }
-                        $offset += $file['length'];
-                    }
-                    
-                    if (xml::is_xml($manifest)){
-                        print "is xml";
-                        $manifest = xml::parse($manifest);
-                        $name = $manifest->find('name');
-                        $type = $manifest->find('type');
-                        $version = $manifest->find('version');
-                        $name = trim($name->get(0)->text);
-                        $type = trim($type->get(0)->text);
-                        $version = trim($version->get(0)->text);
-                        
-                        print "does it have bundle {$name}-{$version}\n";
-                        /* Is this bundle already installed? */
-                        if ($this->bundles->has_bundle($name, $version) === false){
-                            print 'doesnt have this bundle';
-                            /*
-                             * The bundle isn't installed so we are going
-                             * to unbundle it
-                             */
-                            $path = ADAPT_PATH;
-                            
-                            mkdir($path . $name);
-                            $path .= $name . '/';
-                            
-                            mkdir($path . $name . "-" . $version);
-                            $path .= $name . '-' . $version . '/';
-                            
-                            /* Reset the bundle file point back to the start of the body */
-                            fseek($fp, strlen($raw_index));
-                            
-                            /* Lets extract the bundle */
-                            foreach($bundle_index as $file){
-                                $path_parts = explode('/', trim(dirname($file['name']), '/'));
-                                $new_path = $path;
-                                foreach($path_parts as $p){
-                                    $new_path .= "/{$p}";
-                                    if (!is_dir($new_path)){
-                                        mkdir($new_path);
-                                    }
-                                }
-                                
-                                $ofp = fopen($path . $file['name'], "w");
-                                
-                                if ($ofp){
-                                    fwrite($ofp, fread($fp, $file['length']));
-                                    fclose($ofp);
-                                }
-                            }
-                            
-                            fclose($fp);
-                            return $name;
-                        }else{
-                            return $name;
-                        }
-                        
-                    }else{
-                        $this->error("Error unbundling {$bundle_file_path}, unable to read the manifest.");
-                    }
-                    
-                }else{
-                    $this->error("Error unbundling {$bundle_file_path}, unable to find the bundle index.");
-                }
-                
-                fclose($fp);
-            }else{
-                $this->error("Error unbundling {$bundle_file_path}, unable to read the file.");
-            }
-            
-            return false;
-        }
-        
-        public function bundle($bundle_name, $bundle_version){
-            
         }
         
         public function check_for_updates(){

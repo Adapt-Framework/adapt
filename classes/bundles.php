@@ -86,7 +86,7 @@ namespace adapt{
             if ($this->_repository && $this->_repository instanceof repository){
                 return $this->_repository;
             }else{
-                $url = $this->setting('repository.url');
+                $url = $this->setting('repository.url') ?: "http://repository.matt.wales/v1";
                 $username = $this->setting('repository.username');
                 $password = $this->setting('repository.password');
                 $this->_repository = new repository($url, $username, $password);
@@ -374,7 +374,19 @@ namespace adapt{
                         $this->error('Unable to connect to the database, the data source settings in settings.xml are not valid.');
                     }
                     
-//                    $updates = $this->download_updates();
+                    /**
+                     * Update the platform as required
+                     */
+                    $should_update = $this->setting('repository.automatic_updates') ?: "Yes";
+                    $update_time = $this->setting('repository.check_for_updates') ?: 24;
+                    if ($should_update == 'Yes'){
+                        $cache_key = "adapt/check_for_updates";
+                        $can_update = $this->cache->get($cache_key);
+                        if ($can_update != "1"){
+                            $this->download_updates();
+                            $this->cache->set($cache_key, "1", 60 * 60 * $update_time);
+                        }
+                    }
                     
                     /* Load the application */
                     $application = $this->load_bundle($application_name, $application_version);

@@ -340,7 +340,7 @@ namespace adapt{
             $path = '/';
             $parts = explode('/', $dir);
             foreach($parts as $part){
-                $path .= $part;
+                $path .= $part . "/";
                 if (!is_dir($path)){
                     mkdir($path);
                 }

@@ -892,6 +892,8 @@ namespace adapt{
                             $bundle = $this->bundles->load_bundle($bundle_data['name'], $bundle_data['version']);
                             if ($bundle instanceof bundle && $bundle->is_loaded){
                                 
+                                //$this->apply_settings();
+                                
                                 if (!$bundle->boot()){
                                     $this->error("Unable to boot '{$bundle_data['name']}'");
                                     $this->error($bundle->errors(true));
