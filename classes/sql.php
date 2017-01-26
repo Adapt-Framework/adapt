@@ -218,7 +218,7 @@ namespace adapt{
         }
         
         public function pget_is_distinct(){
-            return $this->_is_distinct();
+            return $this->_is_distinct;
         }
         
         public function pget_from_fields(){

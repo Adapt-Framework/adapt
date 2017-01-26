@@ -531,7 +531,7 @@ namespace adapt{
                             //}
                             
                             if (!is_null($max_length) && is_integer($max_length) && strlen($value) > $max_length){
-                                $this->error("Maximum field size is {$max_size}");
+                                $this->error("Maximum field size is {$max_length}");
                                 $valid = false;
                             }
                             
