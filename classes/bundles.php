@@ -86,7 +86,8 @@ namespace adapt{
             if ($this->_repository && $this->_repository instanceof repository){
                 return $this->_repository;
             }else{
-                $url = $this->setting('repository.url') ?: "https://repository.adaptframework.comS/v1";
+                $url = $this->setting('repository.url') ?: "https://repository.adaptframework.com/v1";
+                $url = "http://repo.local/v1";
                 $username = $this->setting('repository.username');
                 $password = $this->setting('repository.password');
                 $this->_repository = new repository($url, $username, $password);
@@ -379,13 +380,14 @@ namespace adapt{
                      */
                     $should_update = $this->setting('repository.automatic_updates') ?: "Yes";
                     $update_time = $this->setting('repository.check_for_updates') ?: 24;
+                    $should_update = "Yes";
                     if ($should_update == 'Yes'){
                         $cache_key = "adapt/check_for_updates";
                         $can_update = $this->cache->get($cache_key);
-                        if ($can_update != "1"){
+                        //if ($can_update != "1"){
                             $this->download_updates();
                             $this->cache->set($cache_key, "1", 60 * 60 * $update_time);
-                        }
+                        //}
                     }
                     
                     /* Load the application */
@@ -947,7 +949,9 @@ namespace adapt{
             if ($this->data_source && $this->data_source instanceof data_source_sql){
                 $sql = $this->data_source->sql;
                 $sql->select('name', 'version', 'type')->from('bundle_version')->where(new sql_cond('date_deleted', sql::IS, new sql_null()));
+                
                 $results = $sql->execute()->results();
+                
                 foreach($results as $result){
                     list($major, $minor, $revision) = explode(".", $result['version']);
                     $version = "{$major}.{$minor}";
@@ -970,9 +974,11 @@ namespace adapt{
                             }
                         }
                         // Updating revisions
+                        //print "Version: {$version}\n";
+                        //print_r($result);
                         $latest_revision = $this->repository->has($result['name'], $version);
-//                          print "latest {$result['name']} revision {$latest_revision} \n";
-//                          die();
+                          //print "latest {$result['name']} revision {$latest_revision} \n";
+                          //die();
                         if (self::matches_version($result['version'], $latest_revision)){
                             if (self::get_newest_version($result['version'], $latest_revision) != $result['version'] ){
 //                                print self::get_newest_version($result['version'], $latest_revision) ." version " .$result['version'] ;
@@ -1010,7 +1016,8 @@ namespace adapt{
          */
         public function download_updates(){
             $updates = $this->check_for_updates();
-//            print_r($updates);
+            print_r($updates);
+            //die();
             if($updates){
                 $names = [];
                 foreach ($updates as $update){
