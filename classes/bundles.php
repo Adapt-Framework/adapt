@@ -380,7 +380,8 @@ namespace adapt{
                      */
                     $should_update = $this->setting('repository.automatic_updates') ?: "Yes";
                     $update_time = $this->setting('repository.check_for_updates') ?: 24;
-                    $should_update = "Yes";
+                    //$should_update = "Yes";
+                    $should_update = "No";
                     if ($should_update == 'Yes'){
                         $cache_key = "adapt/check_for_updates";
                         $can_update = $this->cache->get($cache_key);
