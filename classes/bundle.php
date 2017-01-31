@@ -781,6 +781,7 @@ namespace adapt{
             $version = "{$this->version_major}.{$this->version_minor}";
             print "Current version: {$this->version}\n";
             // Get the latest version
+//            var_dump($this->bundles->repository);
             $latest_version = $this->bundles->repository->has($this->name);
             print "Latest version: {$latest_version}\n";
             // Check if we are the latest
@@ -810,24 +811,30 @@ namespace adapt{
                 print "Failed to download\n";die();
                 return false;
             }
-            print "Downloaded latest\n";die();
+            print "Downloaded latest\n";//die();
+            //Invalidate the bundle object cache
+            $this->cache->delete("adapt/bundle_objects");
+            
             // Load the new version
             $bundle = $this->bundles->load_bundle($this->name, $latest_version);
-            
+//            print_r($bundle);
             if (!$bundle instanceof bundle || !$bundle->is_loaded){
                 $this->error("Unable to load bundle");
+                print "Unable to load bundle\n";
                 return false;
             }
-            
+            print "BUNDLE {$bundle->name} v{$bundle->version}\n"; die();
             // Check the version is the same
             if ($bundle->version != $latest_version){
                 $this->error("Failed to get latest version");
+                print "Failed to get the latest version\n";
                 return false;
             }
-            
+            print_r($bundle);die();
             // Install the revision
             if (!$bundle->install()){
                 $this->errors($bundle->errors(true));
+                print "Failed to install\n";
                 return false;
             }
             
@@ -1737,6 +1744,7 @@ namespace adapt{
                 if ($this->data_source && $this->data_source instanceof data_source_sql){   
                     /* Add the bundle to bundle_version if it isn't already */
                     $model = new model_bundle_version();
+                    print "Bundle: {$this->name}  Version: {$this->version}\n";//die();
                     if (!$model->load_by_name_and_version($this->name, $this->version)){
                         $errors = $model->errors(true);
                         foreach($errors as $error) $this->error("Model 'bundle_version' return the error \"{$error}\"");
