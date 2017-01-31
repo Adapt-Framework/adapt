@@ -79,5 +79,37 @@ namespace adapt{
             
             return false;
         }
+        
+        /**
+         * Updates Adapt to the latest revision
+         */
+        public function update() {
+            $latest_version = parent::update();
+            
+            if ($latest_version === false){
+                return false;
+            }
+            
+            // We need to change the index.php file to boot
+            // the latest version
+            $index_path = $_SERVER['DOCUMENT_ROOT'] . "/index.php";
+            
+            $fp = fopen($index_path, "w+b");
+            if (!$fp){
+                $this->error("Unable to write to index.php");
+                return false;
+            }
+            
+            fwrite($fp, "<?php\n");
+            fwrite($fp, "define('TEMP_PATH', sys_get_temp_dir() . '/');\n");
+            fwrite($fp, "define('ADAPT_PATH', \$_SERVER['DOCUMENT_ROOT'] . '/adapt/');\n");
+            fwrite($fp, "define('ADAPT_VERSION', '{$latest_version}');\n");
+            fwrite($fp, "define('ADAPT_STARTED', true);\n");
+            fwrite($fp, "require(ADAPT_PATH . 'adapt/adapt-' . ADAPT_VERSION . '/boot.php');\n");
+            
+            fclose($fp);
+            
+            return $latest_version;
+        }
     }
 }

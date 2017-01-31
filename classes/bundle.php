@@ -768,6 +768,79 @@ namespace adapt{
             }
         }
         
+        /**
+         * Updates the bundle with the latest available revision.
+         */
+        public function update(){
+            if (!$this->is_loaded){
+                $this->error("Bundle not loaded");
+                return false;
+            }
+            print "Updating {$this->name}\n";
+            // Get the version
+            $version = "{$this->version_major}.{$this->version_minor}";
+            print "Current version: {$this->version}\n";
+            // Get the latest version
+            $latest_version = $this->bundles->repository->has($this->name);
+            print "Latest version: {$latest_version}\n";
+            // Check if we are the latest
+            if (bundles::get_newest_version($version, $latest_version) == $this->version){
+                print "Already the lastest\n";die();
+                return false; // Already the latest revision
+            }
+            
+            // Add the bundle to the bundle version table
+            $model = new model_bundle_version();
+            $model->name = $this->name;
+            $model->version = $latest_version;
+            $model->type = $this->type;;
+            $model->local = 'No';
+            $model->installed = 'No';
+            
+            if (!$model->save()){
+                $this->error("Unable to save bundle version information");
+                print "Failed to save\n";die();
+                return false;
+            }
+            
+            // Download the revision
+            if ($this->bundles->repository->get($this->name, $latest_version) === false){
+                $this->error("Unable to download the latest revision");
+                print_r($this->bundles->repository->errors());
+                print "Failed to download\n";die();
+                return false;
+            }
+            print "Downloaded latest\n";die();
+            // Load the new version
+            $bundle = $this->bundles->load_bundle($this->name, $latest_version);
+            
+            if (!$bundle instanceof bundle || !$bundle->is_loaded){
+                $this->error("Unable to load bundle");
+                return false;
+            }
+            
+            // Check the version is the same
+            if ($bundle->version != $latest_version){
+                $this->error("Failed to get latest version");
+                return false;
+            }
+            
+            // Install the revision
+            if (!$bundle->install()){
+                $this->errors($bundle->errors(true));
+                return false;
+            }
+            
+            // Success
+            return $bundle->version;
+        }
+        
+        /**
+         * Upgrades the bundle to the latest version
+         */
+        public function upgrade(){
+            
+        }
         
         /**
          * Registers a configuration handler.
@@ -1679,6 +1752,16 @@ namespace adapt{
                         
                         $this->_is_installed = true;
                         $this->bundles->set_bundle_installed($this->name, $this->version);
+                        
+                        // Set previous versions as no-longer installed
+                        $sql = $this->data_source->sql;
+                        $sql->update('bundle_version')->set('installed', q('Yes'))->where(
+                            new sql_and(
+                               new sql_cond('name', sql::EQUALS, q($this->name)),
+                               new sql_cond('version', sql::NOT_EQUALS, q($this->version)),
+                               new sql_cond('date_deleted', sql::IS, new sql_now())
+                            )
+                        )->execute();
                         
                         /* Process install handlers */
                         $handlers = $this->store('adapt.install_handlers');

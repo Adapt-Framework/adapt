@@ -234,8 +234,9 @@ namespace adapt{
                 if (is_array($response) && $response['status'] == 200){
                     /* Store the bundle */
                     $key = "adapt/repository/{$bundle_name}-{$version}.bundle";
+                    print_r($response);
                     $this->file_store->set($key, $response['content'], "application/octet-stream");
-                    
+                    print "Bundle file key '{$key}'\n";
                     $unbundler = new unbundler();
                     if ($unbundler->load($key)){
                         $bundle_xml = xml::parse($unbundler->extract_file("bundle.xml"));

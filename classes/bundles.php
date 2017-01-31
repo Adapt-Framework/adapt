@@ -375,22 +375,6 @@ namespace adapt{
                         $this->error('Unable to connect to the database, the data source settings in settings.xml are not valid.');
                     }
                     
-                    /**
-                     * Update the platform as required
-                     */
-                    $should_update = $this->setting('repository.automatic_updates') ?: "Yes";
-                    $update_time = $this->setting('repository.check_for_updates') ?: 24;
-                    //$should_update = "Yes";
-                    $should_update = "No";
-                    if ($should_update == 'Yes'){
-                        $cache_key = "adapt/check_for_updates";
-                        $can_update = $this->cache->get($cache_key);
-                        //if ($can_update != "1"){
-                            $this->download_updates();
-                            $this->cache->set($cache_key, "1", 60 * 60 * $update_time);
-                        //}
-                    }
-                    
                     /* Load the application */
                     $application = $this->load_bundle($application_name, $application_version);
                     
@@ -426,6 +410,24 @@ namespace adapt{
                             
                             /* Boot the application */
                             if ($application->boot()){
+                                
+                                /**
+                                 * Update the platform as required
+                                 */
+                               $should_update = $this->setting('repository.automatic_updates') ?: "Yes";
+                               $update_time = $this->setting('repository.check_for_updates') ?: 24;
+                               $should_update = "Yes";
+                               //$should_update = "No";
+                               if ($should_update == 'Yes'){
+                                   $cache_key = "adapt/check_for_updates";
+                                   $can_update = $this->cache->get($cache_key);
+                                   //if ($can_update != "1"){
+                                       //$this->download_updates();
+                                       $this->update_system();
+                                       $this->cache->set($cache_key, "1", 60 * 60 * $update_time);
+                                   //}
+                               }
+                                
                                 return true;
                             }else{
                                 $errors = $application->errors(true);
@@ -444,6 +446,37 @@ namespace adapt{
                     }
                     
                 }
+            }
+        }
+        
+        public function upgrade_application($application_name){
+            
+        }
+        
+        public function update($bundle_name, $bundle_version){
+            $bundle = $this->load_bundle($bundle_name, $bundle_version);
+            if ($bundle instanceof bundle){
+                return $bundle->update();
+            }
+            
+            return false;
+        }
+        
+        public function update_system(){
+            $sql = $this->data_source->sql;
+            $sql->select('name', 'version')
+                ->from('bundle_version')
+                ->where(
+                    new sql_and(
+                        new sql_cond('installed', sql::EQUALS, q('Yes')),
+                        new sql_cond('date_deleted', sql::IS, new sql_null())
+                    )
+                );
+            
+            $results = $sql->execute()->results();
+            
+            foreach($results as $result){
+                $this->update($result['name'], $result['version']);
             }
         }
         
@@ -1047,9 +1080,9 @@ namespace adapt{
          * this method only updates revisions and does not
          * upgrade to new major or minor versions.
          */
-        public function update_system(){
-            
-        }
+        //public function update_system(){
+        //    
+        //}
         
         /**
          * Upgrades an application to a newer version
@@ -1061,9 +1094,9 @@ namespace adapt{
          * @return boolean
          * If the update succeeded
          */
-        public function upgrade_application($application_name, $application_version){
-            
-        }
+        //public function upgrade_application($application_name, $application_version){
+        //    
+        //}
         
         /**
          * Static function to list all the bundles
