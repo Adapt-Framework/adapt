@@ -798,7 +798,7 @@ namespace adapt{
             $model = new model_bundle_version();
             $model->name = $this->name;
             $model->version = $latest_version;
-            $model->type = $this->type;;
+            $model->type = $this->type;
             $model->local = 'No';
             $model->installed = 'No';
             
@@ -1105,6 +1105,8 @@ namespace adapt{
                                                     return false;
                                                 }
                                                 
+                                                //TODO: Update the schema registration
+                                                
                                                 $sql->change($field_name, $field_name, $data_type, $nullable, $default_value, false, false);
                                                 
                                             }else{
@@ -1171,7 +1173,7 @@ namespace adapt{
                                          * so the table can be properly registered.
                                          */
                                         $this->store('adapt.installing_bundle', $this->name);
-                                        //print $sql;die();
+                                        print $sql;//die();
                                         /* Write the table */
                                         $sql->execute();
                                         
@@ -1341,7 +1343,7 @@ namespace adapt{
                                          * so the table can be properly registered.
                                          */
                                         $this->store('adapt.installing_bundle', $this->name);
-                                        
+                                        print $sql;
                                         /* Write the table */
                                         $sql->execute();
                                         
@@ -1423,7 +1425,7 @@ namespace adapt{
                                                 
                                                 $string_sql = $sql->render();
                                                 
-                                                $results = $sql->execute(60 * 60 * 24 * 5)->results();
+                                                $results = $sql->execute(0)->results();
                                                 $errors = $sql->errors(true);
                                                 
                                                 if (count($errors)){
@@ -1467,8 +1469,8 @@ namespace adapt{
                                                 ->select($table_name . '_id')
                                                 ->from($table_name)
                                                 ->where(new sql_cond('name', sql::EQUALS, sql::q($row['name'])));
-                                            
-                                            $results = $sql->execute(60 * 60 * 24 * 7)->results();
+                                            print $sql;
+                                            $results = $sql->execute(0)->results();
                                             
                                             if (count($results) == 1){
                                                 // Update the record
@@ -1499,7 +1501,7 @@ namespace adapt{
                                             }
                                             $sql->where($where);
                                             
-                                            if (count($sql->execute(60 * 60 * 24 * 7)->results()) == 1){
+                                            if (count($sql->execute(0)->results()) == 1){
                                                 $ignore_record = true;
                                             }
                                         }
@@ -1526,7 +1528,7 @@ namespace adapt{
                                             $sql = $this->data_source->sql;
                                             
                                             $sql->insert_into($table_name, $field_names)->values($values);
-                                            
+                                            print $sql;
                                             $sql->execute();
                                             $errors = $sql->errors(true);
                                             
