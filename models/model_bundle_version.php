@@ -55,7 +55,7 @@ namespace adapt{
                             new sql_cond('date_deleted', sql::IS, new sql_null())
                         )
                     );
-                print $sql;
+                
                 $results = $sql->execute(0)->results();
                 
                 if (count($results) == 1){

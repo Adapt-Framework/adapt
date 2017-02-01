@@ -783,10 +783,14 @@ namespace adapt{
             // Get the latest version
 //            var_dump($this->bundles->repository);
             $latest_version = $this->bundles->repository->has($this->name);
+            if ($latest_version === false){
+                return false;
+            }
+            
             print "Latest version: {$latest_version}\n";
             // Check if we are the latest
             if (bundles::get_newest_version($version, $latest_version) == $this->version){
-                print "Already the lastest\n";die();
+                print "Already the lastest\n";//die();
                 return false; // Already the latest revision
             }
             
@@ -800,7 +804,7 @@ namespace adapt{
             
             if (!$model->save()){
                 $this->error("Unable to save bundle version information");
-                print "Failed to save\n";die();
+                print "Failed to save\n";//die();
                 return false;
             }
             
@@ -808,12 +812,25 @@ namespace adapt{
             if ($this->bundles->repository->get($this->name, $latest_version) === false){
                 $this->error("Unable to download the latest revision");
                 print_r($this->bundles->repository->errors());
-                print "Failed to download\n";die();
+                print "Failed to download\n";//die();
                 return false;
             }
             print "Downloaded latest\n";//die();
+            
             //Invalidate the bundle object cache
-            $this->cache->delete("adapt/bundle_objects");
+            
+            // Mark the current version as not installed
+            $model = new model_bundle_version();
+            if (!$model->load_by_name_and_version($this->name, $this->version)){
+                $this->error('Unable to uninstall the previous version');
+                return false;
+            }
+            
+            $model->installed = 'No';
+            $model->save();
+            
+            return $latest_version;
+            
             
             // Load the new version
             $bundle = $this->bundles->load_bundle($this->name, $latest_version);
@@ -966,7 +983,7 @@ namespace adapt{
                 if ($this->type == 'application'){
                     $dependency_list = $this->bundles->get_dependency_list($this->name, $this->version);
                     
-                    if (is_array($dependency_list)){    
+                    if (is_array($dependency_list)){
                         $dependency_list = array_reverse($dependency_list);
                         
                         foreach($dependency_list as $bundle_data){
@@ -1037,6 +1054,7 @@ namespace adapt{
                                     if (is_array($schema)){
                                         /* Alter existing table */
                                         $field_registrations = array();
+                                        $field_alterations = array();
                                         
                                         $sql = $this->data_source->sql;
                                         $sql->alter_table($table_name);
@@ -1048,6 +1066,8 @@ namespace adapt{
                                         }
                                         
                                         foreach($fields as $field_name => $attributes){
+                                            
+                                            /* Build the attributes for the field */
                                             $data_type = $attributes['data_type'];
                                             if ($data_type == 'varchar'){
                                                 $data_type .= "({$attributes['max_length']})";
@@ -1056,80 +1076,102 @@ namespace adapt{
                                                 $values = explode(")", $values[1]);
                                                 $values = $values[0];
                                                 $values = explode(",", $values);
-                                                
+
                                                 for($i = 0; $i < count($values); $i++){
                                                     $values[$i] = preg_replace("/'|\"/", "", $values[$i]);
                                                     $values[$i] = sql::q(trim($values[$i]));
                                                 }
-                                                
+
                                                 $values = implode(", ", $values);
                                                 $attributes['allowed_values'] = "[" . $values . "]";
                                                 $attributes['data_type'] = "enum";
                                             }
-                                            
+
                                             $nullable = true;
                                             if (isset($attributes['nullable']) && $attributes['nullable'] == 'No') $nullable = false;
-                                            
+
                                             $default_value = null;
                                             if (isset($attributes['default_value'])) $default_value = $attributes['default_value'];
                                             
-                                            $sql->add($field_name, $data_type, $nullable, $default_value, false, false, $last_field);
-                                            $last_field = $field_name;
                                             
-                                            if (isset($attributes['primary_key']) && $attributes['primary_key'] == 'Yes'){
-                                                $auto_increment = true;
-                                                
-                                                if (isset($attributes['auto_increment']) && $attributes['auto_increment'] == 'No'){
-                                                    $auto_increment = false;
+                                            
+                                            /* Does the field already exist? */
+                                            $current_field_data = $this->data_source->get_field_structure($table_name, $field_name);
+                                            
+                                            if (is_array($current_field_data)){
+                                                /* Update the field if we are the owner */
+                                                if ($current_field_data['bundle_name'] != $this->name){
+                                                    $this->error("The field `{$table_name}`.`{$field_name}` cannot be modified by bundle '{$this->name}'");
+                                                    return false;
                                                 }
-                                                $sql->primary_key($field_name, $auto_increment);
-                                            }
-                                            
-                                            if (isset($attributes['index']) && $attributes['index'] == 'Yes'){
-                                                $index_size = null;
                                                 
-                                                if (isset($attributes['index_size'])){
-                                                    $index_size = $attributes['index_size'];
+                                                $sql->change($field_name, $field_name, $data_type, $nullable, $default_value, false, false);
+                                                
+                                            }else{
+                                                
+                                                $sql->add($field_name, $data_type, $nullable, $default_value, false, false, $last_field);
+                                                $last_field = $field_name;
+
+                                                if (isset($attributes['primary_key']) && $attributes['primary_key'] == 'Yes'){
+                                                    $auto_increment = true;
+
+                                                    if (isset($attributes['auto_increment']) && $attributes['auto_increment'] == 'No'){
+                                                        $auto_increment = false;
+                                                    }
+                                                    $sql->primary_key($field_name, $auto_increment);
                                                 }
-                                                $sql->index($field_name, $index_size);
+
+                                                if (isset($attributes['index']) && $attributes['index'] == 'Yes'){
+                                                    $index_size = null;
+
+                                                    if (isset($attributes['index_size'])){
+                                                        $index_size = $attributes['index_size'];
+                                                    }
+                                                    $sql->index($field_name, $index_size);
+                                                }
+
+                                                if (isset($attributes['referenced_table_name']) && isset($attributes['referenced_field_name'])){
+                                                    $sql->foreign_key($field_name, $attributes['referenced_table_name'], $attributes['referenced_field_name']);
+                                                }
+                                                
+                                                /* Add to field registrations */
+                                                $field_registration = array(
+                                                    'bundle_name' => $this->name,
+                                                    'table_name' => $table_name,
+                                                    'field_name' => $field_name,
+                                                    'referenced_table_name' => $attributes['referenced_table_name'],
+                                                    'referenced_field_name' => $attributes['referenced_field_name'],
+                                                    'label' => $attributes['label'],
+                                                    'placeholder_label' => $attributes['placeholder_label'],
+                                                    'description' => $attributes['description'],
+                                                    'data_type_id' => array('lookup_from' => 'data_type', 'with_conditions' => ['name' => $attributes['data_type']]),
+                                                    'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
+                                                    'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
+                                                    'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",
+                                                    'auto_increment' => $attributes['auto_increment'] == "Yes" ? "Yes" : "No",
+                                                    'timestamp' => $attributes['timestamp'] == "Yes" ? "Yes" : "No",
+                                                    'max_length' => $attributes['max_length'],
+                                                    'default_value' => $attributes['default_value'],
+                                                    'allowed_values' => $attributes['allowed_values'],
+                                                    'lookup_table' => $attributes['lookup_table'],
+                                                    'depends_on_table_name' => $attributes['depends_on_table_name'],
+                                                    'depends_on_field_name' => $attributes['depends_on_field_name'],
+                                                    'depends_on_value' => $attributes['depends_on_value']
+                                                );
+
+                                                $field_registrations[] = $field_registration;
                                             }
                                             
-                                            if (isset($attributes['referenced_table_name']) && isset($attributes['referenced_field_name'])){
-                                                $sql->foreign_key($field_name, $attributes['referenced_table_name'], $attributes['referenced_field_name']);
-                                            }
                                             
-                                            $field_registration = array(
-                                                'bundle_name' => $this->name,
-                                                'table_name' => $table_name,
-                                                'field_name' => $field_name,
-                                                'referenced_table_name' => $attributes['referenced_table_name'],
-                                                'referenced_field_name' => $attributes['referenced_field_name'],
-                                                'label' => $attributes['label'],
-                                                'placeholder_label' => $attributes['placeholder_label'],
-                                                'description' => $attributes['description'],
-                                                'data_type_id' => array('lookup_from' => 'data_type', 'with_conditions' => ['name' => $attributes['data_type']]),
-                                                'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
-                                                'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
-                                                'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",
-                                                'auto_increment' => $attributes['auto_increment'] == "Yes" ? "Yes" : "No",
-                                                'timestamp' => $attributes['timestamp'] == "Yes" ? "Yes" : "No",
-                                                'max_length' => $attributes['max_length'],
-                                                'default_value' => $attributes['default_value'],
-                                                'allowed_values' => $attributes['allowed_values'],
-                                                'lookup_table' => $attributes['lookup_table'],
-                                                'depends_on_table_name' => $attributes['depends_on_table_name'],
-                                                'depends_on_field_name' => $attributes['depends_on_field_name'],
-                                                'depends_on_value' => $attributes['depends_on_value']
-                                            );
                                             
-                                            $field_registrations[] = $field_registration;
+                                            
                                         }
                                         
                                         /* We need to make our bundle name available to the sql object
                                          * so the table can be properly registered.
                                          */
                                         $this->store('adapt.installing_bundle', $this->name);
-                                        
+                                        //print $sql;die();
                                         /* Write the table */
                                         $sql->execute();
                                         

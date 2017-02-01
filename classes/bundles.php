@@ -88,7 +88,7 @@ namespace adapt{
             }else{
                 $url = $this->setting('repository.url') ?: "https://repository.adaptframework.com/v1";
                 $url = "http://repo.local/v1";
-                $url = "http://repository.matt.wales/v1";
+                //$url = "http://repository.matt.wales/v1";
                 $username = $this->setting('repository.username');
                 $password = $this->setting('repository.password');
                 $this->_repository = new repository($url, $username, $password);
@@ -411,7 +411,6 @@ namespace adapt{
                             
                             /* Boot the application */
                             if ($application->boot()){
-                                
                                 /**
                                  * Update the platform as required
                                  */
@@ -424,6 +423,7 @@ namespace adapt{
                                    $can_update = $this->cache->get($cache_key);
                                    //if ($can_update != "1"){
                                        //$this->download_updates();
+                                       print "Updating system\n";
                                        $this->update_system();
                                        $this->cache->set($cache_key, "1", 60 * 60 * $update_time);
                                    //}
@@ -457,7 +457,12 @@ namespace adapt{
         public function update($bundle_name, $bundle_version){
             $bundle = $this->load_bundle($bundle_name, $bundle_version);
             if ($bundle instanceof bundle){
-                return $bundle->update();
+                $return = $bundle->update();
+                if ($return !== false){
+                    $this->cache->delete("adapt/bundle_objects");
+                    $this->cache->delete("adapt/data_source/bundle.cache");
+                    $this->_bundle_cache_changed = false;
+                }
             }
             
             return false;

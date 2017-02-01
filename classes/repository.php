@@ -232,11 +232,16 @@ namespace adapt{
                 $response = $this->_http->get($uri);
 
                 if (is_array($response) && $response['status'] == 200){
+                    $temp_file = TEMP_PATH . guid();
+                    file_put_contents($temp_file, $response['content']);
                     /* Store the bundle */
                     $key = "adapt/repository/{$bundle_name}-{$version}.bundle";
 //                    print_r($response);
-                    $this->file_store->set($key, $response['content'], "application/octet-stream");
+                    //$this->file_store->set($key, $response['content'], "application/octet-stream");
+                    $this->file_store->set_by_file($key, $temp_file, "application/octet-stream");
                     print "Bundle file key '{$key}'\n";
+                    print "Temp file: {$temp_file}\n";
+                    unlink($temp_file);
                     $unbundler = new unbundler();
                     if ($unbundler->load($key)){
                         $bundle_xml = xml::parse($unbundler->extract_file("bundle.xml"));
