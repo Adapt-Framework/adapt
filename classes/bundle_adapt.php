@@ -93,7 +93,7 @@ namespace adapt{
             // We need to change the index.php file to boot
             // the latest version
             $index_path = $_SERVER['DOCUMENT_ROOT'] . "/index.php";
-            print $index_path . "\n";die();
+//            print $index_path . "\n";die();
             $fp = fopen($index_path, "w+b");
             if (!$fp){
                 $this->error("Unable to write to index.php");
