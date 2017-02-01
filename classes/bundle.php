@@ -823,6 +823,7 @@ namespace adapt{
                 print "Unable to load bundle\n";
                 return false;
             }
+            return $latest_version;
             print "BUNDLE {$bundle->name} v{$bundle->version}\n"; die();
             // Check the version is the same
             if ($bundle->version != $latest_version){
@@ -830,16 +831,16 @@ namespace adapt{
                 print "Failed to get the latest version\n";
                 return false;
             }
-            print_r($bundle);die();
+            //print_r($bundle);die();
             // Install the revision
-            if (!$bundle->install()){
-                $this->errors($bundle->errors(true));
-                print "Failed to install\n";
-                return false;
-            }
+            //if (!$bundle->install()){
+            //    $this->errors($bundle->errors(true));
+            //    print "Failed to install\n";
+            //    return false;
+            //}
             
             // Success
-            return $bundle->version;
+            //return $bundle->version;
         }
         
         /**
