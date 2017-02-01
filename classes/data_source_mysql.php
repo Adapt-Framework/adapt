@@ -241,95 +241,6 @@ namespace adapt{
         public function render_sql(\adapt\sql $sql){
             $statement = "";
             
-            /*if ($sql instanceof \adapt\sql_function){
-                
-                $statement .= $sql;
-                return $statement;
-                
-            }
-            
-            if ($sql instanceof \adapt\sql_condition){
-                
-                if ($sql->value_1 instanceof sql){
-                    $statement .= $this->render_sql($sql->value_1);
-                }elseif(is_string($sql->value_1)){
-                    $value = $this->escape($sql->value_1);
-                    $statement .= "\"" . $value . "\"";
-                }
-                
-                $statement .= " " . $sql->condition . " ";
-                
-                if ($sql->value_2 instanceof sql){
-                    $statement .= $this->render_sql($sql->value_2);
-                }else{
-                    $value = $this->escape($sql->value_2);
-                    $statement .= "\"" . $value . "\"";
-                }
-                
-                return $statement;
-            }
-            
-            if ($sql instanceof \adapt\sql_or){
-                $statement .= "(";
-                for($i = 0; $i < count($sql->conditions); $i++){
-                    if ($i > 0) $statement .= " OR ";
-                    $condition = $sql->conditions[$i];
-                    if ($condition instanceof \frameworks\adapt\sql){
-                        $statement .= $this->render_sql($condition);
-                    }elseif(is_string($condition)){
-                        $statement .= $condition;
-                    }
-                }
-                
-                $statement .= ")";
-                return $statement;
-            }
-            
-            if ($sql instanceof \adapt\sql_and){
-                $statement .= "(";
-                for($i = 0; $i < count($sql->conditions); $i++){
-                    if ($i > 0) $statement .= " AND ";
-                    $condition = $sql->conditions[$i];
-                    if ($condition instanceof \adapt\sql){
-                        $statement .= $this->render_sql($condition);
-                    }elseif(is_string($condition)){
-                        $statement .= $condition;
-                    }
-                }
-                
-                $statement .= ")";
-                return $statement;
-            }
-            
-            if ($sql instanceof \adapt\sql_if){
-                $statement .= "IF (";
-                if ($sql->condition instanceof \adapt\sql){
-                    $statement .= $this->render_sql($sql->condition);
-                }elseif(is_string($sql->condition)){
-                    $statement .= $sql->condition;
-                }
-                
-                $statement .= ", ";
-                
-                if ($sql->if_true instanceof \adapt\sql){
-                    $statement .= $this->render_sql($sql->if_true);
-                }elseif(is_string($sql->if_true)){
-                    $statement .= "\"" . $sql->if_true . "\"";
-                }
-                
-                $statement .= ", ";
-                
-                if ($sql->if_false instanceof \adapt\sql){
-                    $statement .= $this->render_sql($sql->if_false);
-                }elseif(is_string($sql->if_false)){
-                    $statement .= "\"" . $sql->if_false . "\"";
-                }
-                
-                $statement .= ")";
-                
-                return $statement;
-            }*/
-            
             if ($sql instanceof \adapt\sql){
                 if (!is_null($sql->statement)){
                     if ($statement == ""){
@@ -357,6 +268,47 @@ namespace adapt{
                                 }
                             }
                         }
+
+                        $statement .= "\n";
+
+                        // Add ordering to UNION
+                        $ordering = $sql->ordering;
+                        if (is_array($ordering) && count($ordering)){
+                            $statement .= "ORDER BY ";
+                            $first = true;
+                            foreach($ordering as $order){
+                                if (!$first) $statement .= ",\n";
+                                if ($order['field'] instanceof sql){
+                                    $statement .= $this->render_sql($order['field']);
+                                }else{
+                                    $statement .= $order['field'];
+                                }
+
+                                if ($order['ascending']){
+                                    $statement .= " ASC";
+                                }else{
+                                    $statement .= " DESC";
+                                }
+
+                                $first = false;
+                            }
+
+                            $statement .= "\n";
+
+                            // Add limit to UNION
+                            $limit = $sql->limit_count;
+                            $offset = $sql->limit_offset;
+                            if (!is_null($limit)){
+                                $statement .= "LIMIT ";
+                                if (isset($offset)){
+                                    $statement .= $offset . ", " . $limit . "\n";
+                                }else{
+                                    $statement .= $limit . "\n";
+                                }
+                            }
+                            $statement .= "\n";
+                        }
+
                         break;
                     case "and":
                     case "or":
