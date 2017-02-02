@@ -83,5 +83,8 @@ views/
 
 **bundle.xml** contains meta information describing the bundle, such as it's name, version and any dependencies that it has.
 
-More more information please visit [AdaptFramework.com](http://www.adaptframework.com)
+## Writing your first application
+
+
+For more information please visit [AdaptFramework.com](http://www.adaptframework.com)
 
