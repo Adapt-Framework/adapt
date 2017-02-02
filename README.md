@@ -68,5 +68,20 @@ All other directories within **/adapt/** are bundles.
 
 Adapt Setup is within the directory **/adapt/adapt_setup**, within this directory there will be one or more sub directories containing versions of Adapt Setup. For example, **/adapt/adapt_setup/adapt_setup-1.0.0** would contain version 1.0.0 of Adapt Setup.
 
+### Bundle directory layout
+Typically bundles will contain the following files and directories:
+
+```
+bundle.xml
+classes/
+controllers/
+models/
+views/
+```
+
+**classes/** contains classes that are not controllers, models or views. The other directories contain what you would expect from their names.
+
+**bundle.xml** contains meta information describing the bundle, such as it's name, version and any dependencies that it has.
+
 More more information please visit [AdaptFramework.com](http://www.adaptframework.com)
 
