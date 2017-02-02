@@ -28,6 +28,29 @@ Here is a handful of useful bundles available already:
 * User account management, users and user management made easy.
 * Enterprise grade roles and permissions.
 
+## Getting started
+### Requirements
+* Apache 2.x
+* PHP 5.5+
+* MySQL/MariaDB (If database support is required)
+
+### Installation
+Download [Adapt Installer](https://raw.githubusercontent.com/mbruton/adapt_installer/master/install.php) and upload it to the document root of your web server.  View the file in a browser and the installation will complete automatically, letting you know how to resolve any issues detected during installation.
+
+The installer will download and install Adapt Framework and the Adapt Setup application, Adapt Setup will allow you to configure any database connections you may have and optionaly install an existing application.
+
+### File system layout
+Lets say
+```
+/
+```
+is the document root, inside you'll find the following:
+```
+/.htaccess
+/index.php
+/adapt  <Directory>
+```
+**.htaccess** Instructs Apache to pass on URL routing to Adapt. **index.php** Handles all requests and initialises the framework. The **adapt** directory contains all the installed bundles, settings and any stored files. 
 
 
 
