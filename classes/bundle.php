@@ -782,7 +782,7 @@ namespace adapt{
             print "Current version: {$this->version}\n";
             // Get the latest version
 //            var_dump($this->bundles->repository);
-            $latest_version = $this->bundles->repository->has($this->name);
+            $latest_version = $this->bundles->repository->has($this->name, $version);
             if ($latest_version === false){
                 return false;
             }
@@ -861,10 +861,14 @@ namespace adapt{
         }
         
         /**
-         * Upgrades the bundle to the latest version
+         * Upgrades the bundle to the specified version or
+         * the latest version when $version is missing.
+         * 
+         * @param string
+         * The version to update to.
          */
-        public function upgrade(){
-            
+        public function upgrade($version = null){
+            if (is_null($version)) $version = "latest";
         }
         
         /**

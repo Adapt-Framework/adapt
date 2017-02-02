@@ -450,7 +450,7 @@ namespace adapt{
             }
         }
         
-        public function upgrade_application($application_name){
+        public function upgrade_application($application_name, $version = null){
             
         }
         
