@@ -73,7 +73,13 @@ namespace adapt{
      * Has this bundle been booted?
      */
     class bundle extends base{
-
+        
+        /** Fired when a bundle is updated */
+        const EVENT_ON_UPDATE = 'bundle.on_update';
+        
+        /** Fired when a bundle is upgraded */
+        const EVENT_ON_UPGRADE = 'bundle.on_upgrade';
+        
         /** @ignore */
         protected $_file_store;
         /** @ignore */
@@ -796,6 +802,8 @@ namespace adapt{
             
             // Add the bundle to the bundle version table
             $model = new model_bundle_version();
+            $model->load_by_name_and_version($this->name, $latest_version);
+            $model->errors(true);
             $model->name = $this->name;
             $model->version = $latest_version;
             $model->type = $this->type;
@@ -803,6 +811,7 @@ namespace adapt{
             $model->installed = 'No';
             
             if (!$model->save()){
+                print_r($model->errors());
                 $this->error("Unable to save bundle version information");
                 print "Failed to save\n";//die();
                 return false;
@@ -817,6 +826,10 @@ namespace adapt{
             }
             print "Downloaded latest\n";//die();
             
+            // Mark as local
+            $model->local = 'Yes';
+            $model->save();
+            
             //Invalidate the bundle object cache
             
             // Mark the current version as not installed
@@ -828,6 +841,9 @@ namespace adapt{
             
             $model->installed = 'No';
             $model->save();
+            
+            // Trigger the on update event
+            $this->trigger(self::EVENT_ON_UPDATE, ['bundle_name' => $this->name, 'current_version' => $this->version, 'new_version' => $latest_version]);
             
             return $latest_version;
             
@@ -1110,8 +1126,34 @@ namespace adapt{
                                                 }
                                                 
                                                 //TODO: Update the schema registration
+                                                $field_registrations[] = array(
+                                                    'bundle_name' => $this->name,
+                                                    'table_name' => $table_name,
+                                                    'field_name' => $field_name,
+                                                    'referenced_table_name' => $attributes['referenced_table_name'],
+                                                    'referenced_field_name' => $attributes['referenced_field_name'],
+                                                    'label' => $attributes['label'],
+                                                    'placeholder_label' => $attributes['placeholder_label'],
+                                                    'description' => $attributes['description'],
+                                                    'data_type_id' => array('lookup_from' => 'data_type', 'with_conditions' => ['name' => $attributes['data_type']]),
+                                                    'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
+                                                    'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
+                                                    'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",
+                                                    'auto_increment' => $attributes['auto_increment'] == "Yes" ? "Yes" : "No",
+                                                    'timestamp' => $attributes['timestamp'] == "Yes" ? "Yes" : "No",
+                                                    'max_length' => $attributes['max_length'],
+                                                    'default_value' => $attributes['default_value'],
+                                                    'allowed_values' => $attributes['allowed_values'],
+                                                    'lookup_table' => $attributes['lookup_table'],
+                                                    'depends_on_table_name' => $attributes['depends_on_table_name'],
+                                                    'depends_on_field_name' => $attributes['depends_on_field_name'],
+                                                    'depends_on_value' => $attributes['depends_on_value']
+                                                );
                                                 
-                                                $sql->change($field_name, $field_name, $data_type, $nullable, $default_value, false, false);
+                                                // Ignore the field if it's currently marked as primary
+                                                if ($attributes['primary_key'] != 'Yes'){
+                                                    $sql->change($field_name, $field_name, $data_type, $nullable, $default_value, false, false);
+                                                }
                                                 
                                             }else{
                                                 
@@ -1463,7 +1505,7 @@ namespace adapt{
                                          */
                                         $ignore_record = false;
                                         
-                                        if (in_array('name', $field_names)){
+                                        if (in_array('__name', $field_names)){ // Disabled due to the fact that name fields are not unique
                                             // Intentionally we are skipping the
                                             // date_deleted field on the basis that
                                             // if this record is deleted, it should

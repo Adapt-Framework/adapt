@@ -88,7 +88,7 @@ namespace adapt{
             }else{
                 $url = $this->setting('repository.url') ?: "https://repository.adaptframework.com/v1";
                 $url = "http://repo.local/v1";
-                $url = "http://repository.matt.wales/v1";
+                //$url = "http://repository.matt.wales/v1";
                 $username = $this->setting('repository.username');
                 $password = $this->setting('repository.password');
                 $this->_repository = new repository($url, $username, $password);
@@ -984,6 +984,7 @@ namespace adapt{
          * Indicates that updates are available
          */
         public function check_for_updates(){
+            return;
             $checked = [];
             $updates = [];
             if ($this->data_source && $this->data_source instanceof data_source_sql){
@@ -1055,6 +1056,7 @@ namespace adapt{
          * Indicates that updates have been downloaded
          */
         public function download_updates(){
+            return;
             $updates = $this->check_for_updates();
             print_r($updates);
             //die();

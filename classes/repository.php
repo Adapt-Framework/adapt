@@ -272,6 +272,7 @@ namespace adapt{
         }
         
         public function check_for_updates(){
+            return;
             $checked = [];
             if ($this->data_source && $this->data_source instanceof data_source_sql){
                 $sql = $this->data_source->sql;

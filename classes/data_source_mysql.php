@@ -56,8 +56,7 @@ namespace adapt{
          */
         public function query($sql, $write = false){
             $host = $this->get_host($write);
-            //print new html_pre(print_r($host, true));
-            //print "<pre>Executing: {$sql}</pre>";
+            
             if (!is_null($host) && isset($host['handle'])){
                 if (mysqli_real_query($host['handle'], $sql)){
                     $this->trigger(self::EVENT_QUERY, array('sql' => $sql, 'host' => $host));
