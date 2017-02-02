@@ -52,7 +52,21 @@ is the document root, inside you'll find the following:
 ```
 **.htaccess** Instructs Apache to pass on URL routing to Adapt. **index.php** Handles all requests and initialises the framework. The **adapt** directory contains all the installed bundles, settings and any stored files. 
 
+```
+/adapt/store    <Directory>
+```
 
+**/adapt/store** is a directory containing any files such as user uploads or any data stored by a bundle during it's life.  Adapt also uses this folder for caching.
+
+```
+/adapt/settings.xml
+```
+
+**/adapt/settings.xml** the main settings file containing all the settings.
+
+All other directories within **/adapt/** are bundles.
+
+Adapt Setup is within the directory **/adapt/adapt_setup**, within this directory there will be one or more sub directories containing versions of Adapt Setup. For example, **/adapt/adapt_setup/adapt_setup-1.0.0** would contain version 1.0.0 of Adapt Setup.
 
 More more information please visit [AdaptFramework.com](http://www.adaptframework.com)
 
