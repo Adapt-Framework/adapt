@@ -113,5 +113,34 @@ Add the following to **bundle.xml**:
   </bundle>
 </adapt_framework>
 ```
+**bundle.xml** Tells Adapt that our bundle is an application and that it needs Adapt 2.0 to work.
+
+We now need to create a view controller so that our application can do something useful, create the following directory:
+```
+/adapt/test_app/test_app-1.0.0/controllers
+```
+Now create a new PHP file called **controller_root.php** and save it in the controllers directory.
+
+Inside **controller_root.php** add the following:
+```php
+<?php
+namespace test_app;
+
+defined('ADAPT_STARTED') or die;
+
+class controller_root extends \adapt\controller{
+
+  public function view_default(){
+    $this->add_view(new html_h1("Hello world"));
+    $this->add_view(new html_p("And welcome to Adapt"));
+  }
+
+}
+```
+
+Before we can view our application in the browser, we must tell Adapt to boot it, to do this simple open **/adapt/settings.xml** and change the value for **adapt.default_application_name** to **test_app** and change the value of **adapt.default_application_version** to **1.0.0**.
+
+Opening the site in a web browers will now display **Hello world**
+
 For more information please visit [AdaptFramework.com](http://www.adaptframework.com)
 
