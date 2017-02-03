@@ -140,3 +140,42 @@ class controller_users extends \adapt\controller{
 ```
 
 Only the final part of an action URL invokes an **action_** method.
+
+## Handling user input
+Lets assume we want to handle a user login with a username and password, we can access the form data directly from within the action like so:
+
+```php
+<?php
+namespace test_app;
+
+defined('ADAPT_STARTED') or die;
+
+class controller_root extends \adapt\controller{
+  
+  public function action_login(){
+    $username = $this->request['username'];
+    $password = $this->request['password'];
+    
+    // Do something the username and password
+    if ($success){
+      $this->redirect("/my-account");
+    }else{
+      $this->respond("login", "Login failed");
+      $this->redirect("/login");
+    }
+  }
+  
+  public function view_default(){
+    
+  }
+  
+  public function view_login(){
+    $this->add_view("TODO: Write login form");
+  }
+  
+  public function view_my_account(){
+    $this->add_view("My account page");
+  }
+}
+```
+
