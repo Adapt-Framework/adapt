@@ -416,17 +416,14 @@ namespace adapt{
                                  */
                                $should_update = $this->setting('repository.automatic_updates') ?: "Yes";
                                $update_time = $this->setting('repository.check_for_updates') ?: 24;
-                               $should_update = "Yes";
-                               //$should_update = "No";
+                               
                                if ($should_update == 'Yes'){
                                    $cache_key = "adapt/check_for_updates";
                                    $can_update = $this->cache->get($cache_key);
-                                   //if ($can_update != "1"){
-                                       //$this->download_updates();
-                                       print "Updating system\n";
+                                   if ($can_update != "1"){
                                        $this->update_system();
                                        $this->cache->set($cache_key, "1", 60 * 60 * $update_time);
-                                   //}
+                                   }
                                }
                                 
                                 return true;
@@ -976,135 +973,6 @@ namespace adapt{
                 $this->cache->serialize("adapt/data_source/bundle.cache", $this->_data_source_bundle_cache, 60 * 60 * 24 * 3);
             }
         }
-        
-        /**
-         * Checks the repository for updates and application upgrades
-         * 
-         * @return boolean
-         * Indicates that updates are available
-         */
-        public function check_for_updates(){
-            return;
-            $checked = [];
-            $updates = [];
-            if ($this->data_source && $this->data_source instanceof data_source_sql){
-                $sql = $this->data_source->sql;
-                $sql->select('name', 'version', 'type')->from('bundle_version')->where(new sql_cond('date_deleted', sql::IS, new sql_null()));
-                
-                $results = $sql->execute()->results();
-                
-                foreach($results as $result){
-                    list($major, $minor, $revision) = explode(".", $result['version']);
-                    $version = "{$major}.{$minor}";
-                    $array_key = "{$result['name']}-{$version}";
-                    if (!in_array($array_key, $checked)){
-                        if($result['type'] == 'application'){
-                            $latest_version = $this->repository->has($result['name']);
-                            if (self::get_newest_version($result['version'], $latest_version) != $result['version']){
-                                // Add the bundle to the bundle version table
-                                $model = new model_bundle_version();
-                                $model->name = $result['name'];
-                                $model->version = $latest_version;
-                                $model->type = $result['type'];
-                                $model->local = 'No';
-                                $model->installed = 'No';
-                                if ($model->save()){
-                                    $checked[] = $array_key;
-                                    $updates[] ="{$result['name']}-{$latest_version}";
-                                }
-                            }
-                        }
-                        // Updating revisions
-                        //print "Version: {$version}\n";
-                        //print_r($result);
-                        $latest_revision = $this->repository->has($result['name'], $version);
-                          //print "latest {$result['name']} revision {$latest_revision} \n";
-                          //die();
-                        if (self::matches_version($result['version'], $latest_revision)){
-                            if (self::get_newest_version($result['version'], $latest_revision) != $result['version'] ){
-//                                print self::get_newest_version($result['version'], $latest_revision) ." version " .$result['version'] ;
-                                // Add the bundle to the bundle version table
-                                $model = new model_bundle_version();
-                                $model->name = $result['name'];
-                                $model->version = $latest_revision;
-                                $model->type = $result['type'];
-                                $model->local = 'No';
-                                $model->installed = 'No';
-                                if ($model->save()){
-                                    $checked[] = $array_key;
-                                    $updates[] ="{$result['name']}-{$latest_revision}";
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            if(count($updates)){
-                return $updates;
-            }else{
-                return false;
-            }
-        }
-        
-        
-        /**
-         * Downloads updates
-         * This method downloads new versions listed
-         * in bundle_version.
-         * 
-         * @return boolean
-         * Indicates that updates have been downloaded
-         */
-        public function download_updates(){
-            return;
-            $updates = $this->check_for_updates();
-            print_r($updates);
-            //die();
-            if($updates){
-                $names = [];
-                foreach ($updates as $update){
-                    $bundle = explode('-', $update);
-                    print_r($bundle);
-                    $name = $this->repository->get($bundle[0],$bundle[1]);
-                    var_dump($name);
-//                    die();
-                    if($name){
-                        $model = new model_bundle_version();
-                        $model->load_by_name_and_version($bundle[0],$bundle[1]);
-                        $model->local = 'Yes';
-                        if($model->save()){
-                            $names[] = $name;
-                        }
-                    }
-                }
-                return $names;
-            }
-            return false;
-        }
-        
-        /**
-         * Updates the system
-         * Applies any updates that have been downloaded,
-         * this method only updates revisions and does not
-         * upgrade to new major or minor versions.
-         */
-        //public function update_system(){
-        //    
-        //}
-        
-        /**
-         * Upgrades an application to a newer version
-         * 
-         * @param string
-         * The name of the application to be upgraded
-         * @param string
-         * The version to upgrade too.
-         * @return boolean
-         * If the update succeeded
-         */
-        //public function upgrade_application($application_name, $application_version){
-        //    
-        //}
         
         /**
          * Static function to list all the bundles

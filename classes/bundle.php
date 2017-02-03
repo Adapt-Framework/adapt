@@ -782,21 +782,18 @@ namespace adapt{
                 $this->error("Bundle not loaded");
                 return false;
             }
-            print "Updating {$this->name}\n";
+            
             // Get the version
             $version = "{$this->version_major}.{$this->version_minor}";
-            print "Current version: {$this->version}\n";
+            
             // Get the latest version
-//            var_dump($this->bundles->repository);
             $latest_version = $this->bundles->repository->has($this->name, $version);
             if ($latest_version === false){
                 return false;
             }
             
-            print "Latest version: {$latest_version}\n";
             // Check if we are the latest
             if (bundles::get_newest_version($version, $latest_version) == $this->version){
-                print "Already the lastest\n";//die();
                 return false; // Already the latest revision
             }
             
@@ -811,20 +808,16 @@ namespace adapt{
             $model->installed = 'No';
             
             if (!$model->save()){
-                print_r($model->errors());
                 $this->error("Unable to save bundle version information");
-                print "Failed to save\n";//die();
+                $this->error($model->errors(true));
                 return false;
             }
             
             // Download the revision
             if ($this->bundles->repository->get($this->name, $latest_version) === false){
                 $this->error("Unable to download the latest revision");
-                print_r($this->bundles->repository->errors());
-                print "Failed to download\n";//die();
                 return false;
             }
-            print "Downloaded latest\n";//die();
             
             // Mark as local
             $model->local = 'Yes';
@@ -846,34 +839,6 @@ namespace adapt{
             $this->trigger(self::EVENT_ON_UPDATE, ['bundle_name' => $this->name, 'current_version' => $this->version, 'new_version' => $latest_version]);
             
             return $latest_version;
-            
-            
-            // Load the new version
-            $bundle = $this->bundles->load_bundle($this->name, $latest_version);
-//            print_r($bundle);
-            if (!$bundle instanceof bundle || !$bundle->is_loaded){
-                $this->error("Unable to load bundle");
-                print "Unable to load bundle\n";
-                return false;
-            }
-            return $latest_version;
-            print "BUNDLE {$bundle->name} v{$bundle->version}\n"; die();
-            // Check the version is the same
-            if ($bundle->version != $latest_version){
-                $this->error("Failed to get latest version");
-                print "Failed to get the latest version\n";
-                return false;
-            }
-            //print_r($bundle);die();
-            // Install the revision
-            //if (!$bundle->install()){
-            //    $this->errors($bundle->errors(true));
-            //    print "Failed to install\n";
-            //    return false;
-            //}
-            
-            // Success
-            //return $bundle->version;
         }
         
         /**
@@ -1074,7 +1039,6 @@ namespace adapt{
                                     if (is_array($schema)){
                                         /* Alter existing table */
                                         $field_registrations = array();
-                                        $field_alterations = array();
                                         
                                         $sql = $this->data_source->sql;
                                         $sql->alter_table($table_name);
@@ -1125,7 +1089,6 @@ namespace adapt{
                                                     return false;
                                                 }
                                                 
-                                                //TODO: Update the schema registration
                                                 $field_registrations[] = array(
                                                     'bundle_name' => $this->name,
                                                     'table_name' => $table_name,
@@ -1219,7 +1182,7 @@ namespace adapt{
                                          * so the table can be properly registered.
                                          */
                                         $this->store('adapt.installing_bundle', $this->name);
-                                        print $sql;//die();
+                                        
                                         /* Write the table */
                                         $sql->execute();
                                         
@@ -1389,7 +1352,7 @@ namespace adapt{
                                          * so the table can be properly registered.
                                          */
                                         $this->store('adapt.installing_bundle', $this->name);
-                                        print $sql;
+                                        
                                         /* Write the table */
                                         $sql->execute();
                                         
@@ -1453,7 +1416,7 @@ namespace adapt{
                                          */
                                         foreach($field_names as $field_name){
                                             $value = $row[$field_name];
-//                                            print_r($value);
+                                            
                                             if (is_array($value) && isset($value['lookup_from']) && isset($value['with_conditions'])){
                                                 $sql = $this->data_source->sql
                                                     ->select($value['lookup_from'] . '_id')
@@ -1515,7 +1478,7 @@ namespace adapt{
                                                 ->select($table_name . '_id')
                                                 ->from($table_name)
                                                 ->where(new sql_cond('name', sql::EQUALS, sql::q($row['name'])));
-                                            print $sql;
+                                            
                                             $results = $sql->execute(0)->results();
                                             
                                             if (count($results) == 1){
@@ -1574,7 +1537,7 @@ namespace adapt{
                                             $sql = $this->data_source->sql;
                                             
                                             $sql->insert_into($table_name, $field_names)->values($values);
-                                            print $sql;
+                                            
                                             $sql->execute();
                                             $errors = $sql->errors(true);
                                             
@@ -1835,7 +1798,7 @@ namespace adapt{
                 if ($this->data_source && $this->data_source instanceof data_source_sql){   
                     /* Add the bundle to bundle_version if it isn't already */
                     $model = new model_bundle_version();
-                    print "Bundle: {$this->name}  Version: {$this->version}\n";//die();
+                    
                     if (!$model->load_by_name_and_version($this->name, $this->version)){
                         $errors = $model->errors(true);
                         foreach($errors as $error) $this->error("Model 'bundle_version' return the error \"{$error}\"");

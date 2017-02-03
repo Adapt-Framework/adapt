@@ -1,5 +1,4 @@
 <?php
-
 /*
  * The MIT License (MIT)
  *   
@@ -30,28 +29,28 @@
 namespace adapt{
     
     /* Prevent direct access */
-    defined('ADAPT_STARTED') or die;
+    defined('ADAPT_STARTED') or die();
     
-    class model_bundle_version extends model{
+    class model_field extends model{
         
-        const EVENT_ON_LOAD_BY_NAME_AND_VERSION = 'model_bundle_version.load_by_name_and_version';
+        const EVENT_ON_LOAD_BY_TABLE_NAME_AND_FIELD_NAME = 'model_field.load_by_table_name_and_field_name';
         
         public function __construct($id = null, $data_source = null){
-            parent::__construct("bundle_version", $id, $data_source);
+            parent::__construct('field', $id, $data_source);
         }
         
-        public function load_by_name_and_version($bundle_name, $bundle_version){
+        public function load_by_table_name_and_field_name($table_name, $field_name){
             $this->initialise();
             
-            if ($bundle_name && $bundle_version){
+            if ($table_name && $field_name){
                 $sql = $this->data_source->sql;
                 
                 $sql->select('*')
-                    ->from('bundle_version')
+                    ->from('field')
                     ->where(
                         new sql_and(
-                            new sql_cond('name', sql::EQUALS, sql::q($bundle_name)),
-                            new sql_cond('version', sql::EQUALS, sql::q($bundle_version)),
+                            new sql_cond('table_name', sql::EQUALS, sql::q($table_name)),
+                            new sql_cond('field_name', sql::EQUALS, sql::q($field_name)),
                             new sql_cond('date_deleted', sql::IS, new sql_null())
                         )
                     );
@@ -59,7 +58,7 @@ namespace adapt{
                 $results = $sql->execute(0)->results();
                 
                 if (count($results) == 1){
-                    $this->trigger(self::EVENT_ON_LOAD_BY_NAME_AND_VERSION);
+                    $this->trigger(self::EVENT_ON_LOAD_BY_TABLE_NAME_AND_FIELD_NAME);
                     return $this->load_by_data($results[0]);
                 }elseif(count($results) == 0){
                     $this->error("Unable to find a record");
@@ -72,7 +71,22 @@ namespace adapt{
             return false;
         }
         
+        public function save(){
+            if (parent::save()){
+                // Update the datasource schema for this table
+                $schema = $this->data_source->schema;
+                if (!is_array($schema[$this->_data['table_name']])){
+                    $schema[$this->_data['table_name']] = [];
+                }
+                $schema[$this->_data['table_name']][] = $this->to_hash()['field'];
+                $this->data_source->schema = $schema;
+                
+                return true;
+            }
+            
+            return false;
+        }
         
     }
-
+    
 }
