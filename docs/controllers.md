@@ -184,6 +184,6 @@ $this->respond('key', 'value');
 ```
 To access the response from within a **view_** method you can do the following:
 ```php
-$response = $this->reponse('key');
+$response = $this->response('key');
 ```
-To prevent duplicate form submissions it is recomended the after processing an action you call the redirect method and redirect to a view.  Any data set with the respond method is preserved after the redirect.  In addition, if we were processing multiple actions, the redirect would occur after the last action is processed.  If multiple actions call the redirect method, then the last to call wins.
+To prevent duplicate form submissions it is recomended that after processing an action you call the redirect method and redirect to a view.  Any data set with the respond method is preserved after the redirect.  In addition, if we were processing multiple actions, the redirect would occur after the last action is processed.  If multiple actions call the redirect method, then the last to call wins.
