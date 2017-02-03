@@ -778,13 +778,24 @@ namespace adapt{
          * Updates the bundle with the latest available revision.
          */
         public function update(){
+            return $this->upgrade("{$this->version_major}.{$this->version_minor}");
+        }
+        
+        /**
+         * Upgrades the bundle to the specified version or
+         * the latest version when $version is missing.
+         * 
+         * @param string
+         * The version to update to.
+         */
+        public function upgrade($version = null){
             if (!$this->is_loaded){
                 $this->error("Bundle not loaded");
                 return false;
             }
             
             // Get the version
-            $version = "{$this->version_major}.{$this->version_minor}";
+            //$version = "{$this->version_major}.{$this->version_minor}";
             
             // Get the latest version
             $latest_version = $this->bundles->repository->has($this->name, $version);
@@ -839,17 +850,6 @@ namespace adapt{
             $this->trigger(self::EVENT_ON_UPDATE, ['bundle_name' => $this->name, 'current_version' => $this->version, 'new_version' => $latest_version]);
             
             return $latest_version;
-        }
-        
-        /**
-         * Upgrades the bundle to the specified version or
-         * the latest version when $version is missing.
-         * 
-         * @param string
-         * The version to update to.
-         */
-        public function upgrade($version = null){
-            if (is_null($version)) $version = "latest";
         }
         
         /**
