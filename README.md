@@ -84,7 +84,34 @@ views/
 **bundle.xml** contains meta information describing the bundle, such as it's name, version and any dependencies that it has.
 
 ## Writing your first application
-
-
+Create the following directories:
+```
+/adapt/test_app
+/adapt/test_app/test_app-1.0.0
+```
+We need to tell Adapt about our application so go ahead and create **bundle.xml** and save it in:
+```
+/adapt/test_app/test_app-1.0.0/bundle.xml
+```
+Add the following to **bundle.xml**:
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<adapt_framework>
+  <bundle>
+    <label>Test Application</label>
+    <name>test_app</name>
+    <version>1.0.0</version>
+    <version_status>release</version_status>
+    <type>application</type>
+    <namespace>\test_app</namespace>
+    <depends_on>
+      <bundle>
+        <name>adapt</name>
+        <version>2.0</version>
+      </bundle>
+    </depends_on>
+  </bundle>
+</adapt_framework>
+```
 For more information please visit [AdaptFramework.com](http://www.adaptframework.com)
 
