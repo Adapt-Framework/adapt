@@ -1031,6 +1031,10 @@ namespace adapt{
                         
                         /* Does this table have a date_modified field? */
                         if (in_array('date_modified', $fields)){
+                            $this->_changed_fields['date_modified'] = [
+                                'old_value' => $this->_data['date_modified'],
+                                'new_value' => new sql_now()
+                            ];
                             $this->_data['date_modified'] = new sql_now();
                         }
                         

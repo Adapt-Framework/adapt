@@ -735,18 +735,27 @@ namespace adapt{
                 return false;
             }
             
-            $sql = $this->sql;
-            $sql->insert_into('field', $allowed_keys);
-            $schema = array();
-            
             foreach($table_array as $field_array){
-                $record = array();
+                $model_field = new model_field();
                 
+                // We are going to attempt to load the field
+                // from the database, we don't care if this 
+                // fails, because if it does then it will be 
+                // treated like a brand new field.
+                $model_field->load_by_table_name_and_field_name($field_array['table_name'], $field_array['field_name']);
+                
+                // If it failed the model will be in a state of error, we must clear the error
+                // before we use the model
+                $model_field->errors(true);
+                
+                // Loop through the array and set the values
                 foreach($allowed_keys as $key){
-                    if (isset($field_array[$key])){
-                        $value = $field_array[$key];
-                        if (is_array($value)){
-                            if (isset($value['lookup_from'])){
+                    if ($key != 'date_created'){
+                        if (isset($field_array[$key])){
+                            $value = $field_array[$key];
+                            
+                            // Check if we need to resolve lookups
+                            if (is_array($value) && isset($value['lookup_from'])){
                                 $and = new sql_and(new sql_cond('date_deleted', sql::IS, new sql_null()));
                                 foreach($value['with_conditions'] as $key => $val){
                                     $and->add(new sql_cond($key, sql::EQUALS, sql::q($val)));
@@ -760,28 +769,26 @@ namespace adapt{
                                     ->results(60 * 60 * 24 * 5); //Cache for 5 days
                                 $value = $result[0][$value['lookup_from'] . "_id"];
                             }
+                            
+                            // Set the value
+                            $model_field->$key = $value;
+                        }else{
+                            // Set the value to null, this is required because
+                            // the schema may have changed and so we need to
+                            // remove the old values
+                            $model_field->$key = null;
                         }
-                        $record[$key] = $value;
-                    }else{
-                        $record[$key] = null;
                     }
                 }
-                $record['date_created'] = new sql_now();
-                $sql->values(array_values($record));
-                $schema[] = $record;
-            }
-            
-            if ($sql->execute()){
-                if (is_array($this->_schema[$schema[0]['table_name']])){ 
-                    $this->_schema[$schema[0]['table_name']] = array_merge($this->_schema[$schema[0]['table_name']], $schema);
-                }else{
-                    $this->_schema[$schema[0]['table_name']] = $schema;
-                }
                 
-                return true;
+                // Save the model
+                if (!$model_field->save()){
+                    $this->error($model_field->errors(true));
+                    return false;
+                }
             }
             
-            return false;
+            return true;
         }
         
         /**
@@ -815,4 +822,3 @@ namespace adapt{
 
 }
 
-?>
