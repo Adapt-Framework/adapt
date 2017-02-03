@@ -26,9 +26,9 @@ Because this controller is named **controller_root** and the bundle it's a part 
 Calling the URL **/** from a browser will invoke the method **view_default** on this controller.  Creating a new method called **view_foobar** would be mounted against the URL **/foobar**. 
 
 **view_** methods can do one of three things:
-1. Add content to the DOM by using the controllers **add_view** method.
-2. Return a value, causing only that value to be output to the browser.  Useful for AJAX calls or building API's.
-3. Return another controller and hand off the remaining portion of the URL to the other controller.
+* Add content to the DOM by using the controllers **add_view** method.
+* Return a value, causing only that value to be output to the browser.  Useful for AJAX calls or building API's.
+* Return another controller and hand off the remaining portion of the URL to the other controller.
 
 ### Adding content to the DOM
 We can add content to the DOM by using the controllers **add_view** method like so:
@@ -60,4 +60,83 @@ public function view_bar(){
 
 This is the only offically supported way of returning controllers.
 
-In the above example, the URL **/bar** would be serviced by **view_default** on **controller_foo**.  To service the URL **/bar/humbug** you simply need to add a method named **view_humbug** on **controller_foo**
+In the above example, the URL **/bar** would be serviced by **view_default** on **controller_foo**.  To service the URL **/bar/humbug** you simply need to add a method named **view_humbug** on **controller_foo**.
+
+## Actions
+Lets start by defining a new action named **some-action** on the route controller:
+```php
+<?php
+namespace test_app;
+
+defined('ADAPT_STARTED') or die;
+
+class controller_root extends \adapt\controller{
+  
+  public function action_some_action(){
+  
+  }
+  
+  public function view_default(){
+    
+  }
+}
+```
+
+In Adapt, actions and views are routed seperately. calling the URL **/some-action** will always invoke the method **view_some_action** on **controller_root**.  Also note the - in the URL is translated to _ in the method.
+
+To invoke the method **action_some_action** we would call it either with the URL **/?actions=some-action** or by submitting the actions variable from within a form.
+
+By seperating actions from views we are able to control the output view very easily, we can also perform multiple actions per call, we just simply comma seperate them, eg **/?actions=some-action,another-action**.
+
+Even though actions and views are routed seperately, we still use **view_** methods to control routing to the action.  Lets say we have the root controller (**controller_root**) and another controller handling user accounts (**controller_user**) and we wanted to invoke **action_login** on that controller while displaying **view_foobar** on **controller_root**.
+
+The URL would look like this:
+```
+/foobar?actions=users/login
+```
+
+Our **controller_root** would look like:
+```php
+<?php
+namespace test_app;
+
+defined('ADAPT_STARTED') or die;
+
+class controller_root extends \adapt\controller{
+  
+  public function view_default(){
+    
+  }
+  
+  public function view_foobar(){
+    $this->add_view("Welcome to foobar!");
+  }
+  
+  public function view_users(){
+    return $this->load_controller("\\test_app\\controller_users");
+  }
+}
+```
+
+Our action began **users/...**, notice that the **controller_root** used a **view_** method to route to the user controller.
+
+**controller_user** would look something like this:
+```php
+<?php
+namespace test_app;
+
+defined('ADAPT_STARTED') or die;
+
+class controller_users extends \adapt\controller{
+  
+  public function action_login(){
+  
+  }
+  
+  public function view_default(){
+    
+  }
+}
+```
+
+Only the final part of an action URL invokes an **action_** method.
