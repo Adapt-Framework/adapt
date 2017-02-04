@@ -187,3 +187,55 @@ To access the response from within a **view_** method you can do the following:
 $response = $this->response('key');
 ```
 To prevent duplicate form submissions it is recomended that after processing an action you call the redirect method and redirect to a view.  Any data set with the respond method is preserved after the redirect.  In addition, if we were processing multiple actions, the redirect would occur after the last action is processed.  If multiple actions call the redirect method, then the last to call wins.
+
+## Controlling access
+In the previous example **action_login** redirected to **/my-account** on a successful login, however, there was nothing preventing someone from accessing the URL **/my-account** directly.
+
+We can control access to **view_** or **account_** methods using **permission_** methods.
+
+```php
+<?php
+namespace test_app;
+
+defined('ADAPT_STARTED') or die;
+
+class controller_root extends \adapt\controller{
+  
+  protected $_logged_in = false;
+  
+  public function permission_view_my_account(){
+    return $this->_is_logged_in;
+  }
+  
+  public function action_login(){
+    $username = $this->request['username'];
+    $password = $this->request['password'];
+    
+    // Do something the username and password
+    if ($success){
+      $this->_logged_on = true;
+      $this->redirect("/my-account");
+    }else{
+      $this->respond("login", "Login failed");
+      $this->redirect("/login");
+    }
+  }
+  
+  public function view_default(){
+    
+  }
+  
+  public function view_login(){
+    $this->add_view("TODO: Write login form");
+  }
+  
+  public function view_my_account(){
+    $this->add_view("My account page");
+  }
+}
+```
+
+Permission methods must return true or false indicating permission or not.  
+
+Since view's can mount other view controllers, **permission_** methods can act as gateways.  For example, if you do not have permission to view the URL **/my-account** then by default you do not have permission to access any sub paths within **/my-account**.
+
