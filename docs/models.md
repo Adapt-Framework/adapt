@@ -191,3 +191,81 @@ class controller_root extends \adapt\controller{
 }
 
 ```
+
+### Checking if loaded
+You can check if a model is loaded using the read-only property **is_loaded**.
+
+```php
+$car = new model_car(1); // Load record with car_id '1'
+if ($car->is_loaded){
+  print "Loaded '{$car->label}'\n";
+}else{
+  print "Unable to load because:\n";
+  print_r($car->errors(true));
+}
+```
+
+## Saving models
+You can save a model using it's **save** method. Save will return true or false indicating success or failure.
+
+```php
+$car = new model_car();
+$car->name = "escort";
+if ($car->save()){
+  print "Saved";
+}else{
+  print "Failed to save";
+}
+```
+
+### Check if a model's changed
+If you need find out if a model has changed, you can use the read-only property **has_changed**.
+```php
+$car = new model_car();
+if ($car->has_changed){
+
+}
+```
+
+## Exporting and importing data
+Model provides some convienient methods for exporting and imported data.
+
+### Exporting data
+#### Hash array
+You can export the data from a model using the **to_hash** method.
+```php
+$car = new model_car();
+if ($car->load_by_name('capri')){
+  $data = $car->to_hash();
+  print $data['car']['label'];
+}
+```
+
+The exported array will follow the structure:
+```php
+$data['table_name']['field_name'] = 'value';
+```
+
+#### Hash string array
+This method provides a easy way to export data to a form and import data from a form.  In the structure of the data is the same as **to_hash** but it is flattened so the keys and values can be used as form input name and values.
+
+```php
+$car = new model_car();
+if ($car->load_by_name('capri')){
+  $data = $car->to_hash_string();
+  print $data["car[label]"];
+}
+```
+
+### Importing data
+Data exported using **to_hash** or **to_hash_string** can be directly imported into the model using the **push** method.
+
+```php
+$car = new model_car(1);
+$data = $car->to_hash();
+$data['car']['description'] = "This car is fast";
+
+$car->push($data);
+$car->save();
+```
+
