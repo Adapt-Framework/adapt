@@ -364,6 +364,17 @@
           
           <record>
             <bundle_name>adapt</bundle_name>
+            <name>decimal</name>
+            <validator>decimal</validator>
+            <formatter></formatter>
+            <unformatter></unformatter>
+            <datetime_format></datetime_format>
+            <max_length></max_length>
+            <based_on_data_type></based_on_data_type>
+          </record>
+          
+          <record>
+            <bundle_name>adapt</bundle_name>
             <name>char</name>
             <validator>char</validator>
             <formatter></formatter>

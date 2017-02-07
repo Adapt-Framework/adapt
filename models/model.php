@@ -297,7 +297,9 @@ namespace adapt{
                         $this->_data[$key] = $value;
                     }else{
                         /* Unformat the value */
+                        //print "BEFORE: {$key}={$value}\n";
                         $value = $this->data_source->unformat($this->table_name, $key, $value);
+                        //print "AFTER: {$key}={$value}\n";
                         /* Has the value changed? */
                         if ($this->_data[$key] !== $value){
                             

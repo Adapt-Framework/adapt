@@ -635,7 +635,6 @@ namespace adapt{
             if (is_object($value) && $value instanceof sql) return $value;
             
             $field = $this->get_field_structure($table_name, $field_name);
-            
             if (is_array($field) && is_assoc($field)){
                 $data_type = $this->get_data_type($field['data_type_id']);
                 if (is_array($data_type)){
@@ -753,21 +752,31 @@ namespace adapt{
                     if ($key != 'date_created'){
                         if (isset($field_array[$key])){
                             $value = $field_array[$key];
-                            
+                            //print "VALUE: " . print_r($value, true) . "\n";
+                            $should_die = false;
                             // Check if we need to resolve lookups
                             if (is_array($value) && isset($value['lookup_from'])){
                                 $and = new sql_and(new sql_cond('date_deleted', sql::IS, new sql_null()));
-                                foreach($value['with_conditions'] as $key => $val){
-                                    $and->add(new sql_cond($key, sql::EQUALS, sql::q($val)));
+                                foreach($value['with_conditions'] as $cond_key => $cond_val){
+                                    if (preg_match("/\(/", $cond_val)){
+                                        $cond_val = explode("(", $cond_val);
+                                        $cond_val = $cond_val[0];
+                                    }
+                                    $and->add(new sql_cond($cond_key, sql::EQUALS, sql::q($cond_val)));
                                 }
-                                $result = $this->data_source->sql
+                                $sql = $this->data_source->sql
                                     ->select($value['lookup_from'] . '_id')
                                     ->from($value['lookup_from'])
                                     ->where(
                                         $and
-                                    )->execute()
-                                    ->results(60 * 60 * 24 * 5); //Cache for 5 days
-                                $value = $result[0][$value['lookup_from'] . "_id"];
+                                    );
+                                
+                                $results = $sql->execute()
+                                    ->results(0); //Cache for 5 days
+                                //print_r($results);di
+                                $value = $results[0][$value['lookup_from'] . "_id"];
+                                
+                                $should_die = true;
                             }
                             
                             // Set the value
