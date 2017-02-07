@@ -7,8 +7,8 @@ namespace adapt\interfaces{
     interface storage_file{
         public function pget_available();
         public function is_key_valid($key);
-        public function set($key, $data, $content_type = null, $public = false);
-        public function set_by_file($key, $file_path, $content_type = null, $public = false);
+        public function set($key, $data, $content_type = null);
+        public function set_by_file($key, $file_path, $content_type = null);
         public function get($key, $number_of_bytes = null, $offset = 0);
         public function write_to_file($key, $path = null);
         public function delete($key);
