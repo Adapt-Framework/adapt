@@ -269,7 +269,11 @@ namespace adapt{
                     
                 if (in_array($key, $fields)){
                     /* Format and return the value */
-                    return $this->data_source->format($this->_table_name, $key, $this->_data[$key]);
+                    if (is_null($this->_data[$key])) {
+                        return null;
+                    } else {
+                        return $this->data_source->format($this->_table_name, $key, $this->_data[$key]);
+                    }
                 }
                 
             }
