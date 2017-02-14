@@ -1801,7 +1801,7 @@ namespace adapt{
                     
                     if (!$model->load_by_name_and_version($this->name, $this->version)){
                         $errors = $model->errors(true);
-                        foreach($errors as $error) $this->error("Model 'bundle_version' return the error \"{$error}\"");
+                        //foreach($errors as $error) $this->error("Model 'bundle_version' returned the error \"{$error}\" from the bundle {$this->name}");
                     }
                     
                     $model->name = $this->name;
@@ -1839,17 +1839,21 @@ namespace adapt{
                                 }
                             }
                         }
-                        
+                        /* Remove installation mark */
+                        $this->file_store->delete("adapt/installation/{$this->name}-{$this->version}");
                         return true;
                     }else{
                         $errors = $model->errors(true);
                         foreach($errors as $error) $this->error("Model 'bundle_version' returned the error \"{$error}\"");
+                        /* Remove installation mark */
+                        $this->file_store->delete("adapt/installation/{$this->name}-{$this->version}");
                         return false;
                     }
                 }
                 
                 /* Remove installation mark */
                 $this->file_store->delete("adapt/installation/{$this->name}-{$this->version}");
+                return false;
             }
         }
         

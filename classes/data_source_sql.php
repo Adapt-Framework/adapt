@@ -723,14 +723,17 @@ namespace adapt{
                         
                         foreach($field_keys as $field_key){
                             if (!in_array($field_key, $allowed_keys)){
+                                $this->error("Unknown field {$field_array['table_name']}.{$field_key}");
                                 return false;
                             }
                         }
                     }else{
+                        $this->error("Invalid table data");
                         return false;
                     }
                 }
             }else{
+                $this->error("Bad table data");
                 return false;
             }
             
