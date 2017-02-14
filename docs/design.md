@@ -5,7 +5,7 @@ Before developing with Adapt it's helpful to understand how Adapt is designed an
 ## The foundations
 Every class in Adapt ultimately inherits from a class called **base** and this class provides a few really useful features that can make this impossible, possible.
 
-### Properties
+### Adapt properties
 Typically in PHP we would define a property like so:
 ```php
 class some_class{
@@ -68,3 +68,72 @@ $result = $class->new_method(1, 2);
 
 Note that the method defintion has the first parameter of **$_this** which is the object to which our method is attached.  Normally inside an object we would use **$this**, however, **$this** is a keyword and so we cannot use.
 
+## Shared properties
+Adapt allows properties to be shared between all instances of a class, or between all instances of all classes.  Before we create a shared property we must first store the data somewhere, introducing Adapt store, a runtime data store using a key/value pair. The store is available to all instances of **base**, direct or via inheritance.
+
+```php
+$object = new \adapt\base();
+$object->store('foo', 'bar');
+print $object->store('foo');
+```
+Using Adapt properties we can make this accessible as a property and thus we have a shared property.
+
+```php
+class some_class extends \adapt\base{
+
+    public function pget_foo(){
+        return $this->store('foo');
+    }
+    
+    public function pset_foo($value){
+        $this->store('foo', $value);
+    }
+
+}
+
+$class1 = new some_class();
+$class2 = new some_class();
+
+$class1->foo = 'bar';
+print $class2->foo; // Prints 'bar'
+```
+
+To make this property available to all instance of all classes we can used the **extend** method and extend **base**.
+
+```php
+// Define a class
+class some_class1 extends \adapt\base{
+
+}
+
+// And another
+class another_class extends \adapt\base{
+
+}
+
+// Extend base and add a property getter
+\adapt\base::extend(
+    'pget_foo',
+    function($_this){
+        return $_this->store('foo');
+    }
+);
+
+// Now add a setter
+\adapt\base::extend(
+    'pset_foo',
+    function($_this, $value){
+        $_this->store('foo', $value);
+    }
+);
+
+// Create a two differnt classes
+$class1 = new some_class();
+$class2 = new another_class();
+
+// Set the property on one
+$class1->foo = 'bar';
+
+// Get it from the other
+print $class2->foo; // Prints 'bar', how cool is that?
+```
