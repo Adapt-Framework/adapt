@@ -1423,7 +1423,7 @@ namespace adapt{
                                                     ->from($value['lookup_from']);
                                                     
                                                 $where = new sql_and(
-                                                    new sql_cond('date_deleted', sql::IS, new sql_null())
+                                                    /*new sql_cond('date_deleted', sql::IS, new sql_null())*/
                                                 );
                                                 
                                                 foreach($value['with_conditions'] as $condition => $val){
