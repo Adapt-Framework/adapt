@@ -68,7 +68,7 @@ $result = $class->new_method(1, 2);
 
 Note that the method defintion has the first parameter of **$_this** which is the object to which our method is attached.  Normally inside an object we would use **$this**, however, **$this** is a keyword and so we cannot use.
 
-## Shared properties
+### Shared properties
 Adapt allows properties to be shared between all instances of a class, or between all instances of all classes.  Before we create a shared property we must first store the data somewhere, introducing Adapt store, a runtime data store using a key/value pair. The store is available to all instances of **base**, direct or via inheritance.
 
 ```php
@@ -136,4 +136,46 @@ $class1->foo = 'bar';
 
 // Get it from the other
 print $class2->foo; // Prints 'bar', how cool is that?
+```
+
+### Class handlers
+Adapt provides a useful feature called class handlers, class handlers are a way of templating classes at runtime as well as allowing them to cross namespace boundaries seemlessly.
+
+Before we look how to create a class handler, lets look at some that Adapt defines. 
+
+**\adapt\html** is a registered class handler, here it is in action:
+```php
+$p = new html_p("This class doesn't exist");
+$strong = new html_strong("Neither does this one");
+$p->add($strong);
+$container = new html_div($p); // Again this class isn't defined
+// And all the above will work just fine :)
+```
+So using class handlers we can create classes on demand, all the classes created will have the same functionallity as the class handler, in this case **\adapt\html**.  Once a class has been registered as a handler any class prefixed with the same name and **_** in any namespace will be sent to **\adapt\html** for handling.
+
+Of course there will always be times when you need to concreate a class being handled for custom functionallity.  Lets say we want to change the default behaviour og **html_p** so that it always includes the css class 'foo', we just need to define the class and extend the class handler.  The class should be declared in your bundles namespace, it will however transcend this limitation at runtime and become the default across all namespaces.
+
+Heres the code:
+```php
+namespace some_namespace;
+
+class html_p extends \adapt\html{
+
+    public function __construct($items = null){
+        parent::__construct('p', $items, ['class' => 'foo']);
+    }
+
+}
+```
+
+If we to create this class from another namespace, we would in fact get the concreate from the above class.
+```php
+namespace another_namespace; // Different namespace
+$p = new html_p("Hello world"); // Not defined in this namespace
+print $p;
+```
+
+Prints outs:
+```html
+<p class="foo">Hello world</p>
 ```
