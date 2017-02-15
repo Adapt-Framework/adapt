@@ -236,6 +236,19 @@ While often people deploy there own file storage solutions, please don't, Adapt 
 In fact the storage interface is very simple so you can also write your own file storage layer and replace the Adapt default.  Your storage engine must conform to **\adapt\interfaces\storage_file** and to replace the default you simply do this when your bundle boots:
 ```php
 $this->file_store = new your_storage_class();
-``
+```
 
+## Database access
+To define a database connection you add the connection settings to your settings.xml, you can read how in the bundles documentation, once defined, **\adapt\base** provides a shared property **data_source** which can give us access to the database.
 
+So lets execute a simple SQL query:
+```php
+$results = $this->data_source->sql->select('*')->from('car')->execute()->results();
+```
+Notice it's a single line of code to define, execute and get the results.  We're not showing off, if we were showing off we could have printed it to a html table in one line of code, like so:
+
+```php
+print new \adapt\view_table($this->data_source->sql->select('*')->from('car')->execute()->results());
+```
+
+For more information on accessing data, see the section on **SQL**.
