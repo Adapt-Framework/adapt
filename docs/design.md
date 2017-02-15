@@ -228,3 +228,14 @@ namespace another_namespace;
 $hello_world = new hello_world(); // Works just fine :)
 ```
 
+## File storage
+**\adapt\base** has a shared property called **file_store** which provides access to an instance of **\adapt\storage_file_system** which can be used to store files on the file system.  
+
+While often people deploy there own file storage solutions, please don't, Adapt file storage is both simple and flexible, because it's a shared property, all classes have immediate access and so all bundles store data in the same place.  And because you may want to store files else where, such as in a database, you can just include the bundle **storage_database** in your dependency list and then all files are stored in the database.
+
+In fact the storage interface is very simple so you can also write your own file storage layer and replace the Adapt default.  Your storage engine must conform to **\adapt\interfaces\storage_file** and to replace the default you simply do this when your bundle boots:
+```php
+$this->file_store = new your_storage_class();
+``
+
+
