@@ -179,3 +179,52 @@ Prints outs:
 ```html
 <p class="foo">Hello world</p>
 ```
+
+Lets look at another handler, **\adapt\model**. This handler allows you to use database tables as if they were predefined models.  Suppose a table exists called **car** and it has the fields car_id, manufacturer and model, we can easily create an instance to handle this without ever defining the class.
+
+```php
+namespace some_namespace;
+
+$car = new model_car(); // Class doesn't exist
+$car->manufacturer = 'Ford';
+$car->model = 'Capri';
+$car->save(); // Writen to the database
+
+print $car->car_id;
+```
+
+As with the **\adapt\html** handler we can concreate a specific model if we need custom functionality, and again being a class handler the concreated class will transcend namespaces.
+
+#### Defining a class handler
+Typically would define a handler when your bundle boots, you can read about booting in the bundle documentation.
+
+To create a class handler is really simple, **\adapt\base** has the method **add_handler** which takes a single string parameter with the full namespace and class name of the class to be registered.
+
+Lets create a new handler called **hello**, first we need to create a class.
+```php
+namespace some_namespace;
+
+class hello extends \adapt\base{
+    
+    // The constructor must have at least one parameter that
+    // will receive everything after $x = new hello_...();
+    // you may add additional parameters and these parameter
+    // will be transposed to any handled class.
+    public function __construct($class_name){
+    
+    }
+}
+```
+
+We now need to register the class as a handler, since **\adapt\base** is the foundation for all other classes, we can from within any class call **$this->add_handler(...)**, typically this would be done when the bbundle is booting.
+```php
+$this->add_handler("\\some_namespace\\hello");
+```
+
+And so lets try it out:
+```php
+namespace another_namespace;
+
+$hello_world = new hello_world(); // Works just fine :)
+```
+
