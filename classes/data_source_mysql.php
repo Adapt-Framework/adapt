@@ -57,6 +57,10 @@ namespace adapt{
         public function query($sql, $write = false){
             $host = $this->get_host($write);
             
+            if ($this->setting('adapt.debug_log_sql') == 'Yes'){
+                $this->dlog("Executing SQL statement against {$host['username']}@{$host['host']}:{$host['port']}/{$host['schema']}\n{$sql}");
+            }
+            
             if (!is_null($host) && isset($host['handle'])){
                 if (mysqli_real_query($host['handle'], $sql)){
                     $this->trigger(self::EVENT_QUERY, array('sql' => $sql, 'host' => $host));

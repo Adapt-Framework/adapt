@@ -191,6 +191,15 @@
                   <value>Yes</value>
               </allowed_values>
           </setting>
+          <setting>
+              <name>adapt.debug_log_sql</name>
+              <label>Debug log SQL statements?</label>
+              <default_value>No</default_value>
+              <allowed_values>
+                  <value>No</value>
+                  <value>Yes</value>
+              </allowed_values>
+          </setting>
       </category>
     </settings>
     <schema>
