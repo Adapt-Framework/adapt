@@ -171,6 +171,27 @@
           </allowed_values>
         </setting>
       </category>
+      <category name="Debugging">
+          <setting>
+              <name>adapt.debug</name>
+              <label>Enable debugging?</label>
+              <default_value>Off</default_value>
+              <allowed_values>
+                  <value>Off</value>
+                  <value>Print output</value>
+                  <value>Log to file</value>
+              </allowed_values>
+          </setting>
+          <setting>
+              <name>adapt.debug_bundle_operations</name>
+              <label>Debug bundle opperations?</label>
+              <default_value>No</default_value>
+              <allowed_values>
+                  <value>No</value>
+                  <value>Yes</value>
+              </allowed_values>
+          </setting>
+      </category>
     </settings>
     <schema>
       <add>

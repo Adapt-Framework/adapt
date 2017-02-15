@@ -1026,6 +1026,26 @@ namespace adapt{
         }
         
         /**
+         * Method to log debug output
+         */
+        public function dlog($message){
+            switch($this->setting('adapt.debug')){
+            case "Off":
+                break;
+            case "Print output":
+                print date('Y-m-d H:i:s') . ": {$message}\n";
+                break;
+            case "Log to file":
+                $key = "debug_log/" . date('Ymd') . ".log";
+                $data = $this->file_store->get($key);
+                if (!$data) $data = "";
+                $data .= $message;
+                $this->file_store->set($key, $data, "text/plain");
+                break;
+            }
+        }
+        
+        /**
          * Creates an instance of the class named $class
          *
          * @access public

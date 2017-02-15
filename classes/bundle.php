@@ -778,6 +778,9 @@ namespace adapt{
          * Updates the bundle with the latest available revision.
          */
         public function update(){
+            if ($this->setting('adapt.debug_bundle_opperations') == 'Yes'){
+                $this->dlog("Called bundle->update() on bundle {$this->name} v{$this->version}");
+            }
             return $this->upgrade("{$this->version_major}.{$this->version_minor}");
         }
         
@@ -789,6 +792,13 @@ namespace adapt{
          * The version to update to.
          */
         public function upgrade($version = null){
+            if ($this->setting('adapt.debug_bundle_opperations') == 'Yes'){
+                if ($version){
+                    $this->dlog("Called bundle->upgrade('{$version}') on bundle {$this->name} v{$this->version}");
+                }else{
+                    $this->dlog("Called bundle->upgrade() on bundle {$this->name} v{$this->version}");
+                }
+            }
             if (!$this->is_loaded){
                 $this->error("Bundle not loaded");
                 return false;
@@ -962,6 +972,9 @@ namespace adapt{
          * returns false.
          */
         public function boot(){
+            if ($this->setting('adapt.debug_bundle_opperations') == 'Yes'){
+                $this->dlog("Called bundle->boot() on bundle {$this->name} v{$this->version}");
+            }
             if (!$this->is_booted){
                 $this->apply_settings();
                 
@@ -1015,6 +1028,9 @@ namespace adapt{
          * @access public
          */
         public function install(){
+            if ($this->setting('adapt.debug_bundle_opperations') == 'Yes'){
+                $this->dlog("Called bundle->install() on bundle {$this->name} v{$this->version}");
+            }
             if (!$this->is_installed() && !$this->is_installing()){
                 
                 /* Mark as installing */
