@@ -242,7 +242,7 @@ namespace adapt{
             }
             
             //TODO: Dependencies
-            
+
             /* Valid? */
             return count($this->errors()) == 0 ? true : false;
         }
@@ -976,11 +976,11 @@ namespace adapt{
              * Before we do anything we need to check if this object
              * is valid
              */
-            
+
             if ($this->is_valid){
                 $return = true;
                 $children = $this->get();
-                
+
                 /*
                  * We need to save any children that we
                  * depend up on
@@ -1031,6 +1031,7 @@ namespace adapt{
                     /*
                      * Has anything changed?
                      */
+
                     if ($this->has_changed == true){
                         /* Lets build the sql statement */
                         $sql = $this->data_source->sql; //Same as: $sql = new sql(null, $this->data_source);
@@ -1052,7 +1053,7 @@ namespace adapt{
                                 $data_to_write[$field_name] = $values['new_value'];
                             }
                         }
-                        
+
                         if ($this->is_loaded){
                             /*
                              * We are going to update an existing
@@ -1151,7 +1152,7 @@ namespace adapt{
                             /* Build the sql statement */
                             $sql->insert_into($this->table_name, array_keys($data_to_write));
                             $sql->values(array_values($data_to_write));
-                            
+
                             /* Execute the statement */
                             $sql->execute();
                             
