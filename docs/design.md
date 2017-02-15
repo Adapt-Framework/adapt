@@ -138,7 +138,7 @@ $class1->foo = 'bar';
 print $class2->foo; // Prints 'bar', how cool is that?
 ```
 
-### Class handlers
+## Class handlers
 Adapt provides a useful feature called class handlers, class handlers are a way of templating classes at runtime as well as allowing them to cross namespace boundaries seemlessly.
 
 Before we look how to create a class handler, lets look at some that Adapt defines. 
@@ -195,7 +195,7 @@ print $car->car_id;
 
 As with the **\adapt\html** handler we can concreate a specific model if we need custom functionality, and again being a class handler the concreated class will transcend namespaces.
 
-#### Defining a class handler
+### Defining a class handler
 Typically would define a handler when your bundle boots, you can read about booting in the bundle documentation.
 
 To create a class handler is really simple, **\adapt\base** has the method **add_handler** which takes a single string parameter with the full namespace and class name of the class to be registered.
