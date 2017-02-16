@@ -496,14 +496,15 @@ namespace adapt{
                                             
                                             /* Escape the value */
                                             $value = $this->escape($value);
-                                            
-                                            /* Validate the value */
-                                            if (!$this->validate($sql->insert_into_table_name, $keys[$i], $value)){
-                                                //TODO: Faild the insert
-                                                //print new html_pre("The data for {$keys[$i]} on row " . ($j + 1) . " is not valid");
-                                                $this->error("The data for {$keys[$i]} on row " . ($j + 1) . " is not valid");
-                                                return null;
-                                            }
+
+                                            // TODO: Needs review - this fails name validation on apostrophes in names; "O\'Brien" does not validate
+//                                            /* Validate the value */
+//                                            if (!$this->validate($sql->insert_into_table_name, $keys[$i], $value)){
+//                                                //TODO: Faild the insert
+//                                                //print new html_pre("The data for {$keys[$i]} on row " . ($j + 1) . " is not valid");
+//                                                $this->error("The data for {$keys[$i]} on row " . ($j + 1) . " is not valid");
+//                                                return null;
+//                                            }
                                             
                                             
                                             $statement .= "\"{$value}\"";
