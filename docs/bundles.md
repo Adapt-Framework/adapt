@@ -1,36 +1,36 @@
-## Bundles
+# Bundles
 
-### What are bundles?
+## What are bundles?
+In Adapt everything is a bundle, Adapt is even a bundle.  A bundle is just a bunch of useful code that does something.  A bundle could be a framework like Adapt, it could be locality information, or a form libaray or even a fully blown web application.  The idea is simple, you break code in to small independent useful chucks, bundle it up with a name and a version and then include it in future work.
 
-### Bundle structure
-Each bundle will have a file structure something like this:
+Bundles can depend on other bundles, so instead of writing large applications, you write a smimple bundle that pulls in functionality from other bundles.  Take for example the **Administrator** bundle, this provides a rich website administration tool, featuring platform and user management, including this means you only need to write that which is custom to your application. **Administrator** of course has lots of dependiences, which in turn have more.
+
+By building this way we can solve problems truly once.
+
+To include **Administrator** in your application you need only reference it, Adapt will download and install it the next time your application runs.  Outside of the framework is the Adapt repository, a centralised place where bundles are stored.  The repository is open to anyone and anyone can publish to bundles, of course you have the option of making them public or private.
+
+By intergrating the repository into the fabric of the framework we can automatically install, update, upgrade and self heal when files go missing.  When you write applications with Adapt then you also get the ability to deploy on demand.
+
+Because bundles are versioned and Adapt has been designed to handle updates it becomes possible to provide continuous deployment for any application you write.
+
+## Bundle file structure
+Bundles have a typical file structure as indicated below, this however is not set in stone and bundles may include whatever they wish.
 ```
 /
 /bundle.xml
-/boot.php
-/install.php
-/controllers/
-/classes/
-/models/
-/views/
+/controllers    <Directory>
+/classes        <Directory>
+/models         <Directory>
+/views          <Directory>
+/static         <Directory>
 ```
 
-**bundle.xml** Contains a description about the bundle and any bundles it depends upon to function. This file is mandatory.
-**install.php** Is called when the bundle if installed, typically this will build the bundles schema. This file is optional.
-**boot.php** Is called when the framework boots, this allows you to carry out any tasks before the page has been built.
-**/controllers/** Contains any view controllers you may have.
-**/classes/** Any classes that are not controllers, models or views.
-**/models/** Contains any models you have.
-**/views/** Contains any view you have.
+The directories for models, views and controllers hold as expected, models, views and controllers. The classes directory is for any classes that are not models, views or controllers.  The static directory holds any static content your bundle needs.
 
-Other directories maybe used you are however responsible for auto loading them.
+## bundle.xml
+This file tells Adapt about your bundle.  This file contains meta data such as the bundles name and version, a label and description for display in the repository should you publish it.  This file is also used to define the data schema used by your bundle and any dependencies your bundle has.
 
-### bundle.xml
-**bundle.xml** is a really simple way of describing your bundle and the version.  It also allows for dependencies to be defined which will automatically download and install upon this bundle being installed.
-
-You can also use this file to declare any settings your bundle has, these settings can be set later by other bundles or the end user.
-
-A typical bundle will have the following structure:
+A typical bundle.xml will have the following structure:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <adapt_framework>
