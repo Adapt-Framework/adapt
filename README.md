@@ -1,4 +1,4 @@
-# Adapt PHP Framework 
+# Adapt PHP Framework
 Adapt is an enterprise grade PHP framework that was designed for rapid web application development and deployment.
 
 Adapt has been used commerically for over 10 years and we are now happy to release 2.0 to the world with an MIT license giving you maximum freedom to do what you do.
