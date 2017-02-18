@@ -47,12 +47,27 @@ A typical bundle.xml will have the following structure:
 
 ### Available bundle elements
 Name            | Required      | Description
-----------------+---------------+----------------
+----------------|---------------|----------------
 name            | Always        | The name of the bundle. This should be all lowercase alpha chars or underscores. If publishing to Adapt repository then the name must also be unique.
 version         | Always        | This is the version of the bundle, this should be in the form of xx.xx.xx following the rules of [http://semver.org/](http://semver.org/). When publishing to the repository you may re-publish at anytime but the version must be different from all previous published versions.
 label           | Always        | A human friendly label describing the bundle.  When publishing to the repository the label from the most recent version will be used to the listing.
 description    | Only when posting to the public repository | A rich description of the bundle using only plan text.
-type           | Always         | 
+type           | Always         | This tells Adapt what your bundle is used for, you can obtain a list of valid types from ......., when build an application it must always be **application**
+namespace       | Always        | The namespace being used by the bundle, for example, **\adapt**.  The namespace here must be used for all models, views and controllers.  You should also use it for all other classes.  You can include more namespaces when your bundle is booting, see bundle control below.
+version_status | When posting to Adapt repository | Can be one of **alpha**, **beta**, **release_candidate**, **release**. By allowing development versions in the repository we can offer continious build testing to dev teams.
+availability   | When posting to Adapt repository | Can be one of **public** of **private**.  **Important note:** Bundles pushed to the repository with a status of **public** may not be withdrawn at a later date.  Because the nature of Adapt is building small blocks, pulling a small one used in many web applications would break alot of things.  If you tell us its **public**, it's public
+
+### author
+
+### depends_on
+
+### settings
+
+### schema
+
+### Custom tag handling
+
+## Bundle control
 
 #### Available bundle elements
 ##### label
