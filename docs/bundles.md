@@ -45,6 +45,15 @@ A typical bundle.xml will have the following structure:
 </adapt_framework>
 ```
 
+### Available bundle elements
+Name            | Required      | Description
+----------------+---------------+----------------
+name            | Always        | The name of the bundle. This should be all lowercase alpha chars or underscores. If publishing to Adapt repository then the name must also be unique.
+version         | Always        | This is the version of the bundle, this should be in the form of xx.xx.xx following the rules of [http://semver.org/](http://semver.org/). When publishing to the repository you may re-publish at anytime but the version must be different from all previous published versions.
+label           | Always        | A human friendly label describing the bundle.  When publishing to the repository the label from the most recent version will be used to the listing.
+description    | Only when posting to the public repository | A rich description of the bundle using only plan text.
+type           | Always         | 
+
 #### Available bundle elements
 ##### label
 This is how you would like the name of your bundle to appear in the respository.
