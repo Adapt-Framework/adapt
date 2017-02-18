@@ -20,5 +20,22 @@ DOCUMENT_ROOT/adapt/hello_world/hello_world-1.0.0/views
 
 We need to tell Adapt about out bundle so go ahead and create **DOCUMENT_ROOT/adapt/hello_world/hello_world-1.0.0/bundle.xml**:
 ```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<adapt_framework>
+    <bundle>
+        <label>Hello world application</label>
+        <name>hello_world</name>
+        <version>1.0.0</version>
+        <type>application</type>
+        <namespace>\hello\world</namespace>
+        <description>This the usual hello world application with a little more depth</description>
+        <depends_on>
+            <bundle>
+                <name>adapt</name>
+                <version>2.0</version>
+            </bundle>
+        </depends_on>
+    </bundle>
+</adapt_framework>
+```
 
-``
