@@ -1779,7 +1779,7 @@ namespace adapt{
                 $handlers = $this->store("adapt.config_handlers") ?: [];
                 foreach($this->_config_handlers_to_process as $tag => $children){
                     
-                    if (is_array($handlers[$tag])){
+                    if (isset($handlers[$tag]) && is_array($handlers[$tag])){
                         $bundle = $this->bundles->load_bundle($handlers[$tag]['bundle_name']);
                         if ($bundle instanceof bundle && $bundle->name == $handlers[$tag]['bundle_name']){
                             

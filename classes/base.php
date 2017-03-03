@@ -485,22 +485,25 @@ namespace adapt{
         public function trigger($event_type, $event_data = array()){
             // Trigger global events
             $event_handlers = $this->store('adapt.global_event_handlers');
-            $class_name = get_class($this);
-            
-            $classes = array_keys($event_handlers);
-            
-            foreach($classes as $class){
-                if ($this instanceof $class){
-                    if (isset($event_handlers[$class][$event_type])){
-                        foreach($event_handlers[$class][$event_type] as $handler){
-                            $data = array(
-                                'event_type' => $event_type,
-                                'event_data' => $event_data,
-                                'object' => $this,
-                                'data' => $handler['data']
-                            );
-                            $function = $handler['function'];
-                            call_user_func($function, $data);
+            if (is_array($event_handlers)){
+                $class_name = get_class($this);
+
+                $classes = array_keys($event_handlers);
+                if (is_array($classes)){
+                    foreach($classes as $class){
+                        if ($this instanceof $class){
+                            if (isset($event_handlers[$class][$event_type])){
+                                foreach($event_handlers[$class][$event_type] as $handler){
+                                    $data = array(
+                                        'event_type' => $event_type,
+                                        'event_data' => $event_data,
+                                        'object' => $this,
+                                        'data' => $handler['data']
+                                    );
+                                    $function = $handler['function'];
+                                    call_user_func($function, $data);
+                                }
+                            }
                         }
                     }
                 }

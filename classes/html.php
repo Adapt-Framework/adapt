@@ -79,7 +79,7 @@ namespace adapt{
          */
         public function __construct($tag = null, $data = null, $attributes = array()){
             $this->_closed_tags = $GLOBALS['adapt']->setting('html.closed_tags');
-            parent::__construct($tag, $data, $attributes, !in_array(strtolower($tag), $this->_closed_tags));
+            parent::__construct($tag, $data, $attributes, !in_array(strtolower($tag), $this->_closed_tags ?: []));
             
         }
         
