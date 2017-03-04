@@ -371,7 +371,7 @@ namespace adapt{
                         }
                         
                     }else{
-                        $this->error('Unable to connect to the database, the data source settings in settings.xml are not valid.');
+                        // $this->error('Unable to connect to the database, the data source settings in settings.xml are not valid.');
                     }
                     
                     /* Load the application */
@@ -387,7 +387,6 @@ namespace adapt{
                             $in_error = false;
 
                             while(!$in_error && is_array($dependencies_resolved)){
-                                
                                 /* Fetch from the repository */
                                 foreach($dependencies_resolved as $name => $versions){
                                     $version = self::get_newest_version($versions);
@@ -464,20 +463,22 @@ namespace adapt{
         }
         
         public function update_system(){
-            $sql = $this->data_source->sql;
-            $sql->select('name', 'version')
-                ->from('bundle_version')
-                ->where(
-                    new sql_and(
-                        new sql_cond('installed', sql::EQUALS, q('Yes')),
-                        new sql_cond('date_deleted', sql::IS, new sql_null())
-                    )
-                );
-            
-            $results = $sql->execute()->results();
-            
-            foreach($results as $result){
-                $this->update($result['name'], $result['version']);
+            if ($this->data_source && $this->data_source instanceof data_source_sql){
+                $sql = $this->data_source->sql;
+                $sql->select('name', 'version')
+                    ->from('bundle_version')
+                    ->where(
+                        new sql_and(
+                            new sql_cond('installed', sql::EQUALS, q('Yes')),
+                            new sql_cond('date_deleted', sql::IS, new sql_null())
+                        )
+                    );
+
+                $results = $sql->execute()->results();
+
+                foreach($results as $result){
+                    $this->update($result['name'], $result['version']);
+                }
             }
         }
         
