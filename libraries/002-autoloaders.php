@@ -40,7 +40,6 @@ function voodoo($class){
     $namespaces = explode("\\", $class);
     $class_name = array_pop($namespaces);
     $registered_namespaces = $adapt->store('adapt.namespaces');
-    
     if (count($namespaces) && count($registered_namespaces)){
         if ($namespaces[0] == "application"){
             /* Alias the application bundle */

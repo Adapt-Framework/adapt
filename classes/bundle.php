@@ -1845,6 +1845,7 @@ namespace adapt{
                     }else{
                         $errors = $model->errors(true);
                         foreach($errors as $error) $this->error("Model 'bundle_version' returned the error \"{$error}\"");
+                        
                         /* Remove installation mark */
                         $this->file_store->delete("adapt/installation/{$this->name}-{$this->version}");
                         return false;
@@ -1853,7 +1854,7 @@ namespace adapt{
                 
                 /* Remove installation mark */
                 $this->file_store->delete("adapt/installation/{$this->name}-{$this->version}");
-                return false;
+                return true;
             }
         }
         

@@ -405,10 +405,15 @@ namespace adapt{
                         
                         if (isset($output['headers']['content-length'])){
                             $length = intval($output['headers']['content-length']);
-                            if ($length > 0){
-                                $output['content'] = fread($socket, $length);
-                            }
                             
+                            $output['content'] = "";
+                            if ($length > 0){
+                                while ($length > 0){
+                                    $stream_data = fread($socket, $length);
+                                    $length -= strlen($stream_data);
+                                    $output['content'] .= $stream_data;
+                                }
+                            }
                         }elseif(isset($output['headers']['transfer-encoding']) && strtolower($output['headers']['transfer-encoding']) == 'chunked'){
                             $output['content'] = "";
                             

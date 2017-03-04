@@ -25,6 +25,7 @@ namespace adapt{
         
         protected function _request($uri){
             $response = $this->_http->get($this->_url . $uri);
+            
             if ($response['status'] == 200){
                 return $response['content'];
             }
