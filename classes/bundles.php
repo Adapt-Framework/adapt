@@ -87,6 +87,7 @@ namespace adapt{
                 return $this->_repository;
             }else{
                 $url = $this->setting('repository.url') ?: "https://repository.adaptframework.com/v1";
+                //$url = "http://repository.matt.wales/v1";
                 $username = $this->setting('repository.username');
                 $password = $this->setting('repository.password');
                 $this->_repository = new repository($url, $username, $password);

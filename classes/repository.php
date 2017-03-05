@@ -190,6 +190,9 @@ namespace adapt{
                 $uri = "/bundle-types";
                 
                 $data = $this->_request($uri);
+                if (is_json($data)){
+                    return json_decode($data, true);
+                }
                 
                 if ($data instanceof xml){
                     $type_nodes = $data->find('bundle_type')->get();
@@ -269,6 +272,12 @@ namespace adapt{
             
             return false;
         }
+        
+        public function list_bundles($page = 1, $type = null, $search_string = null){
+            
+        }
+        
+        
     }
 }
 
