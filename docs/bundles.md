@@ -287,7 +287,7 @@ In the next example we have a table for car, colour and car_colour.  At the time
 </schema>
 ```
 
-#### Modifing existing tables
+#### Modifying existing tables
 You can append new fields to existing tables in the same way you define a new table, just list the fields you wish to add.
 
 You can't modify existing fields unless your bundle defined the field in the first place.  Be sure to include a dependency with the **depends_on** tag when modifying tables from other bundles.
@@ -323,5 +323,40 @@ Please be sure to list old no-longer needed fields in the remove section, so tha
 ```
 
 ### Custom tag handling
+It's possible to define new tags for use by your bundle.  See the next section for more information.
+
 
 ## Bundle control
+Each bundle can create a special bundle control class for running code at specific points, such as when bundle boots or is installed.
+
+The class must be saved in the ```classes/``` directory and named ```bundle_<bundle_name>```.  Lets say your bundle is named 'cars' we would create the file ```classes/bundle_car.php```:
+```php
+namespace cars;
+
+class cars extends \adapt\bundle{
+
+}
+```
+
+### Bundle booting
+Lets say we wanted to add a css file to the dom on boot:
+```php
+namespace cars;
+
+class cars extends \adapt\bundle{
+
+    public function boot(){
+        if (parent::boot()){
+            
+            // Add to the dom
+            $this->dom->head->add(new html_link(['rel' => "stylesheet", 'type' => 'text/css', 'href' => "/adapt/cars/cars-{$this->version}/static/css/cars.css"]));
+
+            return true;
+        }
+
+        return false;
+    }
+
+}
+```
+
