@@ -193,7 +193,6 @@ Because Adapt bundles are versioned, you must ensure you use the **schema > remo
 </schema>
 ```
 
-##### Supported data types
 Adapt supports a number of data types, more can be added via other bundles.  The **advanced_data_types** bundle provides things such as email address and IP addresses.  You can get a list of installed data types by looking in the **data_type** table that Adapt installs.
 
 Name        | Notes                     | Name      | Notes
@@ -204,9 +203,41 @@ mediumint   |                           | mediumblob |
 int         |                           | longblob  |
 integer     |                           | tinytext  |
 bigint      |                           | text      |
-serial      | Same as ```xml <field data-type="bigint" key="Primary" auto-increment="Yes" ... />``` | mediumtext | 
+serial      | Same as ```<field data-type="bigint" key="Primary" auto-increment="Yes" ... />``` | mediumtext | 
 bit         |                           | longtext  | 
+boolean     |                           | enum      | Eg: ```<field data-type="enum('Value 1', 'value 2')" default-value="Value" />
+bool        |                           | set       | 
+float       |                           | year      | 
+double      |                           | date      |
+char        | ```<field data-type="char" max-length="32" />```  | time |
+binary      |                           | datetime  | 
+varchar     | ```<field data-type="varchar" max-length="64" />``` | timestamp | 
+varbinary   |                           | guid      | 
 
+To add records to a table we can simply do this:
+```xml
+<schema>
+    <add>
+        <table name="car">
+            <field name="car_id" data-type="bigint" key="primary" auto-increment="Yes" label="Car #" description="This field holds the cars unique ID" />
+            <field name="name" data-type="varchar" max-length="64" label="Name" description="Internal name" />
+            <field name="label" data-type="varchar" max-length="128" label="Label" description="Display label" />
+            <record>
+                <name>ka</name>
+                <label>Ford Ka</label>
+            </record>
+            <record>
+                <name>corsa</name>
+                <label>Vaxhall Corsa</label>
+            </record>
+            <record>
+                <name>ago</name>
+                <label>Toyota Ago</label>
+            </record>
+        </table>
+    </add>
+</schema>
+```
 
 ### Custom tag handling
 
