@@ -333,7 +333,7 @@ The class must be saved in the ```classes/``` directory and named ```bundle_<bun
 ```php
 namespace cars;
 
-class cars extends \adapt\bundle{
+class bundle_cars extends \adapt\bundle{
 
 }
 ```
@@ -343,7 +343,7 @@ Lets say we wanted to add a css file to the dom on boot:
 ```php
 namespace cars;
 
-class cars extends \adapt\bundle{
+class bundle_cars extends \adapt\bundle{
 
     public function boot(){
         if (parent::boot()){
@@ -357,6 +357,187 @@ class cars extends \adapt\bundle{
         return false;
     }
 
+}
+```
+
+### Bundling installation
+We can also do things during install:
+```php
+namespace cars;
+
+class bundle_cars extends \adapt\bundle{
+
+    public function install(){
+        if (parent::install()){
+            
+            // Do something useful
+
+            return true;
+        }
+
+        return false;
+    }
+
+}
+```
+
+### Bundle upgrading
+Or when updating or upgrading:
+```php
+namespace cars;
+
+class bundle_cars extends \adapt\bundle{
+
+    public function update(){
+        if (parent::update()){
+            
+            // Do something useful
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public function upgrade($version = null){
+        if (parent::upgrade($version)){
+
+            // The new version is provided
+
+            return true;
+        }
+
+        return false;
+    }
+
+}
+```
+
+#### Custom bundle.xml tags
+The **forms** extends the bundle.xml file format and allows other bundles to use bundle.xml to define forms.
+
+To do this is a two step process, the first step is to read the tag data and store it somewhere useful, the second to process the data.
+
+The reason for the two stage is approach is simply because Adapt reads the files out of order and so anything we depend on when processing the data may not yet be available.
+
+Lets create a bundle control class for a bundle named 'cars', we need to tell Adapt when our class constructs that we are interested in being notified about a tag named cars:
+```php
+namespace cars;
+
+class bundle_cars extends \adapt\bundle{
+
+    public function __construct($data){
+        parent::__construct('cars', $data);
+
+        $this->register_config_handler('cars', 'cars', 'process_cars_tag');
+    }
+}
+```
+In the above example, we called:
+```php 
+$this->register_config_hander('bundle_name', 'tag_name', 'method_to_handle');
+```
+This tells Adapt to pass on the content of any tags named **cars** in any bundle.xml file to the method 'process_cars_tag'.
+
+Of course in our example we haven't yet created this method, so lets do so:
+```php
+namespace cars;
+
+class bundle_cars extends \adapt\bundle{
+
+    public function __construct($data){
+        parent::__construct('cars', $data);
+
+        $this->register_config_handler('cars', 'cars', 'process_cars_tag');
+    }
+
+    public function process_cars_tag($bundle, $tag_data){
+
+    }
+}
+```
+
+Our **process_cars_tag** method receives two parameters, the first is an instance of ```\adapt\bundle``` and will be the bundle that defined the ```cars``` tag in its xml file.
+
+This method will be called for each method that defines a **cars** tag.  You can get the bundle name and version like so:
+```php
+namespace cars;
+
+class bundle_cars extends \adapt\bundle{
+
+    public function __construct($data){
+        parent::__construct('cars', $data);
+
+        $this->register_config_handler('cars', 'cars', 'process_cars_tag');
+    }
+
+    public function process_cars_tag($bundle, $tag_data){
+        $bundle_name = $bundle->name;
+        $bundle_version = $bundle->version;
+    }
+}
+```
+
+The second parameter ```$tag_data``` will be an instance of ```\adapt\xml``` and contains the data from the bundle.xml file for the **cars** tag.
+
+Lets say we use our cars tag to add new cars to the database and we use the following data structure:
+```xml
+<adapt_framework>
+    <bundle>
+        <name>cars</name>
+        <namespace>cars</namespace>
+        <label>Cars app</label>
+        <type>application</type>
+        <version>1.0.0</version>
+        <cars>
+            <car name="capri" colour="blue">Ford Capri</car>
+            <car name="escort" colour="red">Ford Escort</car>
+        </cars
+    </bundle>
+</adapt_framework>
+```
+
+We need to process the data in ```$tag_data``` and store it somewhere useful.  Lets create a new property called ```$_processed_tag_data``` and process the tag:
+```php
+namespace cars;
+
+class bundle_cars extends \adapt\bundle{
+    
+    protected $_processed_tag_data = [];
+
+    public function __construct($data){
+        parent::__construct('cars', $data);
+
+        $this->register_config_handler('cars', 'cars', 'process_cars_tag');
+    }
+
+    public function process_cars_tag($bundle, $tag_data){
+        $bundle_name = $bundle->name;
+        $bundle_version = $bundle->version;
+
+        // Check that $tag_data is well formed
+        if ($tag_data instance of \adapt\xml && $tag_data->tag == "cars"){
+
+            // Get the child notes
+            $child_nodes = $tag_data->get();
+
+           // Loop through them
+           foreach($child_nodes as $node){
+           
+                // Make sure our $node is 'car' node
+                if ($node instanceof \adapt\xml && $node->tag == "car"){
+                    
+                    // Store a record the record in our $_processed_tag_property
+                    $this->_processed_tag_data[] = [
+                        'label' => $node->text,
+                        'name' => $node->attr('name'),
+                        'colour' => $node->attr('colour')
+                    ];
+                }
+           }
+
+        }
+    }
 }
 ```
 
