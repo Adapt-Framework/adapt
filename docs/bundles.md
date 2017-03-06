@@ -58,13 +58,59 @@ type           | Always         | This tells Adapt what your bundle is used for,
 namespace       | Always        | The namespace being used by the bundle, for example, **\adapt**.  The namespace here must be used for all models, views and controllers.  You should also use it for all other classes.  You can include more namespaces when your bundle is booting, see bundle control below.
 version_status | When posting to Adapt repository | Can be one of **alpha**, **beta**, **release_candidate**, **release**. By allowing development versions in the repository we can offer continious build testing to dev teams.
 availability   | When posting to Adapt repository | Can be one of **public** of **private**.  **Important note:** Bundles pushed to the repository with a status of **public** may not be withdrawn at a later date.  Because the nature of Adapt is building small blocks, pulling a small one used in many web applications would break alot of things.  If you tell us its **public**, it's public
-author         | Optional       | Provides information about the author. ```xml
-<authors></authors>
+author         | Optional       | Provides information about the author.
+
+### authors
+To provide information about the authors of a bundle you can use:
+```xml
+<authors>
+    <author>
+        <name>Matt Bruton</name>
+        <email>matt.bruton@gmail.com</email>
+    </author>
+</authors>
 ```
 
-### author
+### Contributers
+```xml
+<contributors>
+    <contributor>
+        <name>Joe Hockaday</name>
+        <email>jdhockad@hotmail.com</email>
+    </contributor>
+    <contributor>
+        <name>Sion Purnell</name>
+        <email>yepitsmesion@hotmail.co.uk</email>
+    </contributor>
+</contributors>
+```
+
+### Vendor
+To provide information about the bundles vendors use:
+```xml
+<vendor>
+    <name>Adapt Framework</name>
+    <website>https://www.adaptframework.com</website>
+</vendor>
+```
 
 ### depends_on
+Use this tag to tell adapt about any dependencies you require.  You must always provide the **name** element, the **version** element is optional.
+
+When specifing a version it should always be in the format **X** or **X.X**, you shoudn't provide a revision.
+
+For example, to include jQuery and Adapt Administrator:
+```xml
+<depends_on>
+    <bundle>
+        <name>jquery</name>
+    </bundle>
+    <bundle>
+        <name>administrator</name>
+        <version>1</version>
+    </bundle>
+</depends_on>
+```
 
 ### settings
 
