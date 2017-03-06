@@ -58,7 +58,7 @@ type           | Always         | This tells Adapt what your bundle is used for,
 namespace       | Always        | The namespace being used by the bundle, for example, **\adapt**.  The namespace here must be used for all models, views and controllers.  You should also use it for all other classes.  You can include more namespaces when your bundle is booting, see bundle control below.
 version_status | When posting to Adapt repository | Can be one of **alpha**, **beta**, **release_candidate**, **release**. By allowing development versions in the repository we can offer continious build testing to dev teams.
 availability   | When posting to Adapt repository | Can be one of **public** of **private**.  **Important note:** Bundles pushed to the repository with a status of **public** may not be withdrawn at a later date.  Because the nature of Adapt is building small blocks, pulling a small one used in many web applications would break alot of things.  If you tell us its **public**, it's public
-author         | Optional       | Provides information about the author.
+
 
 ### authors
 To provide information about the authors of a bundle you can use:
@@ -113,34 +113,215 @@ For example, to include jQuery and Adapt Administrator:
 ```
 
 ### settings
+Your bundle may wish to include settings, Adapt supports a key/value system.
+
+You can define settings like so:
+```xml
+<settings>
+    <category name="XML &amp; HTML Settings">
+      <setting>
+        <name>xml.readable</name>
+        <label>Output readable XML/HTML?</label>
+        <default_value>No</default_value>
+        <allowed_values>
+          <value>Yes</value>
+          <value>No</value>
+        </allowed_values>
+      </setting>
+      <setting>
+        <name>html.format</name>
+        <label>HTML Format</label>
+        <default_value>html5</default_value>
+        <allowed_values>
+          <value>html5</value>
+          <value>xhtml</value>
+        </allowed_values>
+      </setting>
+      <setting>
+        <name>html.closed_tags</name>
+        <label>Closed HTML tags</label>
+        <default_values>
+          <value>img</value>
+          <value>link</value>
+          <value>meta</value>
+          <value>br</value>
+          <value>hr</value>
+          <value>area</value>
+          <value>base</value>
+          <value>col</value>
+          <value>command</value>
+          <value>embed</value>
+          <value>input</value>
+          <value>link</value>
+          <value>meta</value>
+          <value>param</value>
+          <value>source</value>
+        </default_values>
+      </setting>
+    </category>
+</settings>
+```
+
+**allowed_values** is optional.  Note that **default_value** is used to default a single value, where as **default_values** allows an array to be specified.
+
+The values of settings can be accessed at runtime from within any class like so:
+```php
+$value = $this->setting('some.setting.name');
+```
+
+You can also set the value at runtime, please note that this only remains for the duration of the current request. To override the setting completely enter the new value in **settings.xml** file.
+```php
+// Only set for the remainder of the current request
+$this->setting('some.setting.name', 'new value');
+```
 
 ### schema
+This tag is used to define the data schema used by your bundle.  You can use it to add, change or remove database tables or add, change and remove database records.
+
+Because Adapt bundles are versioned, you must ensure you use the **schema > remove** tag to remove tables no longer needed.
+
+#### Define a table
+```xml
+<schema>
+    <add>
+        <table name="car">
+            <field name="car_id" data-type="bigint" key="primary" auto-increment="Yes" label="Car #" description="This field holds the cars unique ID" />
+            <field name="name" data-type="varchar" max-length="64" label="Name" description="Internal name" />
+            <field name="label" data-type="varchar" max-length="128" label="Label" description="Display label" />
+        </table>
+    </add>
+</schema>
+```
+
+Adapt supports a number of data types, more can be added via other bundles.  The **advanced_data_types** bundle provides things such as email address and IP addresses.  You can get a list of installed data types by looking in the **data_type** table that Adapt installs.
+
+Name        | Notes                     | Name      | Notes
+------------|---------------------------|-----------|---------------------------
+tinyint     |                           | tinyblob  |
+smallint    |                           | blob      |
+mediumint   |                           | mediumblob |
+int         |                           | longblob  |
+integer     |                           | tinytext  |
+bigint      |                           | text      |
+serial      | Same as ```<field data-type="bigint" key="Primary" auto-increment="Yes" ... />``` | mediumtext | 
+bit         |                           | longtext  | 
+boolean     |                           | enum      | Eg: ```<field data-type="enum('Value 1', 'value 2')" default-value="Value" />```
+bool        |                           | set       | 
+float       |                           | year      | 
+double      |                           | date      |
+char        | ```<field data-type="char" max-length="32" />```  | time |
+binary      |                           | datetime  | 
+varchar     | ```<field data-type="varchar" max-length="64" />``` | timestamp | 
+varbinary   |                           | guid      | 
+
+#### Add records to a table
+```xml
+<schema>
+    <add>
+        <table name="car">
+            <field name="car_id" data-type="bigint" key="primary" auto-increment="Yes" label="Car #" description="This field holds the cars unique ID" />
+            <field name="name" data-type="varchar" max-length="64" label="Name" description="Internal name" />
+            <field name="label" data-type="varchar" max-length="128" label="Label" description="Display label" />
+            <record>
+                <name>ka</name>
+                <label>Ford Ka</label>
+            </record>
+            <record>
+                <name>corsa</name>
+                <label>Vaxhall Corsa</label>
+            </record>
+            <record>
+                <name>ago</name>
+                <label>Toyota Ago</label>
+            </record>
+        </table>
+    </add>
+</schema>
+```
+
+#### Referencing other field
+In the next example we have a table for car, colour and car_colour.  At the time of installation we are unable to insert anything into car_colour unless we know the ID, Adapt solves this by allowing lookups.
+```xml
+<schema>
+    <add>
+        <table name="car">
+            <field name="car_id" data-type="bigint" key="primary" auto-increment="Yes" label="Car #" description="This field holds the cars unique ID" />
+            <field name="name" data-type="varchar" max-length="64" label="Name" description="Internal name" />
+            <field name="label" data-type="varchar" max-length="128" label="Label" description="Display label" />
+            <record>
+                <name>ka</name>
+                <label>Ford Ka</label>
+            </record>
+            <record>
+                <name>corsa</name>
+                <label>Vaxhall Corsa</label>
+            </record>
+            <record>
+                <name>ago</name>
+                <label>Toyota Ago</label>
+            </record>
+        </table>
+        <table name="colour">
+            <field name="colour_id" data-type="bigint" key="primary" auto-increment="Yes" label="Colour #" description="This field holds the colours unique ID" />
+            <field name="name" data-type="varchar" max-length="64" label="Name" description="Internal name" />
+            <field name="label" data-type="varchar" max-length="128" label="Label" description="Display label" />
+            <record>
+                <name>red</name>
+                <label>Red</label>
+            </record>
+            <record>
+                <name>blue</name>
+                <label>Blue</label>
+            </record>
+        <table>
+        <table name="car_colour">
+            <field name="car_colour_id" data-type="bigint" key="Primary" auto-increment="Yes" />
+            <field name="car_id" data-type="bigint" key="Foreign" referenced-table-name="car" referenced-field-name="car_id" />
+            <field name="colour_id" data-type="bigint" key="Foreign" referenced-table-name="colour" referenced-field-name="colour_id" />
+            <record>
+                <car_id get-from="car" where-name-is="ka" />
+                <colour_id get-from="colour" where-name-is="blue" />
+            </record>
+        </table>
+    </add>
+</schema>
+```
+
+#### Modifing existing tables
+You can append new fields to existing tables in the same way you define a new table, just list the fields you wish to add.
+
+You can't modify existing fields unless your bundle defined the field in the first place.  Be sure to include a dependency with the **depends_on** tag when modifying tables from other bundles.
+
+#### Removing tables or fields
+To remove a table you simply remove the fields like so:
+```xml
+<schema>
+    <remove>
+        <table name="car">
+            <field name="car_id" />
+            <field name="name" />
+            <field name="label" />
+        </table>
+    </remove>
+</schema>
+```
+You can only remove fields that were defined by your bundle.  When all the fields are removed the table is removed.
+
+Please be sure to list old no-longer needed fields in the remove section, so that your bundle doesn't leave old tables in place between version changes.
+
+#### Removing records
+```xml
+<schema>
+    <remove>
+        <table name="car">
+            <record>
+                <name>corsa</name>
+            </record>
+        </table>
+    </remove>
+</schema>
+```
 
 ### Custom tag handling
 
 ## Bundle control
-
-#### Available bundle elements
-##### label
-This is how you would like the name of your bundle to appear in the respository.
-
-#### name
-This is the bundle name, this needs to be unqiue and contain only alpha chars and underscores.  The bundle will be rejected from the repository if the name is already in use.
-
-#### description
-A rich description that will appear next to your bundle in respository.
-
-#### version
-This is the version of the bundle, this should be in the form of xx.xx.xx following the rules of [http://semver.org/](http://semver.org/).
-
-#### type
-This defines the type of bundle, think of this as a category that can be used to search for bundles.
-- **application** These are web apps that can be installed on a web server.  All applications must use this type.
-- **data_source_driver** Use this if your bundle provides additional database functionality.
-- **locale** Use this if you are extending the locales bundle to provide additional locales information.
-- **data_type** Use this if you are providing additional data types.
-- **form_field** Use this if you are extending the form bundle to provide additional form fields.
-- **extension** These are bundles that provide functionallity.
-- **frameworks** These are bundles that provide the foundations for other bundles, **Adapt** is a framework.
-- **templates** These are not currently available.
-
