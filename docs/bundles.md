@@ -113,34 +113,70 @@ For example, to include jQuery and Adapt Administrator:
 ```
 
 ### settings
+Your bundle may wish to include settings, Adapt supports a key/value system.
+
+You can define settings like so:
+```xml
+<settings>
+    <category name="XML &amp; HTML Settings">
+      <setting>
+        <name>xml.readable</name>
+        <label>Output readable XML/HTML?</label>
+        <default_value>No</default_value>
+        <allowed_values>
+          <value>Yes</value>
+          <value>No</value>
+        </allowed_values>
+      </setting>
+      <setting>
+        <name>html.format</name>
+        <label>HTML Format</label>
+        <default_value>html5</default_value>
+        <allowed_values>
+          <value>html5</value>
+          <value>xhtml</value>
+        </allowed_values>
+      </setting>
+      <setting>
+        <name>html.closed_tags</name>
+        <label>Closed HTML tags</label>
+        <default_values>
+          <value>img</value>
+          <value>link</value>
+          <value>meta</value>
+          <value>br</value>
+          <value>hr</value>
+          <value>area</value>
+          <value>base</value>
+          <value>col</value>
+          <value>command</value>
+          <value>embed</value>
+          <value>input</value>
+          <value>link</value>
+          <value>meta</value>
+          <value>param</value>
+          <value>source</value>
+        </default_values>
+      </setting>
+    </category>
+</settings>
+```
+
+**allowed_values** is optional.  Note that **default_value** is used to default a single value, where as **default_values** allows an array to be specified.
+
+The values of settings can be accessed at runtime from within any class like so:
+```php
+$value = $this->setting('some.setting.name');
+```
+
+You can also set the value at runtime, please note that this only remains for the duration of the current request. To override the setting completely enter the new value in **settings.xml** file.
+```php
+// Only set for the remainder of the current request
+$this->setting('some.setting.name', 'new value');
+``
 
 ### schema
 
 ### Custom tag handling
 
 ## Bundle control
-
-#### Available bundle elements
-##### label
-This is how you would like the name of your bundle to appear in the respository.
-
-#### name
-This is the bundle name, this needs to be unqiue and contain only alpha chars and underscores.  The bundle will be rejected from the repository if the name is already in use.
-
-#### description
-A rich description that will appear next to your bundle in respository.
-
-#### version
-This is the version of the bundle, this should be in the form of xx.xx.xx following the rules of [http://semver.org/](http://semver.org/).
-
-#### type
-This defines the type of bundle, think of this as a category that can be used to search for bundles.
-- **application** These are web apps that can be installed on a web server.  All applications must use this type.
-- **data_source_driver** Use this if your bundle provides additional database functionality.
-- **locale** Use this if you are extending the locales bundle to provide additional locales information.
-- **data_type** Use this if you are providing additional data types.
-- **form_field** Use this if you are extending the form bundle to provide additional form fields.
-- **extension** These are bundles that provide functionallity.
-- **frameworks** These are bundles that provide the foundations for other bundles, **Adapt** is a framework.
-- **templates** These are not currently available.
-
