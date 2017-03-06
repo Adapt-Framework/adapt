@@ -1,15 +1,17 @@
 # Bundles
 
 ## What are bundles?
-In Adapt everything is a bundle, Adapt is even a bundle.  A bundle is just a bunch of useful code that does something.  A bundle could be a framework like Adapt, it could be locality information, or a form libaray or even a fully blown web application.  The idea is simple, you break code in to small independent useful chucks, bundle it up with a name and a version and then include it in future work.
+In Adapt everything is a bundle, Adapt is even a bundle.  A bundle is just a bunch of useful code that does something.  A bundle could be a framework like Adapt, it could be locality information, or a form libaray or even a fully blown web application.  The idea is simple, you break code in to small independent useful chucks of code, bundle it up with a name and a version and then include it in future work.
 
-Bundles can depend on other bundles, so instead of writing large applications, you write a smimple bundle that pulls in functionality from other bundles.  Take for example the **Administrator** bundle, this provides a rich website administration tool, featuring platform and user management, including this means you only need to write that which is custom to your application. **Administrator** of course has lots of dependiences, which in turn have more.
+Bundles can depend on other bundles, so instead of writing large applications, you write a smaller simpler bundle that pulls in functionality from other bundles.  Take for example the **Administrator** bundle, this provides a rich website administration tool, featuring platform and user management, including this means you only need to write that which is custom to your application. **Administrator** of course has lots of dependiences, which in turn have more.
 
 By building this way we can solve problems truly once.
 
-To include **Administrator** in your application you need only reference it, Adapt will download and install it the next time your application runs.  Outside of the framework is the Adapt repository, a centralised place where bundles are stored.  The repository is open to anyone and anyone can publish to bundles, of course you have the option of making them public or private.
+To include **Administrator** in your application you need only reference it, Adapt will download and install it the next time your application runs.
 
-By intergrating the repository into the fabric of the framework we can automatically install, update, upgrade and self heal when files go missing.  When you write applications with Adapt then you also get the ability to deploy on demand.
+Outside of the framework is the Adapt repository, a centralised place where bundles are stored.  The repository is open to anyone and anyone can publish bundles, of course you have the option of making them public or private.
+
+By integrating the repository into the fabric of the framework we can automatically install, update, upgrade and self heal when files go missing.  When you write applications with Adapt then you also get the ability to deploy on demand.
 
 Because bundles are versioned and Adapt has been designed to handle updates it becomes possible to provide continuous deployment for any application you write.
 
@@ -39,7 +41,7 @@ A typical bundle.xml will have the following structure:
         <name>my_app</name>
         <version>1.0.0</version>
         <type>application</type>
-        <namespace>/applications/my_app</namespace>
+        <namespace>\my_namespace</namespace>
         <description>Test application</description>
     </bundle>
 </adapt_framework>
@@ -52,10 +54,13 @@ name            | Always        | The name of the bundle. This should be all low
 version         | Always        | This is the version of the bundle, this should be in the form of xx.xx.xx following the rules of [http://semver.org/](http://semver.org/). When publishing to the repository you may re-publish at anytime but the version must be different from all previous published versions.
 label           | Always        | A human friendly label describing the bundle.  When publishing to the repository the label from the most recent version will be used to the listing.
 description    | Only when posting to the public repository | A rich description of the bundle using only plan text.
-type           | Always         | This tells Adapt what your bundle is used for, you can obtain a list of valid types from ......., when build an application it must always be **application**
+type           | Always         | This tells Adapt what your bundle is used for, you can obtain a list of valid types from [https://repository.adaptframework.com/v1/bundle-types](https://repository.adaptframework.com/v1/bundle-types), when building an application it must always be **application**
 namespace       | Always        | The namespace being used by the bundle, for example, **\adapt**.  The namespace here must be used for all models, views and controllers.  You should also use it for all other classes.  You can include more namespaces when your bundle is booting, see bundle control below.
 version_status | When posting to Adapt repository | Can be one of **alpha**, **beta**, **release_candidate**, **release**. By allowing development versions in the repository we can offer continious build testing to dev teams.
 availability   | When posting to Adapt repository | Can be one of **public** of **private**.  **Important note:** Bundles pushed to the repository with a status of **public** may not be withdrawn at a later date.  Because the nature of Adapt is building small blocks, pulling a small one used in many web applications would break alot of things.  If you tell us its **public**, it's public
+author         | Optional       | Provides information about the author. ```xml
+<authors></authors>
+```
 
 ### author
 
