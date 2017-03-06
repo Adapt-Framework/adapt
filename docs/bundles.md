@@ -205,7 +205,7 @@ integer     |                           | tinytext  |
 bigint      |                           | text      |
 serial      | Same as ```<field data-type="bigint" key="Primary" auto-increment="Yes" ... />``` | mediumtext | 
 bit         |                           | longtext  | 
-boolean     |                           | enum      | Eg: ```<field data-type="enum('Value 1', 'value 2')" default-value="Value" />
+boolean     |                           | enum      | Eg: ```<field data-type="enum('Value 1', 'value 2')" default-value="Value" />```
 bool        |                           | set       | 
 float       |                           | year      | 
 double      |                           | date      |
