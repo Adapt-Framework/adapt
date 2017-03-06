@@ -58,7 +58,7 @@ type           | Always         | This tells Adapt what your bundle is used for,
 namespace       | Always        | The namespace being used by the bundle, for example, **\adapt**.  The namespace here must be used for all models, views and controllers.  You should also use it for all other classes.  You can include more namespaces when your bundle is booting, see bundle control below.
 version_status | When posting to Adapt repository | Can be one of **alpha**, **beta**, **release_candidate**, **release**. By allowing development versions in the repository we can offer continious build testing to dev teams.
 availability   | When posting to Adapt repository | Can be one of **public** of **private**.  **Important note:** Bundles pushed to the repository with a status of **public** may not be withdrawn at a later date.  Because the nature of Adapt is building small blocks, pulling a small one used in many web applications would break alot of things.  If you tell us its **public**, it's public
-author         | Optional       | Provides information about the author.
+
 
 ### authors
 To provide information about the authors of a bundle you can use:
@@ -214,7 +214,7 @@ binary      |                           | datetime  |
 varchar     | ```<field data-type="varchar" max-length="64" />``` | timestamp | 
 varbinary   |                           | guid      | 
 
-To add records to a table we can simply do this:
+#### Add records to a table
 ```xml
 <schema>
     <add>
@@ -236,6 +236,89 @@ To add records to a table we can simply do this:
             </record>
         </table>
     </add>
+</schema>
+```
+
+#### Referencing other field
+In the next example we have a table for car, colour and car_colour.  At the time of installation we are unable to insert anything into car_colour unless we know the ID, Adapt solves this by allowing lookups.
+```xml
+<schema>
+    <add>
+        <table name="car">
+            <field name="car_id" data-type="bigint" key="primary" auto-increment="Yes" label="Car #" description="This field holds the cars unique ID" />
+            <field name="name" data-type="varchar" max-length="64" label="Name" description="Internal name" />
+            <field name="label" data-type="varchar" max-length="128" label="Label" description="Display label" />
+            <record>
+                <name>ka</name>
+                <label>Ford Ka</label>
+            </record>
+            <record>
+                <name>corsa</name>
+                <label>Vaxhall Corsa</label>
+            </record>
+            <record>
+                <name>ago</name>
+                <label>Toyota Ago</label>
+            </record>
+        </table>
+        <table name="colour">
+            <field name="colour_id" data-type="bigint" key="primary" auto-increment="Yes" label="Colour #" description="This field holds the colours unique ID" />
+            <field name="name" data-type="varchar" max-length="64" label="Name" description="Internal name" />
+            <field name="label" data-type="varchar" max-length="128" label="Label" description="Display label" />
+            <record>
+                <name>red</name>
+                <label>Red</label>
+            </record>
+            <record>
+                <name>blue</name>
+                <label>Blue</label>
+            </record>
+        <table>
+        <table name="car_colour">
+            <field name="car_colour_id" data-type="bigint" key="Primary" auto-increment="Yes" />
+            <field name="car_id" data-type="bigint" key="Foreign" referenced-table-name="car" referenced-field-name="car_id" />
+            <field name="colour_id" data-type="bigint" key="Foreign" referenced-table-name="colour" referenced-field-name="colour_id" />
+            <record>
+                <car_id get-from="car" where-name-is="ka" />
+                <colour_id get-from="colour" where-name-is="blue" />
+            </record>
+        </table>
+    </add>
+</schema>
+```
+
+#### Modifing existing tables
+You can append new fields to existing tables in the same way you define a new table, just list the fields you wish to add.
+
+You can't modify existing fields unless your bundle defined the field in the first place.  Be sure to include a dependency with the **depends_on** tag when modifying tables from other bundles.
+
+#### Removing tables or fields
+To remove a table you simply remove the fields like so:
+```xml
+<schema>
+    <remove>
+        <table name="car">
+            <field name="car_id" />
+            <field name="name" />
+            <field name="label" />
+        </table>
+    </remove>
+</schema>
+```
+You can only remove fields that were defined by your bundle.  When all the fields are removed the table is removed.
+
+Please be sure to list old no-longer needed fields in the remove section, so that your bundle doesn't leave old tables in place between version changes.
+
+#### Removing records
+```xml
+<schema>
+    <remove>
+        <table name="car">
+            <record>
+                <name>corsa</name>
+            </record>
+        </table>
+    </remove>
 </schema>
 ```
 
