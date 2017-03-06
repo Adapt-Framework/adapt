@@ -25,7 +25,7 @@ In addition to **pget_** and **_pset** there also exists another, **mget_**, thi
 
 Heres a simple example, note that we have to inherit from **base** for this to work.
 ```php
-class some_class \adapt\base{
+class some_class extends \adapt\base{
     protected $_the_inner_propery;
     
     public function pget_some_property(){
