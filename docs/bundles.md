@@ -173,9 +173,40 @@ You can also set the value at runtime, please note that this only remains for th
 ```php
 // Only set for the remainder of the current request
 $this->setting('some.setting.name', 'new value');
-``
+```
 
 ### schema
+This tag is used to define the data schema used by your bundle.  You can use it to add, change or remove database tables or add, change and remove database records.
+
+Because Adapt bundles are versioned, you must ensure you use the **schema > remove** tag to remove tables no longer needed.
+
+#### Define a table
+```xml
+<schema>
+    <add>
+        <table name="car">
+            <field name="car_id" data-type="bigint" key="primary" auto-increment="Yes" label="Car #" description="This field holds the cars unique ID" />
+            <field name="name" data-type="varchar" max-length="64" label="Name" description="Internal name" />
+            <field name="label" data-type="varchar" max-length="128" label="Label" description="Display label" />
+        </table>
+    </add>
+</schema>
+```
+
+##### Supported data types
+Adapt supports a number of data types, more can be added via other bundles.  The **advanced_data_types** bundle provides things such as email address and IP addresses.  You can get a list of installed data types by looking in the **data_type** table that Adapt installs.
+
+Name        | Notes                     | Name      | Notes
+------------|---------------------------|-----------|---------------------------
+tinyint     |                           | tinyblob  |
+smallint    |                           | blob      |
+mediumint   |                           | mediumblob |
+int         |                           | longblob  |
+integer     |                           | tinytext  |
+bigint      |                           | text      |
+serial      | Same as ```xml <field data-type="bigint" key="Primary" auto-increment="Yes" ... />``` | mediumtext | 
+bit         |                           | longtext  | 
+
 
 ### Custom tag handling
 
