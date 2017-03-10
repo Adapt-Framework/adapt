@@ -79,18 +79,24 @@ namespace adapt{
                     $schema[$this->_data['table_name']] = [];
                 }
                 
-                $table_schema = $schema[$this->table_name];
+                $table_schema = $schema[$this->_data['table_name']];
                 $new_table_schema = [];
                 
+                $appended = false;
                 foreach($table_schema as $field_schema){
                     if ($field_schema['field_name'] == $this->field_name){
                         $new_table_schema[] = $this->to_hash()['field'];
+                        $appended = true;
                     }else{
                         $new_table_schema[] = $field_schema;
                     }
                 }
                 
-                $schema[$this->table_name] = $new_table_schema;
+                if (!$appended) {
+                    $new_table_schema[] = $this->to_hash()['field'];
+                }
+                
+                $schema[$this->_data['table_name']] = $new_table_schema;
                 
                 $this->data_source->schema = $schema;
                 
