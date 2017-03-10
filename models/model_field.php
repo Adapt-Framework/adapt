@@ -90,7 +90,7 @@ namespace adapt{
                     }
                 }
                 
-                $schema[$this->table_name] = $new_table_schema;
+                $schema[$this->_data['table_name']] = $new_table_schema;
                 
                 $this->data_source->schema = $schema;
                 
