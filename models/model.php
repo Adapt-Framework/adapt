@@ -1258,8 +1258,11 @@ namespace adapt{
                     $this->initialise();
                 }else{
                     $this->error("You do not have permission to delete this model");
+                    return false;
                 }
             }
+            
+            return true;
         }
         
         /**
