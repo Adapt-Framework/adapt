@@ -229,7 +229,6 @@
             <description>The max length of this data type</description>
             <data_type>int</data_type>
           </field>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>tinyint</name>
@@ -240,7 +239,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>smallint</name>
@@ -251,7 +249,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>meduimint</name>
@@ -262,7 +259,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>int</name>
@@ -273,7 +269,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>integer</name>
@@ -284,7 +279,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>bigint</name>
@@ -295,7 +289,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>serial</name>
@@ -306,7 +299,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>bit</name>
@@ -317,7 +309,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>boolean</name>
@@ -328,7 +319,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>bool</name>
@@ -339,7 +329,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>float</name>
@@ -350,7 +339,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>double</name>
@@ -361,7 +349,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>decimal</name>
@@ -372,7 +359,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>char</name>
@@ -383,7 +369,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>binary</name>
@@ -394,7 +379,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>varchar</name>
@@ -405,7 +389,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>varbinary</name>
@@ -416,7 +399,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>tinyblob</name>
@@ -427,7 +409,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>blob</name>
@@ -438,7 +419,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>mediumblob</name>
@@ -449,7 +429,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>longblob</name>
@@ -460,7 +439,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>tinytext</name>
@@ -471,7 +449,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>text</name>
@@ -482,7 +459,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>mediumtext</name>
@@ -493,7 +469,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>longtext</name>
@@ -504,7 +479,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>enum</name>
@@ -515,7 +489,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>set</name>
@@ -526,7 +499,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>year</name>
@@ -537,7 +509,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>date</name>
@@ -548,7 +519,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>time</name>
@@ -559,7 +529,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>datetime</name>
@@ -570,7 +539,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>timestamp</name>
@@ -581,7 +549,6 @@
             <max_length></max_length>
             <based_on_data_type></based_on_data_type>
           </record>
-          
           <record>
             <bundle_name>adapt</bundle_name>
             <name>guid</name>
@@ -592,7 +559,6 @@
             <max_length></max_length>
             <based_on_data_type>varchar(256)</based_on_data_type>
           </record>
-          
         </table>
         <table name="field">
           <field name="field_id" key="primary" auto-increment="Yes">
@@ -737,7 +703,6 @@
             <max_length>64</max_length>
             <nullable>Yes</nullable>
           </field>
-          
         </table>
         <table name="bundle_version">
           <field name="bundle_version_id" key="primary" auto-increment="Yes">

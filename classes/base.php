@@ -345,7 +345,7 @@ namespace adapt{
          *
          * @access public
          * @param string
-         * The full namespace and classname of the class to be used
+         * The full namespace and class name of the class to be used
          * as a class handler
          * @return boolean Returns true if the class exists, false if it doesn't.
          */
@@ -554,7 +554,7 @@ namespace adapt{
          * @param string
          * A unique key used to get or set the data.
          * @param mixed
-         * Optional.  When specified data is stored, when absent data is retrived.
+         * Optional.  When specified data is stored, when absent data is retrieved.
          * @return mixed
          * When data is specified return null, else returns the value for
          * key. Please note this value will be null if the key doesn't exist.
