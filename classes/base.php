@@ -1030,6 +1030,9 @@ namespace adapt{
         
         /**
          * Checks if a method exists on the current object
+         *
+         * @param string $method_name
+         * @return boolean
          */
         public function has_method($method_name){
             if (method_exists($this, $method_name)){
