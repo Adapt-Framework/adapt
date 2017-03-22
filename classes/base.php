@@ -1037,7 +1037,7 @@ namespace adapt{
             }
             
             $class_name = get_called_class();
-            $extension = $GLOBALS['adapt']->store('adapt.extensions');
+            $extension = $this->store('adapt.extensions');
 
             if (!is_null($extension) && isset($extension[$class_name])){
                 return in_array($method_name, array_keys($extension[$class_name]));
