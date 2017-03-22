@@ -1041,7 +1041,7 @@ namespace adapt{
                 $classes = array_keys($extensions);
                 foreach($classes as $class){
                     if ($this instanceof $class){
-                        if (isset($extensions[$class][$name])){
+                        if (isset($extensions[$class][$method_name])){
                             return true;
                         }
                     }
