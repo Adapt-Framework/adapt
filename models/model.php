@@ -819,7 +819,7 @@ namespace adapt{
                 }
                 
                 /* Check we have permission to load */
-                if (!method_exists($this, 'permission_load') || $this->permission_load()){
+                if (!$this->has_method('permission_load') || $this->permission_load()){
                     /* Fire the EVENT_ON_LOAD_BY_DATA event */
                     $this->trigger(self::EVENT_ON_LOAD_BY_DATA);
                     return true;
@@ -980,7 +980,7 @@ namespace adapt{
             /*
              * Check we are permitted to save this object
              */
-            if (method_exists($this, 'permission_save') && !$this->permission_save()){
+            if ($this->has_method('permission_save') && !$this->permission_save()){
                 $this->error("You are not permitted to save this model");
                 return false;
             }
@@ -1252,7 +1252,7 @@ namespace adapt{
          */
         public function delete(){
             if ($this->is_loaded){
-                if (!method_exists($this, 'permission_delete') || $this->permission_delete()){
+                if (!$this->has_method('permission_delete') || $this->permission_delete()){
                     $this->date_deleted = new sql_now();
                     $this->save();
                     $this->initialise();
