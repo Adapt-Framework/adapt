@@ -1036,11 +1036,16 @@ namespace adapt{
                 return true;
             }
             
-            $class_name = get_called_class();
-            $extension = $this->store('adapt.extensions');
-
-            if (!is_null($extension) && isset($extension[$class_name])){
-                return in_array($method_name, array_keys($extension[$class_name]));
+            $extensions = $this->store('adapt.extensions');
+            if (isset($extensions) && is_array($extensions)){
+                $classes = array_keys($extensions);
+                foreach($classes as $class){
+                    if ($this instanceof $class){
+                        if (isset($extensions[$class][$name])){
+                            return true;
+                        }
+                    }
+                }
             }
 
             return false;
