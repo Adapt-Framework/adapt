@@ -301,9 +301,8 @@ namespace adapt{
                         $this->_data[$key] = $value;
                     }else{
                         /* Unformat the value */
-                        //print "BEFORE: {$key}={$value}\n";
                         $value = $this->data_source->unformat($this->table_name, $key, $value);
-                        //print "AFTER: {$key}={$value}\n";
+                        
                         /* Has the value changed? */
                         if ($this->_data[$key] !== $value){
                             
@@ -817,12 +816,19 @@ namespace adapt{
                             }
                         }
                     }
-                    
                 }
                 
-                /* Fire the EVENT_ON_LOAD_BY_DATA event */
-                $this->trigger(self::EVENT_ON_LOAD_BY_DATA);
-                return true;
+                /* Check we have permission to load */
+                if (!$this->has_method('permission_load') || $this->permission_load()){
+                    /* Fire the EVENT_ON_LOAD_BY_DATA event */
+                    $this->trigger(self::EVENT_ON_LOAD_BY_DATA);
+                    return true;
+                }else{
+                    /* Not permissioned to use this object */
+                    $this->initialise();
+                    $this->error("You are not permitted to load this model");
+                    return false;
+                }
             }else{
                 $this->error("Failed to load by data due to missing keys");
                 $this->initialise();
@@ -971,6 +977,14 @@ namespace adapt{
          * model returns it's ID if successful otherwise false.
          */
         public function save(){
+            /*
+             * Check we are permitted to save this object
+             */
+            if ($this->has_method('permission_save') && !$this->permission_save()){
+                $this->error("You are not permitted to save this model");
+                return false;
+            }
+            
             $return = false;
             /*
              * Before we do anything we need to check if this object
@@ -1238,10 +1252,17 @@ namespace adapt{
          */
         public function delete(){
             if ($this->is_loaded){
-                $this->date_deleted = new sql_now();
-                $this->save();
-                $this->initialise();
+                if (!$this->has_method('permission_delete') || $this->permission_delete()){
+                    $this->date_deleted = new sql_now();
+                    $this->save();
+                    $this->initialise();
+                }else{
+                    $this->error("You do not have permission to delete this model");
+                    return false;
+                }
             }
+            
+            return true;
         }
         
         /**

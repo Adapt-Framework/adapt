@@ -1029,6 +1029,32 @@ namespace adapt{
         }
         
         /**
+         * Checks if a method exists on the current object
+         *
+         * @param string $method_name
+         * @return boolean
+         */
+        public function has_method($method_name){
+            if (method_exists($this, $method_name)){
+                return true;
+            }
+            
+            $extensions = $this->store('adapt.extensions');
+            if (isset($extensions) && is_array($extensions)){
+                $classes = array_keys($extensions);
+                foreach($classes as $class){
+                    if ($this instanceof $class){
+                        if (isset($extensions[$class][$method_name])){
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+        
+        /**
          * Creates an instance of the class named $class
          *
          * @access public
