@@ -330,6 +330,7 @@ namespace adapt{
          */
         public function route($url, $is_action = false){
             $url = trim($url);
+            
             if($is_action){
                 $controllers = explode("/", $url);
                 $action = array_pop($controllers);
@@ -366,7 +367,33 @@ namespace adapt{
                 if (isset($method)){
                     if (method_exists($this, $method) || is_callable(array($this, $method))){
                         if (/*(!method_exists($this, $permission) && !is_callable(array($this, $permission)))*/ is_null($this->$permission()) || $this->$permission() == true){
-                            $output =  $this->$method();
+                            
+                            // Lets check if we have any params that can be passed in?
+                            $reflection_method = new \ReflectionMethod(get_class($this), $method);
+                            $param_count = count($reflection_method->getParameters());
+                            $url_remaining = [];
+                            $params = [];
+                            
+                            if ($param_count){
+                                $url_components = explode("/", $url);
+                                for($i = 0; $i < $param_count; $i++){
+                                    if (count($url_components) > $i){
+                                        $params[] = $url_components[$i];
+                                    }
+                                }
+                                
+                                if ($param_count < count($url_components)){
+                                    for($j = $param_count; $j < count($url_components); $j++){
+                                        $url_remaining[] = $url_components[$j];
+                                    }
+                                }
+                                
+                                $url = implode("/", $url_remaining);
+                                
+                                $output = call_user_func_array([$this, $method], $params);
+                            }else{
+                                $output =  $this->$method();
+                            }
                             
                             if ($output instanceof controller){
                                 return $output->route($url, $is_action);
@@ -386,8 +413,68 @@ namespace adapt{
                 }
                 
             }
-            
         }
+        
+//        public function route($url, $is_action = false){
+//            $url = trim($url);
+//            if($is_action){
+//                $controllers = explode("/", $url);
+//                $action = array_pop($controllers);
+//                $this->_url_mount_point = trim($this->request['url'] . '/' . $action , '/');
+//            }else{
+//                $this->_url_mount_point = trim(($this->request['url']), '/');
+//            }
+//            if (!isset($url) || $url == ""){
+//                $url = "default";
+//            }
+//            
+//            $url_components = array_reverse(explode("/", $url));
+//            $method = array_pop($url_components);
+//            $method = str_replace("-", "_", $method);
+//            $url = implode("/", array_reverse($url_components));
+//            
+//            if (!$is_action){
+//                $this->url = $url;
+//            }
+//            
+//            if (strlen($method) > 0){
+//                if ($is_action){
+//                    if (count($url_components) == 0){
+//                        $method = "action_{$method}";
+//                    }else{
+//                        $method = "view_{$method}";
+//                    }
+//                }else{
+//                    $method = "view_{$method}";
+//                }
+//                
+//                $permission = "permission_{$method}";
+//                
+//                if (isset($method)){
+//                    if (method_exists($this, $method) || is_callable(array($this, $method))){
+//                        if (/*(!method_exists($this, $permission) && !is_callable(array($this, $permission)))*/ is_null($this->$permission()) || $this->$permission() == true){
+//                            $output =  $this->$method();
+//                            
+//                            if ($output instanceof controller){
+//                                return $output->route($url, $is_action);
+//                            }else{
+//                                return $output;
+//                            }
+//                        }else{
+//                            return $this->error(403);
+//                        }
+//                    }else{
+//                        if ($is_action){
+//                            return $this->error(400);
+//                        }else{
+//                            return $this->error(404);
+//                        }
+//                    }
+//                }
+//                
+//            }
+//            
+//        }
         
         /**
          * Over-rides the DOM and displays the HTTP error.
