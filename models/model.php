@@ -1274,12 +1274,28 @@ namespace adapt{
         
         /**
          * Deletes the model
-         *
+         * @param boolean $include_children
          * @access public
          */
-        public function delete(){
+        public function delete($include_children = false){
             if ($this->is_loaded){
                 if (!$this->has_method('permission_delete') || $this->permission_delete()){
+                    
+                    /* Remove our children if required */
+                    if ($include_children === true){
+                        $children = $this->get();
+                        
+                        foreach($children as $child){
+                            if ($child instanceof \adapt\model){
+                                /* Note: Intentionally the $include_children 
+                                 * param is not passed down the chain.
+                                 */
+                                $child->delete();
+                            }
+                        }
+                    }
+                    
+                    /* Delete ourself */
                     $this->date_deleted = new sql_now();
                     $this->save();
                     $this->initialise();
