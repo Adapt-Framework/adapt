@@ -55,8 +55,30 @@ namespace adapt{
      * The table name this model is using.
      * @property-read boolean $auto_load_children
      * Are child models auto loaded?
+     * @property-read boolean $has_guid
+     * Does this object have a GUID?
      */
     class model extends base{
+        
+        /**
+         * Constants that represent export
+         * options for to_hash(), to_xml()
+         * and to_json()
+         */
+        /* Context all */
+        const CONTEXT_ALL = "context.all";
+        
+        /* Context form */
+        const CONTEXT_FORM = "context.form";
+        
+        /* Context API */
+        const CONTEXT_API = "context.api";
+        
+        /* Context Web */
+        const CONTEXT_WEB = "context.web";
+        
+        /* Context List */
+        const CONTEXT_LIST = "context.list";
         
         /**
          * Fired when a model is loaded
@@ -255,6 +277,11 @@ namespace adapt{
         /** @ignore */
         public function pget_auto_load_children(){
             return $this->_auto_load_children;
+        }
+        
+        /** @ignore */
+        public function pget_has_guid(){
+            return is_array($this->data_source->get_field_structure($this->table_name, 'guid'));
         }
         
         /*
@@ -1269,10 +1296,51 @@ namespace adapt{
          * Export hash to a hash array
          *
          * @access public
+         * @param string $context
          * @return array
          * A hash array containing the models data.
          */
-        public function to_hash(){
+        public function to_hash($context = self::CONTEXT_ALL){
+            if (!is_string($context)){
+                $context = self::CONTEXT_ALL;
+            }
+            
+            $hash = $this->_to_hash();
+            
+            $context = trim(strtolower($context));
+            
+            switch($context){
+            case self::CONTEXT_LIST:
+            case self::CONTEXT_WEB:
+            case self::CONTEXT_API:
+            case self::CONTEXT_FORM:
+                /* Remove dates */
+                unset($hash[$this->table_name]['date_created']);
+                unset($hash[$this->table_name]['date_modified']);
+                unset($hash[$this->table_name]['date_deleted']);
+                
+                /* If we have a GUID, hide our keys */
+                if ($this->has_guid){
+                    $keys = $this->data_source->get_primary_keys($this->table_name);
+                    foreach($keys as $key){
+                        unset($hash[$this->table_name][$key]);
+                    }
+                }
+                break;
+            case self::CONTEXT_ALL:
+            default:
+            }
+            
+            return $hash;
+        }
+        
+        /**
+         * v2.1 Hide the original and replace with a context
+         * sensitive version
+         * $param string $context
+         * @return type
+         */
+        protected function _to_hash($context){
             $output = array();
             $hash = array();
             
@@ -1318,7 +1386,7 @@ namespace adapt{
             $children = $this->get();
             foreach($children as $child){
                 if ($child instanceof model){
-                    $hash = $child->to_hash();
+                    $hash = $child->to_hash($conext);
                     
                     foreach($hash as $table_name => $fields){
                         if (isset($output[$table_name])){
@@ -1333,28 +1401,11 @@ namespace adapt{
                                     if (!is_array($output[$table_name][$key])) $output[$table_name][$key] = array($output[$table_name][$key]);
                                     $output[$table_name][$key][] = $values;
                                 }
-                                
-                                
-                                //$output[$table_name][$key] = array_merge($output[$table_name][$key], $values);
                             }
                         }else{
                             $output[$table_name] = $hash[$table_name];
                         }
                     }
-                    
-                    //$output = array_merge($output, $hash);
-                    //foreach($hash as $key => $value){
-                    //    
-                    //}
-                    
-                    //$output[$this->table_name][$child->table_name][] = $hash[$child->table_name];
-                    //$output[$child->table_name][] = $hash[$child->table_name];
-                    
-                    //foreach($hash as $key => $values){
-                    //    foreach($values as $value){
-                    //        $output[$key][] = $value;
-                    //    }
-                    //}
                 }
             }
             
@@ -1365,28 +1416,14 @@ namespace adapt{
          * Returns a simplified hash array
          *
          * @access public
+         * $param string $context
          * @return array
          * A hash array containing the models data.
          */
-        public function to_hash_string(){
+        public function to_hash_string($context = self::CONTEXT_FORM){
             $output = array();
-            $hash = $this->to_hash();
+            $hash = $this->to_hash($context);
             
-            //foreach($hash as $table_name => $field){
-            //    foreach($field as $field_name => $values){
-            //        if (is_array($values)){
-            //            foreach($values as $value){
-            //                $key = "{$table_name}[{$field_name}][]";
-            //                $output[] = array('key' => $key, 'value' => $value);
-            //            }
-            //        }else{
-            //            $key = "{$table_name}[{$field_name}]";
-            //            $output[] = array('key' => $key, 'value' => $values);
-            //            //$output["{$table_name}[{$field_name}]"] = $values;
-            //        }
-            //    }
-            //}
-            //return $output;
             foreach($hash as $table => $values){
                 
                 foreach($values as $field => $value){
@@ -1488,54 +1525,18 @@ namespace adapt{
          * Returns the models data in JSON format
          *
          * @access public
+         * $param string $context
          * @return string
          * A string containing the data in JSON format.
          */
-        public function to_json(){
-            $output = [];
-            foreach($this->_data as $key => $value){
-                if ($value instanceof sql){
-                    $sql = new sql_null();
-                    if ($sql->render() == $value->render()){
-                        $hash[$key] = null;
-                    }
-                }elseif(is_null($value)){
-                    $hash[$key] = null;
-                }else{
-                    $hash[$key] = $this->data_source->format($this->table_name, $key, $value);
-                }
-            }
-            
-            $class = new \ReflectionClass(get_class($this));
-            foreach($class->getMethods(\ReflectionMethod::IS_PUBLIC) as $method){
-                $name = $method->name;
-                if (substr($name, 0, 5) == "mget_"){
-                    $key = substr($name, 5);
-                    $hash[$key] = $this->$name();
-                }
-            }
-            
-            $output[$this->table_name] = $hash;
-            
-            $children = $this->get();
-            
-            foreach($children as $child){
-                if ($child instanceof model){
-                    if (!isset($output[$child->table_name])){
-                        $output[$child->table_name] = [];
-                    }
-                    
-                    $hash = $child->to_hash();
-                    $output[$child->table_name][] = $hash[$child->table_name];
-                }
-            }
-            
-            return json_encode($output);
+        public function to_json($conext = self::CONTEXT_API){
+            $hash = $this->to_hash($context);
+            return json_encode($hash);
         }
         
         /** @ignore */
         public function __toString(){
-            return $this->to_json();
+            return $this->to_json(self::CONTEXT_ALL);
         }
         
         /**
