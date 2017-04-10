@@ -55,6 +55,8 @@ namespace adapt{
      * The table name this model is using.
      * @property-read boolean $auto_load_children
      * Are child models auto loaded?
+     * @property-read array $changed_fields
+     * The fields that have been changed
      * @property-read boolean $has_guid
      * Does this object have a GUID?
      */
@@ -238,6 +240,11 @@ namespace adapt{
         /** @ignore */
         public function pget_has_changed(){
             return $this->_has_changed;
+        }
+
+        /** @ignore */
+        public function pget_changed_fields(){
+            return $this->_changed_fields;
         }
         
         /** @ignore */
