@@ -671,6 +671,15 @@ namespace adapt{
          * Returns true or false, or an array of un-met dependencies.
          */
         public function has_all_dependencies($bundle_name, $bundle_version = null){
+            $cache_key = "adapt/bundle/dependencies/{$bundle_name}";
+            if (!is_null($bundle_version)){
+                $cache_key .= "-" . $bundle_version;
+            }
+            
+            if (!is_null($this->cache->get($cache_key))){
+                return true;
+            }
+            
             $required_dependencies = array();
             $bundle = $this->load_bundle($bundle_name, $bundle_version);
             
@@ -705,6 +714,7 @@ namespace adapt{
             
             
             if (count($required_dependencies) == 0){
+                $this->cache->set($cache_key, "1", 900);
                 return true;
             }
             
