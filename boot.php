@@ -134,7 +134,8 @@ if ($adapt->bundles->boot_application()){
     $adapt->bundles->save_bundle_cache();
     $adapt->bundles->save_global_settings();
     
-    if (isset($_SERVER['SHELL'])){
+    //if (isset($_SERVER['SHELL'])){
+    if (!isset($_SERVER['HTTP_HOST'])){
         /* Command Line Interface */
         print "Adapt Framework (" . ADAPT_VERSION . ") CLI\n";
         
