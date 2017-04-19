@@ -1524,6 +1524,14 @@ namespace adapt{
                                                 case "bundle_name":
                                                     $row[$field_name] = $this->name;
                                                     break;
+                                                default:
+                                                    if (is_null($row[$file_name])){
+                                                        $field_schema = $this->data_source->get_field_structure($table_name, $field_name);
+                                                        if (isset($field_schema) && !is_null($field_schema['default_value'])){
+                                                            $row[$field_name] = $field_schema['default_value'];
+                                                        }
+                                                    }
+                                                    break;
                                                 }
                                                 
                                                 $values[] = $row[$field_name];
