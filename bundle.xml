@@ -9,7 +9,7 @@
     <type>php_framework</type>
     <namespace>\adapt</namespace>
     <description>Adapt framework is designed for rapid application and web deployment, built to scale it can meet the needs of the most demanding websites.</description>
-    <copyright>2016 Matt Bruton</copyright>
+    <copyright>2017 Matt Bruton</copyright>
     <license>MIT</license>
     <vendor>
         <name>Adapt Framework</name>
