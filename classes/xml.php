@@ -183,7 +183,7 @@ namespace adapt{
                     if (self::is_xml($child) && $parse){
                         $this->_add(self::parse($child));
                     }else{
-                        $this->_children[] = self::escape($child);
+                        $this->_children[] = $child;
                     }
                 }else{
                     $this->_children[] = strval($child);
@@ -305,21 +305,22 @@ namespace adapt{
          * Escape functions
          */
         public static function escape($string){
-            $string = mb_ereg_replace("/\"/", "&quot;", $string, "m");
-            $string = mb_ereg_replace("/'/", "&apos;", $string, "m");
-            $string = mb_ereg_replace("/\</", "&lt;", $string, "m");
-            $string = mb_ereg_replace("/\>/", "&gt;", $string, "m");
-            $string = mb_ereg_replace("/&/", "&amp;", $string, "m");
+            $string = mb_ereg_replace("&", "&amp;", $string, "m");
+            $string = mb_ereg_replace("\"", "&quot;", $string, "m");
+            $string = mb_ereg_replace("'", "&apos;", $string, "m");
+            $string = mb_ereg_replace("\<", "&lt;", $string, "m");
+            $string = mb_ereg_replace("\>", "&gt;", $string, "m");
+            
             
             return $string;
         }
         
         public static function unescape($string){
-            $string = mb_ereg_replace("/&amp;/", "&", $string, "m");
-            $string = mb_ereg_replace("/&apos;/", "'", $string, "m");
-            $string = mb_ereg_replace("/&lt;/", "<", $string, "m");
-            $string = mb_ereg_replace("/&gt;/", ">", $string, "m");
-            $string = mb_ereg_replace("/&quot;/", "\"", $string, "m");
+            $string = mb_ereg_replace("&amp;", "&", $string, "m");
+            $string = mb_ereg_replace("&apos;", "'", $string, "m");
+            $string = mb_ereg_replace("&lt;", "<", $string, "m");
+            $string = mb_ereg_replace("&gt;", ">", $string, "m");
+            $string = mb_ereg_replace("&quot;", "\"", $string, "m");
             
             return $string;
         }
@@ -452,7 +453,9 @@ namespace adapt{
                     }
                     $has_children = true;
                     
-                    if ($string_data != "") $node->add(self::unescape($string_data));
+                    if ($string_data != ""){
+                        $node->add(self::unescape($string_data));
+                    }
                     
                     
                     $parts = explode(" ", $tag_data);
@@ -484,7 +487,7 @@ namespace adapt{
                                     $current_part = "";
                                     $value = preg_replace("/^\"|'/", "", $value);
                                     $value = preg_replace("/\"|'$/", "", $value);
-                                    $node->attr($name, $value);
+                                    $node->attr($name, self::unescape($value));
                                 }else{
                                     $current_part .= " " . $parts[$i];
                                 }
