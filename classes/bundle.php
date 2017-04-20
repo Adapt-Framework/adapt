@@ -1011,7 +1011,6 @@ namespace adapt{
          */
         public function install(){
             if (!$this->is_installed() && !$this->is_installing()){
-                
                 /* Mark as installing */
                 $this->file_store->set("adapt/installation/{$this->name}-{$this->version}", "true", "text/plain");
                 
@@ -1436,7 +1435,6 @@ namespace adapt{
                                                     foreach($errors as $error){
                                                         $this->error($error);
                                                     }
-                                                    
                                                     return false;
                                                 }
                                                 
@@ -1730,7 +1728,6 @@ namespace adapt{
                                                     foreach($errors as $error){
                                                         $this->error($error);
                                                     }
-                                                    
                                                     return false;
                                                 }
                                                 
