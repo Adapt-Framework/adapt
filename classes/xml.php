@@ -1,10 +1,12 @@
 <?php
 
 /*
+ * Adapt Framework (www.adaptframework.com)
+ * 
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2017 Matt Bruton (www.adaptframework.com)
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
