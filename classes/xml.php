@@ -50,6 +50,7 @@ namespace adapt{
         protected $_closing_tag;
         protected $_attributes;
         protected $_parent;
+        protected $_cdata_tokens;
         
         /*
          * Constructor
@@ -61,6 +62,7 @@ namespace adapt{
             $this->_children = array();
             $this->_attributes = array();
             $this->_closing_tag = $closing_tag;
+            $this->_cdata_tokens = array();
             
             if (is_array($data) && is_assoc($data) && count($attributes) == 0){
                 $this->_attributes = $data;
@@ -196,10 +198,22 @@ namespace adapt{
         public function get($index = null){
             if (isset($index)){
                 if ($index < $this->count()){
-                    return $this->_children[$index];
+                    if (is_string($this->_children[$index])){
+                        return $this->process_cdata_tags($this->_children[$index]);
+                    }else{
+                        return $this->_children[$index];
+                    }
                 }
             }else{
-                return $this->_children;
+                $final = [];
+                foreach($this->_children as $child){
+                    if (is_string($child)){
+                        $final[] = $this->process_cdata_tags($child);
+                    }else{
+                        $final[] = $child;
+                    }
+                }
+                return $final;
             }
         }
         
@@ -255,13 +269,27 @@ namespace adapt{
             
             foreach($children as $c){
                 if (is_string($c)){
-                    $output .= $c;
+                    $output .= $this->process_cdata_tags($c);
                 }elseif($c instanceof xml){
-                    $output .= $c->render();
+                    $output .= $c->value();
                 }
             }
             
             return $output;
+        }
+        
+        /*
+         * CDATA methods
+         */
+        public function add_cdata_token($token, $data){
+            $this->_cdata_tokens[$token] = $data;
+        }
+        
+        public function process_cdata_tags($string){
+            foreach($this->_cdata_tokens as $token => $data){
+                $string = preg_replace("/{$token}/", $data, $string);
+            }
+            return $string;
         }
         
         /*
@@ -385,7 +413,11 @@ namespace adapt{
                         $xml .= $child->render($close_all_empty_tags, $add_slash_to_empty_tags, $child_depth);
                         $last_was_child = true;
                     }elseif (is_string($child)){
-                        $xml .= static::escape($child);
+                        $string = static::escape($child);
+                        foreach($this->_cdata_tokens as $token => $data){
+                            $string = preg_replace("/" . static::escape($token) . "/", "<![CDATA[{$data}]]>", $string);
+                        }
+                        $xml .= $string;
                         $last_was_child = false;
                     }else{
                         try{
@@ -408,11 +440,14 @@ namespace adapt{
         /*
          * Parser functions
          */
-        public static function parse($data, $return_as_document = false, $alternative_first_node_object = null){
+        public static function parse($data, $return_as_document = false, $alternative_first_node_object = null, $cdata_tokens = []){
             if (is_string($data)){
                 /* Convert the data to an array */
                 /* Remove xml tag */
                 $data = preg_replace("/<\?.*?>\s?/", "", $data);
+                
+                /* Tokenize the cdata tags */
+                $data = static::parse_cdata_tags($data, $cdata_tokens);
                 
                 /* Replace <.../> with <... /> */
                 $data = preg_replace("/([^\s])\/>/", "$1 />", $data);
@@ -457,6 +492,14 @@ namespace adapt{
                     $has_children = true;
                     
                     if ($string_data != ""){
+                        /* Check if the string contains any cdata tokens */
+                        $cdata_token_matches = [];
+                        if (preg_match_all("/&cdata[0-9]+;/", $string_data, $cdata_token_matches)){
+                            foreach($cdata_token_matches[0] as $token){
+                                /* Add the token and it's data to the child node */
+                                $node->add_cdata_token($token, $cdata_tokens[$token]);
+                            }
+                        }
                         $node->add(static::unescape($string_data));
                     }
                     
@@ -519,7 +562,7 @@ namespace adapt{
                                 //print_r($children);
                                 if ($depth == 0){
                                     //Parse the children
-                                    $parsed_nodes = static::parse($children);
+                                    $parsed_nodes = static::parse($children, false, null, $cdata_tokens);
                                     
                                     if (is_array($parsed_nodes)){
                                         foreach($parsed_nodes as $n){
@@ -561,7 +604,7 @@ namespace adapt{
                         
                         if($data_node) $nodes[] = $data_node;
                         if (count($final)){
-                            $parsed_nodes = static::parse($final);
+                            $parsed_nodes = static::parse($final, false, null, $cdata_tokens);
                             if (is_array($parsed_nodes)){
                                 $nodes = array_merge($nodes, $parsed_nodes);
                             }else{
@@ -576,6 +619,33 @@ namespace adapt{
                     }
                 }
             }
+        }
+        
+        public static function parse_cdata_tags($xml_string, array &$cdata_tokens){
+            /* Break the string by parts */
+            mb_regex_set_options("i");
+            $parts = mb_split("<!\[CDATA\[|\]\]>", $xml_string);
+            
+            /* Reset the string */
+            $xml_string = "";
+            
+            /* Loop thru the parts */
+            for ($i = 0; $i < count($parts); $i++){
+                /* Get the current part */
+                $part = $parts[$i];
+                
+                if ($i % 2 == 0){
+                    $xml_string .= $part;
+                }else{
+                    $token = "&cdata" . count($cdata_tokens) . ";";
+                    $cdata_tokens[$token] = $part;
+                    $xml_string .= $token;
+                }
+                
+                
+            }
+            
+            return $xml_string;
         }
         
         /*
