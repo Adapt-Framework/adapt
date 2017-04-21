@@ -1,10 +1,12 @@
 <?php
 
 /*
+ * Adapt Framework (www.adaptframework.com)
+ * 
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2017 Matt Bruton (www.adaptframework.com)
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -405,43 +407,7 @@ namespace adapt{
         /*
          * Parser functions
          */
-        
-        public static function SimpleXML2xml(&$xml_node, &$sxml_node){
-            $attributes = $sxml_node->attributes();
-            $children = $sxml_node->children();
-            
-            foreach($attributes as $key => $value){
-                $xml_node->attr((string)$key, (string)$value);
-            }
-            
-            foreach($children as $child){
-                $string_value = (string)$child;
-                $string_value = trim($string_value);
-                
-                if ($string_value != ""){
-                    $xml = new xml((string)$child->getName());
-                    $xml->_add($string_value, false);
-                    $xml_node->add($xml);
-                }else{
-                    $xml = new xml((string)$child->getName());
-                    $xml_node->add($xml);
-                    self::SimpleXML2xml($xml, $child);
-                }
-            }
-        }
         public static function parse($data, $return_as_document = false, $alternative_first_node_object = null){
-            if (is_string($data) && self::is_xml($data)){
-                /* We are going to use SimpleXML to parse the data */
-                $sxml = simplexml_load_string($data);
-                //TODO: Check return value
-                $xml = new xml((string)$sxml->getName());
-                
-                self::SimpleXML2xml($xml, $sxml);
-                
-                return $xml;
-            }
-            
-            
             if (is_string($data)){
                 /* Convert the data to an array */
                 /* Remove xml tag */
@@ -460,7 +426,6 @@ namespace adapt{
                 
                 $data = $final;
             }
-            //print "<pre>" . print_r($final, true) . "</pre>";
             
             if (is_array($data) && count($data)){
                 $nodes = array();
@@ -623,5 +588,3 @@ namespace adapt{
     }
 
 }
-
-?>
