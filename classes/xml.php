@@ -414,6 +414,9 @@ namespace adapt{
                 /* Remove xml tag */
                 $data = preg_replace("/<\?.*?>\s?/", "", $data);
                 
+                /* Replace <.../> with <... /> */
+                $data = preg_replace("/([^\s])\/>/", "$1 />", $data);
+                
                 /* Split the tags */
                 $data = preg_split("/</", $data);
                 
@@ -513,10 +516,6 @@ namespace adapt{
                                 }
                             }elseif(preg_match("/^\/{$this_tag}/", $data[$i])){
                                 //print "Here with {$data[$i]} at depth {$depth} on tag {$node->tag_name}\n";
-                                
-                                
-                                
-                                
                                 //print_r($children);
                                 if ($depth == 0){
                                     //Parse the children
