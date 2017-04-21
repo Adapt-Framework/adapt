@@ -1,10 +1,12 @@
 <?php
 
 /*
+ * Adapt Framework (www.adaptframework.com)
+ * 
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2017 Matt Bruton (www.adaptframework.com)
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,6 +50,7 @@ namespace adapt{
         protected $_closing_tag;
         protected $_attributes;
         protected $_parent;
+        protected $_cdata_tokens;
         
         /*
          * Constructor
@@ -59,6 +62,7 @@ namespace adapt{
             $this->_children = array();
             $this->_attributes = array();
             $this->_closing_tag = $closing_tag;
+            $this->_cdata_tokens = array();
             
             if (is_array($data) && is_assoc($data) && count($attributes) == 0){
                 $this->_attributes = $data;
@@ -179,9 +183,9 @@ namespace adapt{
                     $this->_children[] = $child;
                 }elseif(is_string($child)){
                     if (self::is_xml($child) && $parse){
-                        $this->_add(self::parse($child));
+                        $this->_add(static::parse($child));
                     }else{
-                        $this->_children[] = self::escape($child);
+                        $this->_children[] = $child;
                     }
                 }else{
                     $this->_children[] = strval($child);
@@ -194,10 +198,22 @@ namespace adapt{
         public function get($index = null){
             if (isset($index)){
                 if ($index < $this->count()){
-                    return $this->_children[$index];
+                    if (is_string($this->_children[$index])){
+                        return $this->process_cdata_tags($this->_children[$index]);
+                    }else{
+                        return $this->_children[$index];
+                    }
                 }
             }else{
-                return $this->_children;
+                $final = [];
+                foreach($this->_children as $child){
+                    if (is_string($child)){
+                        $final[] = $this->process_cdata_tags($child);
+                    }else{
+                        $final[] = $child;
+                    }
+                }
+                return $final;
             }
         }
         
@@ -253,13 +269,27 @@ namespace adapt{
             
             foreach($children as $c){
                 if (is_string($c)){
-                    $output .= $c;
+                    $output .= $this->process_cdata_tags($c);
                 }elseif($c instanceof xml){
-                    $output .= $c->render();
+                    $output .= $c->value();
                 }
             }
             
             return $output;
+        }
+        
+        /*
+         * CDATA methods
+         */
+        public function add_cdata_token($token, $data){
+            $this->_cdata_tokens[$token] = $data;
+        }
+        
+        public function process_cdata_tags($string){
+            foreach($this->_cdata_tokens as $token => $data){
+                $string = preg_replace("/{$token}/", $data, $string);
+            }
+            return $string;
         }
         
         /*
@@ -303,21 +333,22 @@ namespace adapt{
          * Escape functions
          */
         public static function escape($string){
-            $string = mb_ereg_replace("/\"/", "&quot;", $string, "m");
-            $string = mb_ereg_replace("/'/", "&apos;", $string, "m");
-            $string = mb_ereg_replace("/\</", "&lt;", $string, "m");
-            $string = mb_ereg_replace("/\>/", "&gt;", $string, "m");
-            $string = mb_ereg_replace("/&/", "&amp;", $string, "m");
+            $string = mb_ereg_replace("&", "&amp;", $string, "m");
+            $string = mb_ereg_replace("\"", "&quot;", $string, "m");
+            $string = mb_ereg_replace("'", "&apos;", $string, "m");
+            $string = mb_ereg_replace("\<", "&lt;", $string, "m");
+            $string = mb_ereg_replace("\>", "&gt;", $string, "m");
+            
             
             return $string;
         }
         
         public static function unescape($string){
-            $string = mb_ereg_replace("/&amp;/", "&", $string, "m");
-            $string = mb_ereg_replace("/&apos;/", "'", $string, "m");
-            $string = mb_ereg_replace("/&lt;/", "<", $string, "m");
-            $string = mb_ereg_replace("/&gt;/", ">", $string, "m");
-            $string = mb_ereg_replace("/&quot;/", "\"", $string, "m");
+            $string = mb_ereg_replace("&amp;", "&", $string, "m");
+            $string = mb_ereg_replace("&apos;", "'", $string, "m");
+            $string = mb_ereg_replace("&lt;", "<", $string, "m");
+            $string = mb_ereg_replace("&gt;", ">", $string, "m");
+            $string = mb_ereg_replace("&quot;", "\"", $string, "m");
             
             return $string;
         }
@@ -326,7 +357,7 @@ namespace adapt{
          * Render functions
          */
         public function render_attribute($key, $value){
-            return $key . "=\"" . self::escape($value) . "\"";
+            return $key . "=\"" . static::escape($value) . "\"";
         }
         
         public function render($close_all_empty_tags = false, $add_slash_to_empty_tags = true, $depth = 0){
@@ -382,7 +413,11 @@ namespace adapt{
                         $xml .= $child->render($close_all_empty_tags, $add_slash_to_empty_tags, $child_depth);
                         $last_was_child = true;
                     }elseif (is_string($child)){
-                        $xml .= self::escape($child);
+                        $string = static::escape($child);
+                        foreach($this->_cdata_tokens as $token => $data){
+                            $string = preg_replace("/" . static::escape($token) . "/", "<![CDATA[{$data}]]>", $string);
+                        }
+                        $xml .= $string;
                         $last_was_child = false;
                     }else{
                         try{
@@ -405,47 +440,17 @@ namespace adapt{
         /*
          * Parser functions
          */
-        
-        public static function SimpleXML2xml(&$xml_node, &$sxml_node){
-            $attributes = $sxml_node->attributes();
-            $children = $sxml_node->children();
-            
-            foreach($attributes as $key => $value){
-                $xml_node->attr((string)$key, (string)$value);
-            }
-            
-            foreach($children as $child){
-                $string_value = (string)$child;
-                $string_value = trim($string_value);
-                
-                if ($string_value != ""){
-                    $xml = new xml((string)$child->getName());
-                    $xml->_add($string_value, false);
-                    $xml_node->add($xml);
-                }else{
-                    $xml = new xml((string)$child->getName());
-                    $xml_node->add($xml);
-                    self::SimpleXML2xml($xml, $child);
-                }
-            }
-        }
-        public static function parse($data, $return_as_document = false, $alternative_first_node_object = null){
-            if (is_string($data) && self::is_xml($data)){
-                /* We are going to use SimpleXML to parse the data */
-                $sxml = simplexml_load_string($data);
-                //TODO: Check return value
-                $xml = new xml((string)$sxml->getName());
-                
-                self::SimpleXML2xml($xml, $sxml);
-                
-                return $xml;
-            }
-            
-            
+        public static function parse($data, $return_as_document = false, $alternative_first_node_object = null, $cdata_tokens = []){
             if (is_string($data)){
                 /* Convert the data to an array */
                 /* Remove xml tag */
                 $data = preg_replace("/<\?.*?>\s?/", "", $data);
+                
+                /* Tokenize the cdata tags */
+                $data = static::parse_cdata_tags($data, $cdata_tokens);
+                
+                /* Replace <.../> with <... /> */
+                $data = preg_replace("/([^\s])\/>/", "$1 />", $data);
                 
                 /* Split the tags */
                 $data = preg_split("/</", $data);
@@ -460,7 +465,6 @@ namespace adapt{
                 
                 $data = $final;
             }
-            //print "<pre>" . print_r($final, true) . "</pre>";
             
             if (is_array($data) && count($data)){
                 $nodes = array();
@@ -473,7 +477,7 @@ namespace adapt{
                     $tag_data = mb_trim($data[0]);
                     $string_data = "";
                 }
-                //$string_data = trim($string_data);
+                $string_data = trim($string_data);
                 
                 if ($tag_data){
                     if (isset($alternative_first_node_object) && $alternative_first_node_object instanceof xml){
@@ -487,7 +491,17 @@ namespace adapt{
                     }
                     $has_children = true;
                     
-                    if ($string_data != "") $node->add(self::unescape($string_data));
+                    if ($string_data != ""){
+                        /* Check if the string contains any cdata tokens */
+                        $cdata_token_matches = [];
+                        if (preg_match_all("/&cdata[0-9]+;/", $string_data, $cdata_token_matches)){
+                            foreach($cdata_token_matches[0] as $token){
+                                /* Add the token and it's data to the child node */
+                                $node->add_cdata_token($token, $cdata_tokens[$token]);
+                            }
+                        }
+                        $node->add(static::unescape($string_data));
+                    }
                     
                     
                     $parts = explode(" ", $tag_data);
@@ -519,7 +533,7 @@ namespace adapt{
                                     $current_part = "";
                                     $value = preg_replace("/^\"|'/", "", $value);
                                     $value = preg_replace("/\"|'$/", "", $value);
-                                    $node->attr($name, $value);
+                                    $node->attr($name, static::unescape($value));
                                 }else{
                                     $current_part .= " " . $parts[$i];
                                 }
@@ -545,14 +559,10 @@ namespace adapt{
                                 }
                             }elseif(preg_match("/^\/{$this_tag}/", $data[$i])){
                                 //print "Here with {$data[$i]} at depth {$depth} on tag {$node->tag_name}\n";
-                                
-                                
-                                
-                                
                                 //print_r($children);
                                 if ($depth == 0){
                                     //Parse the children
-                                    $parsed_nodes = self::parse($children);
+                                    $parsed_nodes = static::parse($children, false, null, $cdata_tokens);
                                     
                                     if (is_array($parsed_nodes)){
                                         foreach($parsed_nodes as $n){
@@ -594,7 +604,7 @@ namespace adapt{
                         
                         if($data_node) $nodes[] = $data_node;
                         if (count($final)){
-                            $parsed_nodes = self::parse($final);
+                            $parsed_nodes = static::parse($final, false, null, $cdata_tokens);
                             if (is_array($parsed_nodes)){
                                 $nodes = array_merge($nodes, $parsed_nodes);
                             }else{
@@ -611,6 +621,33 @@ namespace adapt{
             }
         }
         
+        public static function parse_cdata_tags($xml_string, array &$cdata_tokens){
+            /* Break the string by parts */
+            mb_regex_set_options("i");
+            $parts = mb_split("<!\[CDATA\[|\]\]>", $xml_string);
+            
+            /* Reset the string */
+            $xml_string = "";
+            
+            /* Loop thru the parts */
+            for ($i = 0; $i < count($parts); $i++){
+                /* Get the current part */
+                $part = $parts[$i];
+                
+                if ($i % 2 == 0){
+                    $xml_string .= $part;
+                }else{
+                    $token = "&cdata" . count($cdata_tokens) . ";";
+                    $cdata_tokens[$token] = $part;
+                    $xml_string .= $token;
+                }
+                
+                
+            }
+            
+            return $xml_string;
+        }
+        
         /*
          * Helper functions
          */
@@ -623,5 +660,3 @@ namespace adapt{
     }
 
 }
-
-?>

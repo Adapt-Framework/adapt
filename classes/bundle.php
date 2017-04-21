@@ -1011,7 +1011,6 @@ namespace adapt{
          */
         public function install(){
             if (!$this->is_installed() && !$this->is_installing()){
-                
                 /* Mark as installing */
                 $this->file_store->set("adapt/installation/{$this->name}-{$this->version}", "true", "text/plain");
                 
@@ -1436,7 +1435,6 @@ namespace adapt{
                                                     foreach($errors as $error){
                                                         $this->error($error);
                                                     }
-                                                    
                                                     return false;
                                                 }
                                                 
@@ -1523,6 +1521,14 @@ namespace adapt{
                                                     break;
                                                 case "bundle_name":
                                                     $row[$field_name] = $this->name;
+                                                    break;
+                                                default:
+                                                    if (is_null($row[$field_name])){
+                                                        $field_schema = $this->data_source->get_field_structure($table_name, $field_name);
+                                                        if (isset($field_schema) && !is_null($field_schema['default_value'])){
+                                                            $row[$field_name] = $field_schema['default_value'];
+                                                        }
+                                                    }
                                                     break;
                                                 }
                                                 
@@ -1722,7 +1728,6 @@ namespace adapt{
                                                     foreach($errors as $error){
                                                         $this->error($error);
                                                     }
-                                                    
                                                     return false;
                                                 }
                                                 

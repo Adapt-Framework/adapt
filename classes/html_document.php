@@ -33,15 +33,24 @@ namespace adapt{
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
     
-    class xml_document extends xml{
+    class html_document extends html{
         
-        public function __construct($tag, $data = null, $attributes = array(), $closing_tag = false){
-            parent::__construct($tag, $data, $attributes, $closing_tag);
+        public function __construct($data = null, $attributes = array(), $closing_tag = false){
+            parent::__construct('html', $data, $attributes, $closing_tag);
         }
         
-        public function render($close_all_empty_tags = false, $add_slash_to_empty_tags = true, $depth = 0){
-            $output = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
-            $output .= parent::render($close_all_empty_tags, $add_slash_to_empty_tags, $depth);
+        public function render($not_req_1 = null, $not_req_2 = null, $depth = 0){
+            $output = "<!DOCTYPE html>\n";
+            
+            /**
+             * We are going to override render to output html 5
+             * instead of pure xml
+             */
+            if ($this->setting('html.format') == "xhtml"){
+                $output .= parent::_render(true, true, $depth);
+            }else{
+                $output .= parent::_render(false, false, $depth);
+            }
             return $output;
         }
     }

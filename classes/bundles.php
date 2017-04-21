@@ -116,7 +116,7 @@ namespace adapt{
                         $settings_data = xml::parse($settings_data);
                         
                         if ($settings_data instanceof xml){
-                            $children = $settings_data->get(0)->get();
+                            $children = $settings_data->find('setting')->get();
                             
                             foreach($children as $child){
                                 
@@ -671,6 +671,15 @@ namespace adapt{
          * Returns true or false, or an array of un-met dependencies.
          */
         public function has_all_dependencies($bundle_name, $bundle_version = null){
+            $cache_key = "adapt/bundle/dependencies/{$bundle_name}";
+            if (!is_null($bundle_version)){
+                $cache_key .= "-" . $bundle_version;
+            }
+            
+            if (!is_null($this->cache->get($cache_key))){
+                return true;
+            }
+            
             $required_dependencies = array();
             $bundle = $this->load_bundle($bundle_name, $bundle_version);
             
@@ -705,6 +714,7 @@ namespace adapt{
             
             
             if (count($required_dependencies) == 0){
+                $this->cache->set($cache_key, "1", 900);
                 return true;
             }
             
@@ -1032,19 +1042,7 @@ namespace adapt{
          * The version of the bundle using the namespace.
          */
         public function register_namespace($namespace, $bundle_name, $bundle_version){
-            //print "<p>Registering namespace <strong>{$namespace}-{$bundle_version}</strong></p>"; //new html_p(array("Registering namespace ", new html_strong($namespace)));
             $namespaces = $this->store('adapt.namespaces');
-            //if (!is_array($namespaces)){
-            //    if ($this->cache && $this->cache instanceof cache){
-            //        $namespaces = $this->cache->get('adapt/namespaces');
-            //        
-            //        if (!is_array($namespaces)){
-            //            $namespaces = array();
-            //        }
-            //    }else{
-            //        $namespaces = array();
-            //    }
-            //}
             
             $namespaces[$namespace] = array(
                 'bundle_name' => $bundle_name,
@@ -1052,10 +1050,6 @@ namespace adapt{
             );
             
             $this->store('adapt.namespaces', $namespaces);
-            
-            //if ($this->cache && $this->cache instanceof cache){
-            //    $this->cache->serialize('adapt.namespaces', $namespaces, 600);
-            //}
         }
         
         /**
