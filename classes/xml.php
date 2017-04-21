@@ -181,7 +181,7 @@ namespace adapt{
                     $this->_children[] = $child;
                 }elseif(is_string($child)){
                     if (self::is_xml($child) && $parse){
-                        $this->_add(self::parse($child));
+                        $this->_add(static::parse($child));
                     }else{
                         $this->_children[] = $child;
                     }
@@ -329,7 +329,7 @@ namespace adapt{
          * Render functions
          */
         public function render_attribute($key, $value){
-            return $key . "=\"" . self::escape($value) . "\"";
+            return $key . "=\"" . static::escape($value) . "\"";
         }
         
         public function render($close_all_empty_tags = false, $add_slash_to_empty_tags = true, $depth = 0){
@@ -385,7 +385,7 @@ namespace adapt{
                         $xml .= $child->render($close_all_empty_tags, $add_slash_to_empty_tags, $child_depth);
                         $last_was_child = true;
                     }elseif (is_string($child)){
-                        $xml .= self::escape($child);
+                        $xml .= static::escape($child);
                         $last_was_child = false;
                     }else{
                         try{
@@ -457,7 +457,7 @@ namespace adapt{
                     $has_children = true;
                     
                     if ($string_data != ""){
-                        $node->add(self::unescape($string_data));
+                        $node->add(static::unescape($string_data));
                     }
                     
                     
@@ -490,7 +490,7 @@ namespace adapt{
                                     $current_part = "";
                                     $value = preg_replace("/^\"|'/", "", $value);
                                     $value = preg_replace("/\"|'$/", "", $value);
-                                    $node->attr($name, self::unescape($value));
+                                    $node->attr($name, static::unescape($value));
                                 }else{
                                     $current_part .= " " . $parts[$i];
                                 }
@@ -519,7 +519,7 @@ namespace adapt{
                                 //print_r($children);
                                 if ($depth == 0){
                                     //Parse the children
-                                    $parsed_nodes = self::parse($children);
+                                    $parsed_nodes = static::parse($children);
                                     
                                     if (is_array($parsed_nodes)){
                                         foreach($parsed_nodes as $n){
@@ -561,7 +561,7 @@ namespace adapt{
                         
                         if($data_node) $nodes[] = $data_node;
                         if (count($final)){
-                            $parsed_nodes = self::parse($final);
+                            $parsed_nodes = static::parse($final);
                             if (is_array($parsed_nodes)){
                                 $nodes = array_merge($nodes, $parsed_nodes);
                             }else{
