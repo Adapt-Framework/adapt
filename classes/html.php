@@ -186,7 +186,7 @@ namespace adapt{
          * @return string
          * The rendered element.
          */
-        public function render($not_req_1 = null, $not_req_2 = null, $depth = 0, $not_req_3 = null){
+        public function render($not_req_1 = null, $not_req_2 = null, $depth = 0){
             /**
              * We are going to override render to output html 5
              * instead of pure xml
