@@ -181,9 +181,9 @@ namespace adapt{
                     $this->_children[] = $child;
                 }elseif(is_string($child)){
                     if (self::is_xml($child) && $parse){
-                        $this->_add(self::parse($child));
+                        $this->_add(static::parse($child));
                     }else{
-                        $this->_children[] = self::escape($child);
+                        $this->_children[] = $child;
                     }
                 }else{
                     $this->_children[] = strval($child);
@@ -305,21 +305,22 @@ namespace adapt{
          * Escape functions
          */
         public static function escape($string){
-            $string = mb_ereg_replace("/\"/", "&quot;", $string, "m");
-            $string = mb_ereg_replace("/'/", "&apos;", $string, "m");
-            $string = mb_ereg_replace("/\</", "&lt;", $string, "m");
-            $string = mb_ereg_replace("/\>/", "&gt;", $string, "m");
-            $string = mb_ereg_replace("/&/", "&amp;", $string, "m");
+            $string = mb_ereg_replace("&", "&amp;", $string, "m");
+            $string = mb_ereg_replace("\"", "&quot;", $string, "m");
+            $string = mb_ereg_replace("'", "&apos;", $string, "m");
+            $string = mb_ereg_replace("\<", "&lt;", $string, "m");
+            $string = mb_ereg_replace("\>", "&gt;", $string, "m");
+            
             
             return $string;
         }
         
         public static function unescape($string){
-            $string = mb_ereg_replace("/&amp;/", "&", $string, "m");
-            $string = mb_ereg_replace("/&apos;/", "'", $string, "m");
-            $string = mb_ereg_replace("/&lt;/", "<", $string, "m");
-            $string = mb_ereg_replace("/&gt;/", ">", $string, "m");
-            $string = mb_ereg_replace("/&quot;/", "\"", $string, "m");
+            $string = mb_ereg_replace("&amp;", "&", $string, "m");
+            $string = mb_ereg_replace("&apos;", "'", $string, "m");
+            $string = mb_ereg_replace("&lt;", "<", $string, "m");
+            $string = mb_ereg_replace("&gt;", ">", $string, "m");
+            $string = mb_ereg_replace("&quot;", "\"", $string, "m");
             
             return $string;
         }
@@ -328,7 +329,7 @@ namespace adapt{
          * Render functions
          */
         public function render_attribute($key, $value){
-            return $key . "=\"" . self::escape($value) . "\"";
+            return $key . "=\"" . static::escape($value) . "\"";
         }
         
         public function render($close_all_empty_tags = false, $add_slash_to_empty_tags = true, $depth = 0){
@@ -384,7 +385,7 @@ namespace adapt{
                         $xml .= $child->render($close_all_empty_tags, $add_slash_to_empty_tags, $child_depth);
                         $last_was_child = true;
                     }elseif (is_string($child)){
-                        $xml .= self::escape($child);
+                        $xml .= static::escape($child);
                         $last_was_child = false;
                     }else{
                         try{
@@ -412,6 +413,9 @@ namespace adapt{
                 /* Convert the data to an array */
                 /* Remove xml tag */
                 $data = preg_replace("/<\?.*?>\s?/", "", $data);
+                
+                /* Replace <.../> with <... /> */
+                $data = preg_replace("/([^\s])\/>/", "$1 />", $data);
                 
                 /* Split the tags */
                 $data = preg_split("/</", $data);
@@ -452,7 +456,9 @@ namespace adapt{
                     }
                     $has_children = true;
                     
-                    if ($string_data != "") $node->add(self::unescape($string_data));
+                    if ($string_data != ""){
+                        $node->add(static::unescape($string_data));
+                    }
                     
                     
                     $parts = explode(" ", $tag_data);
@@ -484,7 +490,7 @@ namespace adapt{
                                     $current_part = "";
                                     $value = preg_replace("/^\"|'/", "", $value);
                                     $value = preg_replace("/\"|'$/", "", $value);
-                                    $node->attr($name, $value);
+                                    $node->attr($name, static::unescape($value));
                                 }else{
                                     $current_part .= " " . $parts[$i];
                                 }
@@ -510,14 +516,10 @@ namespace adapt{
                                 }
                             }elseif(preg_match("/^\/{$this_tag}/", $data[$i])){
                                 //print "Here with {$data[$i]} at depth {$depth} on tag {$node->tag_name}\n";
-                                
-                                
-                                
-                                
                                 //print_r($children);
                                 if ($depth == 0){
                                     //Parse the children
-                                    $parsed_nodes = self::parse($children);
+                                    $parsed_nodes = static::parse($children);
                                     
                                     if (is_array($parsed_nodes)){
                                         foreach($parsed_nodes as $n){
@@ -559,7 +561,7 @@ namespace adapt{
                         
                         if($data_node) $nodes[] = $data_node;
                         if (count($final)){
-                            $parsed_nodes = self::parse($final);
+                            $parsed_nodes = static::parse($final);
                             if (is_array($parsed_nodes)){
                                 $nodes = array_merge($nodes, $parsed_nodes);
                             }else{

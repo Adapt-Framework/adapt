@@ -1,10 +1,12 @@
 <?php
 
-/*
+/* 
+ * Adapt Framework (www.adaptframework.com)
+ * 
  * The MIT License (MIT)
  *   
- * Copyright (c) 2015 Adapt Framework (www.adaptframework.com)
- * Authored by Matt Bruton (matt@adaptframework.com)
+ * Copyright (c) 2017 Matt Bruton
+ * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,9 +39,9 @@ namespace adapt{
             parent::__construct($tag, $data, $attributes, $closing_tag);
         }
         
-        public function render(){
+        public function render($close_all_empty_tags = false, $add_slash_to_empty_tags = true, $depth = 0){
             $output = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
-            $output .= parent::render();
+            $output .= parent::render($close_all_empty_tags, $add_slash_to_empty_tags, $depth);
             return $output;
         }
     }
