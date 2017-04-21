@@ -186,7 +186,7 @@ namespace adapt{
          * @return string
          * The rendered element.
          */
-        public function render($not_req_1 = null, $not_req_2 = null, $depth = 0){
+        public function render($not_req_1 = null, $not_req_2 = null, $depth = 0, $not_req_3 = null){
             /**
              * We are going to override render to output html 5
              * instead of pure xml
@@ -206,9 +206,11 @@ namespace adapt{
          * @param boolean
          * Should the returned string be output as a document. **Warning** this
          * should always be set to **false**.
+         * @param null
+         * Used by the parent class, this should be left out
          * @return html
          */
-        public static function parse($data, $return_as_document = false, $alternative_first_node_object = null){
+        public static function parse($data, $return_as_document = false, $alternative_first_node_object = null, $not_req_1 = null){
             /*
              * We are going to override the parse function
              * to deal with html 5 style tags that miss
@@ -262,7 +264,7 @@ namespace adapt{
                     $output[$i] = static::fix_parsed_tags($output[$i]);
                 }
             }else{
-                $output = static::fix_parsed_tags($output); //ISSUE: Application namespace?
+                $output = static::fix_parsed_tags($output);
             }
             
             return $output;
