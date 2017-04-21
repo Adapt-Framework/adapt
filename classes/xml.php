@@ -646,10 +646,6 @@ namespace adapt{
             }
             
             return $xml_string;
-            print_r($cdata_tokens);
-            print $xml_string . "\n";
-            
-            die();
         }
         
         /*
