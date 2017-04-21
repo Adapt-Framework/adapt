@@ -39,8 +39,25 @@ function voodoo($class){
     /* Get the namespace and class name */
     $namespaces = explode("\\", $class);
     $class_name = array_pop($namespaces);
+    
+    /* Replace the class if a replacement exists */
+    $replacements = $adapt->store('adapt.class_replacements');
+    
+    if (is_array($replacements) && isset($replacements[$class])){
+        $requested_namespace = implode("\\", $namespaces);
+        
+        $class_def = "class {$class_name} extends {$replacements[$class]}{}";
+        if ($requested_namespace != ""){
+            $class_def = "namespace {$requested_namespace}{{$class_def}}";
+        }
+
+        eval($class_def);
+        $class_loaded = true;
+    }
+    
+    /* Seek in registered namespaces */
     $registered_namespaces = $adapt->store('adapt.namespaces');
-    if (count($namespaces) && count($registered_namespaces)){
+    if ($class_loaded == false && count($namespaces) && count($registered_namespaces)){
         if ($namespaces[0] == "application"){
             /* Alias the application bundle */
             $bundle_name = strtolower($namespaces[0]);
@@ -77,7 +94,6 @@ function voodoo($class){
             
             foreach($registered_namespaces as $nskey => $registered_namespace){
                 $path = ADAPT_PATH . "{$registered_namespace['bundle_name']}/{$registered_namespace['bundle_name']}-{$registered_namespace['bundle_version']}/models/{$class_name}.php";
-                //print "<pre>{$path}</pre>";
                 if (file_exists($path)){
                     $class_def = "class {$class_name} extends {$nskey}\\{$class_name}{}";
                     if ($requested_namespace != ""){

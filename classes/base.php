@@ -364,6 +364,43 @@ namespace adapt{
         }
         
         /**
+         * Replaces a class completely with another
+         * This class should be called within a bundle_<bundle_name>
+         * constructor method.
+         * 
+         * Only works if the class to be replaced hasn't already been
+         * called.
+         * 
+         * Once replaced the original will no longer be available so the
+         * replacement must fully replace all functionality of the original.
+         * 
+         * For example:
+         * <code>
+         * class bundle_xxx(...) extends \adapt\bundle{
+         *      public function __construct(...){
+         *          parent::__construct(...);
+         *          $this->class_replace('\adapt\users\model_user', '\acme\model_user');
+         *      }
+         * }
+         * </code>
+         * 
+         * @access public
+         * @param string
+         * Full namespace and class name of the class to be replaced
+         * @param string
+         * Full namespace and class name of the class to replace it with
+         * @return null
+         */
+        public function class_replace($original, $replacement){
+            $replacements = $this->store('adapt.class_replacements');
+            if (is_null($replacements)) $replacements = array();
+
+            $replacements[$original] = $replacement;
+            $this->store('adapt.class_replacements', $replacements);
+        }
+        
+        
+        /**
          * Registers an error and triggers the event \adapt\base::EVENT_ERROR
          *
          * <code>
