@@ -477,7 +477,7 @@ namespace adapt{
                     $tag_data = mb_trim($data[0]);
                     $string_data = "";
                 }
-                //$string_data = trim($string_data);
+                $string_data = trim($string_data);
                 
                 if ($tag_data){
                     if (isset($alternative_first_node_object) && $alternative_first_node_object instanceof xml){
