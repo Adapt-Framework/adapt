@@ -52,8 +52,36 @@ namespace adapt{
         protected $_parent;
         protected $_cdata_tokens;
         
-        /*
-         * Constructor
+        /**
+         * Constructs a new xml element.
+         * 
+         * This class is a registered class handler, to create an xml node
+         * 'example_node' from another namespace, we would normally write:
+         * <code>
+         * $example_node = new \adapt\xml('example_node');
+         * </code>
+         * 
+         * Because this is a class handler we can simply, from any namespace,
+         * write:
+         * 
+         * <code>
+         * $example_node = new xml_example_node();
+         * </code>
+         * 
+         * 
+         * @access public
+         * @param string $tag
+         * When constructing directly, the $tag param denotes the node name,
+         * when being used as a class handler the $tag param is removed and
+         * the node name is derived from the class name.
+         * @param null|string|int|xml|array
+         * Data to add to the node
+         * @param array
+         * Assoc array of params and values
+         * @param boolean
+         * When empty, should the closing tag be used? True renders < ... ></ ... > 
+         * while the default, false, renders < ... />
+         * 
          */
         public function __construct($tag = null, $data = null, $attributes = array(), $closing_tag = false){
             parent::__construct();
@@ -161,19 +189,52 @@ namespace adapt{
             return $this->render();
         }
         
-        /*
-         * Child functions
+        /**
+         * Returns an instance of \adapt\aquery optionally filtered
+         * by a selector.
+         * 
+         * This method allows filtering and searching of child nodes in the
+         * same way as jQuery works
+         * 
+         * @see \adapt\aquery
+         * @access public
+         * @param null|string|selector
+         * Optionally a selector to filter with
          */
         public function find($selector = null){
             /* This function replaces __get() && __set() */
             return new aquery($this, $selector, $this->parent);
         }
         
+        /**
+         * Adds child nodes to this node, this method is very flexible with
+         * input.
+         * <code>
+         * $node = new xml_foo();
+         * $node->add('<bar></bar>');
+         * $node->add(new xml_bar());
+         * $node->add(new xml('bar'));
+         * $node->add('<bar></bar>', '<fubar></fubar>');
+         * $node->add(['<bar></bar>', '<fubar></fubar>']);
+         * $node->add([[new xml_bar(), [new xml_furbar()]], '<fubar></fubar>'], new xml_hello('world'));
+         * </code>
+         * 
+         * @param string|xml|array
+         */
         public function add(/*$data = null*/){
             //if (isset($data)) $this->_add($data);
             $this->_add(func_get_args());
         }
         
+        /**
+         * Internal method used by Adapt to add a child object to this object,
+         * the second param dontes if strings should be parsed as xml.  This
+         * method is useful if you need to add child methods without having
+         * them parsed. 
+         * @param string|\adapt\xml $child
+         * @param boolean $parse
+         * Should strings be parsed?
+         */
         public final function _add($child, $parse = true){
             if (!is_null($child)){
                 if (is_array($child)){
@@ -195,6 +256,12 @@ namespace adapt{
             }
         }
         
+        /**
+         * Returns the child at $index, or when $index is null, an array of
+         * children
+         * @param int $index
+         * @return string|xml
+         */
         public function get($index = null){
             if (isset($index)){
                 if ($index < $this->count()){
@@ -217,6 +284,11 @@ namespace adapt{
             }
         }
         
+        /**
+         * Sets the child at $index to the value $item 
+         * @param int $index
+         * @param string|xml $item
+         */
         public function set($index, $item){
             if (isset($index)){
                 if ($index < $this->count()){
@@ -225,6 +297,12 @@ namespace adapt{
             }
         }
         
+        /**
+         * Removes the child from the childs index or from providing the child
+         * itself.  When no param is provided all children are removed.
+         * @param null|int|string|xml $index_or_child
+         * @return boolean
+         */
         public function remove($index_or_child = null){
             if (is_null($index_or_child)){
                 $children = $this->_children;
@@ -253,14 +331,27 @@ namespace adapt{
             return false;
         }
         
+        /**
+         * Removes all child nodes
+         */
         public function clear(){
             $this->remove();
         }
         
+        /**
+         * Returns a count of child nodes
+         * @return int
+         */
         public function count(){
             return count($this->_children);
         }
         
+        /**
+         * Returns the text value of all the children when $value is null, or
+         * when $value is provided, adds a new text value as a child.
+         * @param string $value
+         * @return string
+         */
         public function value($value = null){
             if ($value && is_string($value)) $this->add($value);
             
@@ -281,10 +372,12 @@ namespace adapt{
         /*
          * CDATA methods
          */
+        /** @ignore */
         public function add_cdata_token($token, $data){
             $this->_cdata_tokens[$token] = $data;
         }
         
+        /** @ignore */
         public function process_cdata_tags($string){
             foreach($this->_cdata_tokens as $token => $data){
                 $string = preg_replace("/{$token}/", $data, $string);
@@ -338,7 +431,6 @@ namespace adapt{
             $string = mb_ereg_replace("'", "&apos;", $string, "m");
             $string = mb_ereg_replace("\<", "&lt;", $string, "m");
             $string = mb_ereg_replace("\>", "&gt;", $string, "m");
-            
             
             return $string;
         }
