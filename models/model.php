@@ -279,7 +279,7 @@ namespace adapt{
                     if (is_null($this->_data[$key])) {
                         return null;
                     } else {
-                        return $this->data_source->format($this->_table_name, $key, $this->_data[$key]);
+                        return $this->data_source->format($this->table_name, $key, $this->_data[$key]);
                     }
                 }
                 
@@ -314,7 +314,7 @@ namespace adapt{
                         if ($this->_data[$key] !== $value){
                             
                             /* Is the new value valid? */
-                            if ($this->data_source->validate($this->_table_name, $key, $value)){
+                            if ($this->data_source->validate($this->table_name, $key, $value)){
                                 $this->_has_changed = true;
                                 $this->_changed_fields[$key] = array(
                                     'old_value' => $this->_data[$key],
