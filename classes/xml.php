@@ -50,9 +50,38 @@ namespace adapt{
         protected $_closing_tag;
         protected $_attributes;
         protected $_parent;
+        protected $_cdata_tokens;
         
-        /*
-         * Constructor
+        /**
+         * Constructs a new xml element.
+         * 
+         * This class is a registered class handler, to create an xml node
+         * 'example_node' from another namespace, we would normally write:
+         * <code>
+         * $example_node = new \adapt\xml('example_node');
+         * </code>
+         * 
+         * Because this is a class handler we can simply, from any namespace,
+         * write:
+         * 
+         * <code>
+         * $example_node = new xml_example_node();
+         * </code>
+         * 
+         * 
+         * @access public
+         * @param string $tag
+         * When constructing directly, the $tag param denotes the node name,
+         * when being used as a class handler the $tag param is removed and
+         * the node name is derived from the class name.
+         * @param null|string|int|xml|array
+         * Data to add to the node
+         * @param array
+         * Assoc array of params and values
+         * @param boolean
+         * When empty, should the closing tag be used? True renders < ... ></ ... > 
+         * while the default, false, renders < ... />
+         * 
          */
         public function __construct($tag = null, $data = null, $attributes = array(), $closing_tag = false){
             parent::__construct();
@@ -61,6 +90,7 @@ namespace adapt{
             $this->_children = array();
             $this->_attributes = array();
             $this->_closing_tag = $closing_tag;
+            $this->_cdata_tokens = array();
             
             if (is_array($data) && is_assoc($data) && count($attributes) == 0){
                 $this->_attributes = $data;
@@ -159,19 +189,52 @@ namespace adapt{
             return $this->render();
         }
         
-        /*
-         * Child functions
+        /**
+         * Returns an instance of \adapt\aquery optionally filtered
+         * by a selector.
+         * 
+         * This method allows filtering and searching of child nodes in the
+         * same way as jQuery works
+         * 
+         * @see \adapt\aquery
+         * @access public
+         * @param null|string|selector
+         * Optionally a selector to filter with
          */
         public function find($selector = null){
             /* This function replaces __get() && __set() */
             return new aquery($this, $selector, $this->parent);
         }
         
+        /**
+         * Adds child nodes to this node, this method is very flexible with
+         * input.
+         * <code>
+         * $node = new xml_foo();
+         * $node->add('<bar></bar>');
+         * $node->add(new xml_bar());
+         * $node->add(new xml('bar'));
+         * $node->add('<bar></bar>', '<fubar></fubar>');
+         * $node->add(['<bar></bar>', '<fubar></fubar>']);
+         * $node->add([[new xml_bar(), [new xml_furbar()]], '<fubar></fubar>'], new xml_hello('world'));
+         * </code>
+         * 
+         * @param string|xml|array
+         */
         public function add(/*$data = null*/){
             //if (isset($data)) $this->_add($data);
             $this->_add(func_get_args());
         }
         
+        /**
+         * Internal method used by Adapt to add a child object to this object,
+         * the second param dontes if strings should be parsed as xml.  This
+         * method is useful if you need to add child methods without having
+         * them parsed. 
+         * @param string|\adapt\xml $child
+         * @param boolean $parse
+         * Should strings be parsed?
+         */
         public final function _add($child, $parse = true){
             if (!is_null($child)){
                 if (is_array($child)){
@@ -193,16 +256,39 @@ namespace adapt{
             }
         }
         
+        /**
+         * Returns the child at $index, or when $index is null, an array of
+         * children
+         * @param int $index
+         * @return string|xml
+         */
         public function get($index = null){
             if (isset($index)){
                 if ($index < $this->count()){
-                    return $this->_children[$index];
+                    if (is_string($this->_children[$index])){
+                        return $this->process_cdata_tags($this->_children[$index]);
+                    }else{
+                        return $this->_children[$index];
+                    }
                 }
             }else{
-                return $this->_children;
+                $final = [];
+                foreach($this->_children as $child){
+                    if (is_string($child)){
+                        $final[] = $this->process_cdata_tags($child);
+                    }else{
+                        $final[] = $child;
+                    }
+                }
+                return $final;
             }
         }
         
+        /**
+         * Sets the child at $index to the value $item 
+         * @param int $index
+         * @param string|xml $item
+         */
         public function set($index, $item){
             if (isset($index)){
                 if ($index < $this->count()){
@@ -211,6 +297,12 @@ namespace adapt{
             }
         }
         
+        /**
+         * Removes the child from the childs index or from providing the child
+         * itself.  When no param is provided all children are removed.
+         * @param null|int|string|xml $index_or_child
+         * @return boolean
+         */
         public function remove($index_or_child = null){
             if (is_null($index_or_child)){
                 $children = $this->_children;
@@ -239,14 +331,27 @@ namespace adapt{
             return false;
         }
         
+        /**
+         * Removes all child nodes
+         */
         public function clear(){
             $this->remove();
         }
         
+        /**
+         * Returns a count of child nodes
+         * @return int
+         */
         public function count(){
             return count($this->_children);
         }
         
+        /**
+         * Returns the text value of all the children when $value is null, or
+         * when $value is provided, adds a new text value as a child.
+         * @param string $value
+         * @return string
+         */
         public function value($value = null){
             if ($value && is_string($value)) $this->add($value);
             
@@ -255,13 +360,29 @@ namespace adapt{
             
             foreach($children as $c){
                 if (is_string($c)){
-                    $output .= $c;
+                    $output .= $this->process_cdata_tags($c);
                 }elseif($c instanceof xml){
-                    $output .= $c->render();
+                    $output .= $c->value();
                 }
             }
             
             return $output;
+        }
+        
+        /*
+         * CDATA methods
+         */
+        /** @ignore */
+        public function add_cdata_token($token, $data){
+            $this->_cdata_tokens[$token] = $data;
+        }
+        
+        /** @ignore */
+        public function process_cdata_tags($string){
+            foreach($this->_cdata_tokens as $token => $data){
+                $string = preg_replace("/{$token}/", $data, $string);
+            }
+            return $string;
         }
         
         /*
@@ -310,7 +431,6 @@ namespace adapt{
             $string = mb_ereg_replace("'", "&apos;", $string, "m");
             $string = mb_ereg_replace("\<", "&lt;", $string, "m");
             $string = mb_ereg_replace("\>", "&gt;", $string, "m");
-            
             
             return $string;
         }
@@ -385,7 +505,11 @@ namespace adapt{
                         $xml .= $child->render($close_all_empty_tags, $add_slash_to_empty_tags, $child_depth);
                         $last_was_child = true;
                     }elseif (is_string($child)){
-                        $xml .= static::escape($child);
+                        $string = static::escape($child);
+                        foreach($this->_cdata_tokens as $token => $data){
+                            $string = preg_replace("/" . static::escape($token) . "/", "<![CDATA[{$data}]]>", $string);
+                        }
+                        $xml .= $string;
                         $last_was_child = false;
                     }else{
                         try{
@@ -408,11 +532,14 @@ namespace adapt{
         /*
          * Parser functions
          */
-        public static function parse($data, $return_as_document = false, $alternative_first_node_object = null){
+        public static function parse($data, $return_as_document = false, $alternative_first_node_object = null, $cdata_tokens = []){
             if (is_string($data)){
                 /* Convert the data to an array */
                 /* Remove xml tag */
                 $data = preg_replace("/<\?.*?>\s?/", "", $data);
+                
+                /* Tokenize the cdata tags */
+                $data = static::parse_cdata_tags($data, $cdata_tokens);
                 
                 /* Replace <.../> with <... /> */
                 $data = preg_replace("/([^\s])\/>/", "$1 />", $data);
@@ -442,7 +569,7 @@ namespace adapt{
                     $tag_data = mb_trim($data[0]);
                     $string_data = "";
                 }
-                //$string_data = trim($string_data);
+                $string_data = trim($string_data);
                 
                 if ($tag_data){
                     if (isset($alternative_first_node_object) && $alternative_first_node_object instanceof xml){
@@ -457,6 +584,14 @@ namespace adapt{
                     $has_children = true;
                     
                     if ($string_data != ""){
+                        /* Check if the string contains any cdata tokens */
+                        $cdata_token_matches = [];
+                        if (preg_match_all("/&cdata[0-9]+;/", $string_data, $cdata_token_matches)){
+                            foreach($cdata_token_matches[0] as $token){
+                                /* Add the token and it's data to the child node */
+                                $node->add_cdata_token($token, $cdata_tokens[$token]);
+                            }
+                        }
                         $node->add(static::unescape($string_data));
                     }
                     
@@ -519,7 +654,7 @@ namespace adapt{
                                 //print_r($children);
                                 if ($depth == 0){
                                     //Parse the children
-                                    $parsed_nodes = static::parse($children);
+                                    $parsed_nodes = static::parse($children, false, null, $cdata_tokens);
                                     
                                     if (is_array($parsed_nodes)){
                                         foreach($parsed_nodes as $n){
@@ -561,7 +696,7 @@ namespace adapt{
                         
                         if($data_node) $nodes[] = $data_node;
                         if (count($final)){
-                            $parsed_nodes = static::parse($final);
+                            $parsed_nodes = static::parse($final, false, null, $cdata_tokens);
                             if (is_array($parsed_nodes)){
                                 $nodes = array_merge($nodes, $parsed_nodes);
                             }else{
@@ -576,6 +711,33 @@ namespace adapt{
                     }
                 }
             }
+        }
+        
+        public static function parse_cdata_tags($xml_string, array &$cdata_tokens){
+            /* Break the string by parts */
+            mb_regex_set_options("i");
+            $parts = mb_split("<!\[CDATA\[|\]\]>", $xml_string);
+            
+            /* Reset the string */
+            $xml_string = "";
+            
+            /* Loop thru the parts */
+            for ($i = 0; $i < count($parts); $i++){
+                /* Get the current part */
+                $part = $parts[$i];
+                
+                if ($i % 2 == 0){
+                    $xml_string .= $part;
+                }else{
+                    $token = "&cdata" . count($cdata_tokens) . ";";
+                    $cdata_tokens[$token] = $part;
+                    $xml_string .= $token;
+                }
+                
+                
+            }
+            
+            return $xml_string;
         }
         
         /*

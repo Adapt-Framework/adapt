@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Adapt Framework
+ * Adapt Framework (www.adaptframework.com)
  *
  * The MIT License (MIT)
  *   
- * Copyright (c) 2016 Matt Bruton
+ * Copyright (c) 2017 Matt Bruton
  * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -206,9 +206,11 @@ namespace adapt{
          * @param boolean
          * Should the returned string be output as a document. **Warning** this
          * should always be set to **false**.
+         * @param null
+         * Used by the parent class, this should be left out
          * @return html
          */
-        public static function parse($data, $return_as_document = false){
+        public static function parse($data, $return_as_document = false, $alternative_first_node_object = null, $not_req_1 = null){
             /*
              * We are going to override the parse function
              * to deal with html 5 style tags that miss
@@ -248,7 +250,7 @@ namespace adapt{
                 $data = $final;
             }
             if ($return_as_document){
-                $output = xml::parse($data, false, new \application\html_document()); //ISSUE: Ummm... This class doesn't exist!
+                $output = xml::parse($data, false, new html_document(), $alternative_first_node_object);
             }else{
                 $output = xml::parse($data);
             }
@@ -259,10 +261,10 @@ namespace adapt{
              */
             if (is_array($output)){
                 for($i = 0; $i < count($output); $i++){
-                    $output[$i] = \application\html::fix_parsed_tags($output[$i]); //ISSUE: Application namespace?
+                    $output[$i] = static::fix_parsed_tags($output[$i]);
                 }
             }else{
-                $output = \application\html::fix_parsed_tags($output); //ISSUE: Application namespace?
+                $output = static::fix_parsed_tags($output);
             }
             
             return $output;
