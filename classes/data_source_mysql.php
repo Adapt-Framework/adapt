@@ -71,6 +71,8 @@ namespace adapt{
                     $this->error("Unable to retrieve result set");
                     return false;
                 }else{
+                    $error = mysqli_error($host['handle']);
+                    $this->error($error);
                     $this->error("Invalid SQL statement: {$sql}");
                     return false;
                 }
