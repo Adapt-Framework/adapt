@@ -293,6 +293,11 @@ namespace adapt{
             $return = parent::__set($key, $value);
             
             if ($return === false){
+
+                if ($value === null) {
+                    $value = new sql_null();
+                }
+
                 $fields = array_keys($this->_data);
                 
                 if (in_array($key, $fields)){
