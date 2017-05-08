@@ -60,7 +60,7 @@ function array_remove($array, $index){
  * JSON functions
  */
 function is_json($data){
-    json_decode($data);
+    json_decode($data, true);
     return (json_last_error() == JSON_ERROR_NONE);
 }
 

@@ -347,11 +347,6 @@ namespace adapt{
                             $value = trim($value);
                             $output['headers'][$key] = $value;
                         }
-                        /* connection has been close from the server*/
-                        if(isset($output['headers']['connection']) && $output['headers']['connection'] == 'close'){
-                            $this->close_connection($url['host'], $url['port']);
-                            return null;
-                        }
                         
                         /* Parse and store any cookies in the cookie jar */
                         if (isset($output['headers']['set-cookie'])){
@@ -429,6 +424,11 @@ namespace adapt{
                                     fread($socket, 2);
                                 }
                             }
+                        }
+                        
+                        /* connection has been close from the server*/
+                        if(isset($output['headers']['connection']) && $output['headers']['connection'] == 'close'){
+                            $this->close_connection($url['host'], $url['port']);
                         }
 
                         /* Decompress the content if needed */
