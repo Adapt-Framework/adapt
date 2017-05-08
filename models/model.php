@@ -294,10 +294,6 @@ namespace adapt{
             
             if ($return === false){
 
-                if ($value === null) {
-                    $value = new sql_null();
-                }
-
                 $fields = array_keys($this->_data);
                 
                 if (in_array($key, $fields)){
@@ -313,7 +309,9 @@ namespace adapt{
                         $this->_data[$key] = $value;
                     }else{
                         /* Unformat the value */
-                        $value = $this->data_source->unformat($this->table_name, $key, $value);
+                        if ($value !== null) {
+                            $value = $this->data_source->unformat($this->table_name, $key, $value);
+                        }
                         
                         /* Has the value changed? */
                         if ($this->_data[$key] !== $value){
