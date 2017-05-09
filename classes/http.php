@@ -330,7 +330,7 @@ namespace adapt{
                     /* Read the first line of the response */
                     $status = fgets($socket);
                     list($protocol_version, $status, $message) = explode(" ", $status, 3);
-                    
+
                     if (in_array(strtoupper($protocol_version), array('HTTP/1.0', 'HTTP/1.1'))){
                         
                         $output = array(
@@ -346,12 +346,6 @@ namespace adapt{
                             $key = trim(strtolower($key));
                             $value = trim($value);
                             $output['headers'][$key] = $value;
-                        }
-                        
-                        /* connection has been close from the server*/
-                        if(isset($output['headers']['connection']) && $output['headers']['connection'] == 'close'){
-                            $this->close_connection($url['host'], $url['port']);
-                            return null;
                         }
                         
                         /* Parse and store any cookies in the cookie jar */
@@ -430,6 +424,11 @@ namespace adapt{
                                     fread($socket, 2);
                                 }
                             }
+                        }
+                        
+                        /* connection has been close from the server*/
+                        if(isset($output['headers']['connection']) && $output['headers']['connection'] == 'close'){
+                            $this->close_connection($url['host'], $url['port']);
                         }
 
                         /* Decompress the content if needed */
@@ -510,10 +509,11 @@ namespace adapt{
             }else{
                 $error_number = null;
                 $error_string = null;
+
                 $handle = fsockopen($host, $port, $error_number, $error_string, $this->timeout);
-                
+
                 if ($use_ssl){
-                    if (false == stream_socket_enable_crypto($handle, true)){
+                    if (false == stream_socket_enable_crypto($handle, true, STREAM_CRYPTO_METHOD_ANY_CLIENT)){
                         $this->error('Failed to initialise SSL');
                         return null;
                     }
