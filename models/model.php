@@ -1107,7 +1107,7 @@ namespace adapt{
                                         if ($value instanceof sql){
                                             $sql->set($key, $value);
                                         }elseif($value === null){
-					    $sql->set($key, sql::NULL);
+					    $sql->set($key, new sql_null());
 					}else{
                                             $sql->set($key, sql::q($value));
                                         }
