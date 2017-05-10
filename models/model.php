@@ -1103,9 +1103,12 @@ namespace adapt{
                                     $sql->update($this->table_name);
                                     
                                     foreach($data_to_write as $key => $value){
+
                                         if ($value instanceof sql){
                                             $sql->set($key, $value);
-                                        }else{
+                                        }elseif($value === null){
+					    $sql->set($key, sql::NULL);
+					}else{
                                             $sql->set($key, sql::q($value));
                                         }
                                     }
