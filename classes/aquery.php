@@ -1448,7 +1448,8 @@ namespace adapt{
                         
                         case selector::IS_EMPTY:
                             if (count($xml_node->children)) return false;
-                            
+                            return true;
+                            break;
                         case selector::ALL:
                             return true;
                             break;
