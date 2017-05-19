@@ -1476,6 +1476,8 @@ namespace adapt{
                                 if ($is_even) return false;
                             }
                             break;
+                        default :
+                            break;
                         
                         }
                     }
