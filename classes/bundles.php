@@ -748,36 +748,36 @@ namespace adapt{
                     if ($bundle->is_loaded){
                         
                         $dependencies = $bundle->depends_on;
-                        
-                        foreach($dependencies as $name => $versions){
-                            
-                            $version = self::get_newest_version($versions);
-                            
-                            $list[] = array(
-                                'name' => $name,
-                                'version' => $version
-                            );
-                            
-                            $output = $this->get_dependency_list($name, $version);
-                            foreach($output as $item){
-                                $found = false;
-                                foreach($list as $list_item){
-                                    
-                                    if ($list['name'] == $list_item['name']){
-                                        $found = true;
-                                        break;
+                        if(is_array($dependencies) || is_object($dependencies)){
+                            foreach($dependencies as $name => $versions){
+
+                                $version = self::get_newest_version($versions);
+
+                                $list[] = array(
+                                    'name' => $name,
+                                    'version' => $version
+                                );
+
+                                $output = $this->get_dependency_list($name, $version);
+                                foreach($output as $item){
+                                    $found = false;
+                                    foreach($list as $list_item){
+
+                                        if (isset($list_item['name']) && $list['name'] == $list_item['name']){
+                                            $found = true;
+                                            break;
+                                        }
                                     }
-                                }
-                                
-                                if (!$found){
-                                    $list[] = array(
-                                        'name' => $item['name'],
-                                        'version' => $item['version']
-                                    );
+
+                                    if (!$found){
+                                        $list[] = array(
+                                            'name' => $item['name'],
+                                            'version' => $item['version']
+                                        );
+                                    }
                                 }
                             }
                         }
-                        
                         /* Clean the list */
                         $final = array();
                         

@@ -1315,8 +1315,10 @@ namespace adapt{
             $extensions = $this->store('adapt.extensions');
 
             foreach($extensions as $class_name => $data){
-                $class_name = array_pop(explode("\\", $class_name));
-                if ($class_name == array_pop(explode("\\", get_class($this)))){
+                $classes = explode("\\", $class_name);
+                $class_name = array_pop($classes);
+                $this_class = explode("\\", get_class($this));
+                if ($class_name == array_pop($this_class)){
                     $methods = array_keys($data);
                     foreach($methods as $method){
                         if (substr($method, 0, 5) == 'mget_'){

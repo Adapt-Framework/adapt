@@ -901,14 +901,14 @@ namespace adapt{
                 'function' => $function_name
             );
             
-            if (!is_array($this->_local_install_handlers[$target_bundle])){
+            if (!isset($this->_local_install_handlers[$target_bundle]) || !is_array($this->_local_install_handlers[$target_bundle])){
                 $this->_local_install_handlers[$target_bundle] = array();
             }
             $this->_local_install_handlers[$target_bundle][] = $handler;
             
             $handlers = $this->store("adapt.install_handlers");
             if (is_array($handlers)){
-                if (is_array($handlers[$target_bundle])){
+                if (isset($handlers[$target_bundle]) && is_array($handlers[$target_bundle])){
                     $handlers[$target_bundle][] = $handler;
                 }else{
                     $handlers[$target_bundle] = array($handler);

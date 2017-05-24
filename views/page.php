@@ -114,9 +114,9 @@ namespace adapt{
             $this->body->add(func_get_args());
         }
         
-        public function render(){
+        public function render($not_req_1 = NULL, $not_req_2 = NULL, $depth = 0){
             $this->body->add(new html_comment('Powered by Adapt Framework - http://www.adaptframework.com'));
-            return "<!DOCTYPE html>\n" . parent::render();
+            return "<!DOCTYPE html>\n" . parent::render($not_req_1, $not_req_2, $depth);
         }
         
     }

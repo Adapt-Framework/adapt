@@ -815,7 +815,7 @@ namespace adapt{
             $results = $sql->execute(0)->results();
             
             foreach($results as $result){
-                if (!is_array($this->_schema[$result['table_name']])){
+                if (!isset($this->_schema[$result['table_name']]) || !is_array($this->_schema[$result['table_name']])){
                     $this->_schema[$result['table_name']] = [];
                 }
                 $this->_schema[$result['table_name']][] = $result;

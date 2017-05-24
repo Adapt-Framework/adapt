@@ -113,10 +113,10 @@ namespace adapt{
          */
         public function __construct($sql = null, $data_source = null){
             parent::__construct();
+            $classes = explode("\\",get_class($this));
+            $class_name = array_pop($classes);
             
-            $class_name = array_pop(explode("\\", get_class($this)));
-            
-            //print "<h3>" . $class_name . "</h3>";
+//            print "<h3>" . $class_name . "</h3>";
             //print "<pre>" . print_r(func_get_args()) . "</pre>";
             
             if ($class_name == "sql"){
