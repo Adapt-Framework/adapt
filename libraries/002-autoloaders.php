@@ -53,7 +53,7 @@ function voodoo($class){
         }else{
             /* Check against registered namespaces */
             $requested_namespace = "\\" . implode("\\", $namespaces);
-            if(isset($registered_namespaces[$requested_namespace])){
+            if (isset($registered_namespaces[$requested_namespace])){
                 $path = ADAPT_PATH . "{$registered_namespaces[$requested_namespace]['bundle_name']}/{$registered_namespaces[$requested_namespace]['bundle_name']}-{$registered_namespaces[$requested_namespace]['bundle_version']}/";
 
                 $locations = array('classes/', 'views/', 'controllers/', 'models/', 'interfaces/', 'tests/');

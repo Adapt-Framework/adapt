@@ -748,7 +748,7 @@ namespace adapt{
                     if ($bundle->is_loaded){
                         
                         $dependencies = $bundle->depends_on;
-                        if(is_array($dependencies) || is_object($dependencies)){
+                        if (is_array($dependencies)){
                             foreach($dependencies as $name => $versions){
 
                                 $version = self::get_newest_version($versions);

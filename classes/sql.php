@@ -116,9 +116,6 @@ namespace adapt{
             $classes = explode("\\",get_class($this));
             $class_name = array_pop($classes);
             
-//            print "<h3>" . $class_name . "</h3>";
-            //print "<pre>" . print_r(func_get_args()) . "</pre>";
-            
             if ($class_name == "sql"){
                 if (!is_null($data_source)){
                     $this->_data_source = $data_source;
