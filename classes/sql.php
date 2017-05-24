@@ -600,7 +600,7 @@ namespace adapt{
             return $this;
         }
         
-        public function add($field_name, $data_type, $nullable = true, $default_value = null, $unique = false, $signed = true, $after = null){
+        public function add($field_name, $data_type = null, $nullable = true, $default_value = null, $unique = false, $signed = true, $after = null){
             $params = func_get_args();
             
             if (count($params) == 1 && is_array($this->_functions) && count($this->_functions)){
