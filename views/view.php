@@ -40,7 +40,8 @@ namespace adapt{
             $this->_variables = array();
             parent::__construct($tag, $data, $attributes);
             $this->add_class('view');
-            $class_name = array_pop(explode("\\", get_class($this)));
+            $classes = explode("\\", get_class($this));
+            $class_name = array_pop($classes);
             if (preg_match("/^view_/", $class_name)) $class_name = mb_substr($class_name, 5);
             $class_name = str_replace("_", "-", $class_name);
             $this->add_class($class_name);
