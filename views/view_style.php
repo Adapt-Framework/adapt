@@ -11,7 +11,7 @@ namespace adapt{
      */
     class view_style extends view{
         
-        public function __construct($script = null, $attributes = array(['type' => 'text/css'])){
+        public function __construct($script = null, $attributes = ['type' => 'text/css']){
             parent::__construct('style', $script, $attributes);
         }
         

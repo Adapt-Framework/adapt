@@ -306,7 +306,7 @@ namespace adapt{
                     if (is_null($this->_data[$key])) {
                         return null;
                     } else {
-                        return $this->data_source->format($this->_table_name, $key, $this->_data[$key]);
+                        return $this->data_source->format($this->table_name, $key, $this->_data[$key]);
                     }
                 }
                 
@@ -320,6 +320,7 @@ namespace adapt{
             $return = parent::__set($key, $value);
             
             if ($return === false){
+
                 $fields = array_keys($this->_data);
                 
                 if (in_array($key, $fields)){
@@ -335,13 +336,15 @@ namespace adapt{
                         $this->_data[$key] = $value;
                     }else{
                         /* Unformat the value */
-                        $value = $this->data_source->unformat($this->table_name, $key, $value);
+                        if ($value !== null) {
+                            $value = $this->data_source->unformat($this->table_name, $key, $value);
+                        }
                         
                         /* Has the value changed? */
                         if ($this->_data[$key] !== $value){
                             
                             /* Is the new value valid? */
-                            if ($this->data_source->validate($this->_table_name, $key, $value)){
+                            if ($this->data_source->validate($this->table_name, $key, $value)){
                                 $this->_has_changed = true;
                                 $this->_changed_fields[$key] = array(
                                     'old_value' => $this->_data[$key],
@@ -1127,9 +1130,12 @@ namespace adapt{
                                     $sql->update($this->table_name);
                                     
                                     foreach($data_to_write as $key => $value){
+
                                         if ($value instanceof sql){
                                             $sql->set($key, $value);
-                                        }else{
+                                        }elseif($value === null){
+					    $sql->set($key, new sql_null());
+					}else{
                                             $sql->set($key, sql::q($value));
                                         }
                                     }
@@ -1393,8 +1399,10 @@ namespace adapt{
             $extensions = $this->store('adapt.extensions');
 
             foreach($extensions as $class_name => $data){
-                $class_name = array_pop(explode("\\", $class_name));
-                if ($class_name == array_pop(explode("\\", get_class($this)))){
+                $classes = explode("\\", $class_name);
+                $class_name = array_pop($classes);
+                $this_class = explode("\\", get_class($this));
+                if ($class_name == array_pop($this_class)){
                     $methods = array_keys($data);
                     foreach($methods as $method){
                         if (substr($method, 0, 5) == 'mget_'){

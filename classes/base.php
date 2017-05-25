@@ -497,8 +497,8 @@ namespace adapt{
             $class_name = get_called_class();
             
             if (!is_array($event_handlers)) $event_handlers = [];
-            if (!is_array($event_handlers[$class_name])) $event_handlers[$class_name] = [];
-            if (!is_array($event_handlers[$class_name][$event_type])) $event_handlers[$class_name][$event_type] = [];
+            if (!isset($event_handlers[$class_name]) || !is_array($event_handlers[$class_name])) $event_handlers[$class_name] = [];
+            if (!isset($event_handlers[$class_name][$event_type]) || !is_array($event_handlers[$class_name][$event_type])) $event_handlers[$class_name][$event_type] = [];
             
             if (is_callable($function)){
                 $event_handlers[$class_name][$event_type][] = [

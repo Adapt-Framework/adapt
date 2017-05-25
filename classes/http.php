@@ -38,7 +38,7 @@ namespace adapt{
     
     /* Prevent direct access */
     defined('ADAPT_STARTED') or die;
-    
+
     /**
      * Native HTTP / HTTPS support without any extensions.
      *
@@ -52,6 +52,13 @@ namespace adapt{
      * Returns an array of cookies used by this class.
      */
     class http extends base{
+
+        const GET = 'GET';
+        const POST = 'POST';
+        const PUT = 'PUT';
+        const HEAD = 'HEAD';
+        const DELETE = 'DELETE';
+        const PATCH = 'PATCH';
         
         /**
          * @ignore
@@ -153,7 +160,7 @@ namespace adapt{
          * Returns an array containing the status, headers and the content.
          */
         public function get($url, $headers = array()){
-            return $this->request($url, 'get', $headers);
+            return $this->request($url, self::GET, $headers);
         }
         
         /**
@@ -177,7 +184,7 @@ namespace adapt{
          * Returns an array containing the status and headers.
          */
         public function head($url, $headers = array()){
-            return $this->request($url, 'head', $headers);
+            return $this->request($url, self::HEAD, $headers);
         }
         
         /**
@@ -203,9 +210,76 @@ namespace adapt{
          * Returns an array containing the status, headers and content.
          */
         public function post($url, $data, $headers = array()){
-            return $this->request($url, 'post', $headers, $data);
+            return $this->request($url, self::POST, $headers, $data);
         }
 
+        /**
+         * Performs a HTTP Put request.
+         *
+         * <code>
+         * $http = new http();
+         *
+         * $response = $http->put('http://example.com/post/1', json_encode(['foo' => 'bar']), ['Content-Type: application/json']);
+         * if ($response['status'] == 200) {
+         *      print $response['content'];
+         * }
+         * </code>
+         *
+         * @param $url
+         * @param $data
+         * @param array $headers
+         * @return array
+         */
+        public function put($url, $data, $headers = array())
+        {
+            return $this->request($url, self::PUT, $headers, $data);
+        }
+
+        /**
+         * Performs a HTTP Delete request.
+         *
+         * <code>
+         * $http = new http();
+         *
+         * $response = $http->delete('http://example.com/post/1', ['auth_token' => 'example'], ['Content-Type: application/json']);
+         * if ($response['status'] == 200) {
+         *      print $response['content'];
+         * }
+         * </code>
+         *
+         *
+         * @param $url
+         * @param $data
+         * @param array $headers
+         * @return array
+         */
+        public function delete($url, $data = '', $headers = array())
+        {
+            return $this->request($url, self::DELETE, $headers, $data);
+        }
+
+        /**
+         * Performs a HTTP Patch request.
+         *
+         * <code>
+         * $http = new http();
+         *
+         * $response = $http->patch('http://example.com/post/1', ['auth_token' => 'example'], ['Content-Type: application/json']);
+         * if ($response['status'] == 200) {
+         *      print $response['content'];
+         * }
+         * </code>
+         *
+         *
+         * @param $url
+         * @param $data
+         * @param array $headers
+         * @return array
+         */
+        public function patch($url, $data, $headers = array())
+        {
+            return $this->request($url, self::PATCH, $headers, $data);
+        }
         
         /**
          * Performs a HTTP request
@@ -225,12 +299,12 @@ namespace adapt{
          * @return array
          * Returns an array containing the status, content and headers.
          */
-        public function request($url, $type = 'get', $headers = array(), $data = null, $redirect_count = 0){
+        public function request($url, $type = GET, $headers = array(), $data = null, $redirect_count = 0){
             $url = $this->parse_url($url);
             
             if ($socket = $this->get_connection($url['host'], $url['port'], $url['protocol'] == 'https' ? true : false)){
                 
-                if (in_array(strtolower($type), array('get', 'post', 'head'))){
+                if (in_array(strtoupper($type), array(self::GET, self::POST, self::PUT, self::HEAD, self::DELETE, self::PATCH))){
                     $path = $url['path'];
                     if ($url['query_string'] != ""){
                         $path .= "?" . $url['query_string'];
@@ -295,7 +369,7 @@ namespace adapt{
                     /* Are we posting? */
                     $payload = "";
                     
-                    if ($type == "post"){
+                    if (in_array($type, [self::POST, self::PUT, self::PATCH])){
                         /* Add the data */
                         if(is_assoc($data)){
                             $first = true;
@@ -330,7 +404,7 @@ namespace adapt{
                     /* Read the first line of the response */
                     $status = fgets($socket);
                     list($protocol_version, $status, $message) = explode(" ", $status, 3);
-                    
+
                     if (in_array(strtoupper($protocol_version), array('HTTP/1.0', 'HTTP/1.1'))){
                         
                         $output = array(
@@ -347,13 +421,7 @@ namespace adapt{
                             $value = trim($value);
                             $output['headers'][$key] = $value;
                         }
-                        
-                        /* connection has been close from the server*/
-                        if(isset($output['headers']['connection']) && $output['headers']['connection'] == 'close'){
-                            $this->close_connection($url['host'], $url['port']);
-                            return null;
-                        }
-                        
+
                         /* Parse and store any cookies in the cookie jar */
                         if (isset($output['headers']['set-cookie'])){
                             $cookies = $output['headers']['set-cookie'];
@@ -430,6 +498,11 @@ namespace adapt{
                                     fread($socket, 2);
                                 }
                             }
+                        }
+                        
+                        /* connection has been close from the server*/
+                        if(isset($output['headers']['connection']) && $output['headers']['connection'] == 'close'){
+                            $this->close_connection($url['host'], $url['port']);
                         }
 
                         /* Decompress the content if needed */
@@ -510,10 +583,11 @@ namespace adapt{
             }else{
                 $error_number = null;
                 $error_string = null;
+
                 $handle = fsockopen($host, $port, $error_number, $error_string, $this->timeout);
-                
+
                 if ($use_ssl){
-                    if (false == stream_socket_enable_crypto($handle, true)){
+                    if (false == stream_socket_enable_crypto($handle, true, STREAM_CRYPTO_METHOD_ANY_CLIENT)){
                         $this->error('Failed to initialise SSL');
                         return null;
                     }
@@ -550,6 +624,7 @@ namespace adapt{
                 unset($this->_connections[$key]);
             }
         }
+
         /**
          * Breaks a URL down into it's composite parts and returns
          * as an array.

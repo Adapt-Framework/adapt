@@ -113,11 +113,8 @@ namespace adapt{
          */
         public function __construct($sql = null, $data_source = null){
             parent::__construct();
-            
-            $class_name = array_pop(explode("\\", get_class($this)));
-            
-            //print "<h3>" . $class_name . "</h3>";
-            //print "<pre>" . print_r(func_get_args()) . "</pre>";
+            $classes = explode("\\",get_class($this));
+            $class_name = array_pop($classes);
             
             if ($class_name == "sql"){
                 if (!is_null($data_source)){
@@ -603,7 +600,7 @@ namespace adapt{
             return $this;
         }
         
-        public function add($field_name, $data_type, $nullable = true, $default_value = null, $unique = false, $signed = true, $after = null){
+        public function add($field_name, $data_type = null, $nullable = true, $default_value = null, $unique = false, $signed = true, $after = null){
             $params = func_get_args();
             
             if (count($params) == 1 && is_array($this->_functions) && count($this->_functions)){

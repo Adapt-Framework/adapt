@@ -61,16 +61,22 @@ namespace adapt{
                 if (mysqli_real_query($host['handle'], $sql)){
                     $this->trigger(self::EVENT_QUERY, array('sql' => $sql, 'host' => $host));
                     if ($write){
-                        mysqli_next_result($host['handle']);
+                        if (mysqli_more_results($host['handle'])){
+                            mysqli_next_result($host['handle']);
+                        }
                         return true;
                     }elseif ($result = mysqli_store_result($host['handle'])){
-                        mysqli_next_result($host['handle']);
+                        if (mysqli_more_results($host['handle'])){
+                            mysqli_next_result($host['handle']);
+                        }
                         return $result;
                     }
                     
                     $this->error("Unable to retrieve result set");
                     return false;
                 }else{
+                    $error = mysqli_error($host['handle']);
+                    $this->error($error);
                     $this->error("Invalid SQL statement: {$sql}");
                     return false;
                 }
