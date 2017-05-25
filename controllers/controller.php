@@ -116,6 +116,8 @@ namespace adapt{
                         
                         if (count($ids)){
                             $this->_model->load($ids);
+                        }elseif (isset($this->request[$this->_model->table_name]['guid'])){
+                            $this->_model->load_by_guid($this->request[$this->_model->table_name]['guid']);
                         }
                     }
                 }

@@ -751,6 +751,10 @@
             <nullable>No</nullable>
           </field>
         </table>
+        <table name="guid">
+            <field name="guid" data-type="guid" key="primary" label="GUID" />
+            <field name="table_name" data-type="varchar" max-length="128" label="Table name" description="The name of the table the GUID was allocated to" />
+        </table>
       </add>
     </schema>
   </bundle>

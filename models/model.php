@@ -2137,6 +2137,35 @@ namespace adapt{
             }
             
         }
+        
+        public static function from_guid($guid){
+            $adapt = $GLOBALS['adapt'];
+            if ($adapt instanceof \adapt\base && $adapt->data_source instanceof \adapt\data_source_sql){
+                $sql = $adapt->data_source->sql;
+                
+                $sql->select('table_name')
+                    ->from('guid')
+                    ->where(
+                        new sql_and(
+                            new sql_cond('date_deleted', sql::IS, sql::NULL),
+                            new sql_cond('guid', sql::EQUALS, q($guid))
+                        )
+                    );
+                $results = $sql->execute(0)->results();
+                
+                if (count($results)){
+                    $model_name = "model_" . $results[0]['table_name'];
+                    $model = self::create_object($model_name);
+                    if ($model instanceof model){
+                        if ($model->load_by_guid($guid)){
+                            return $model;
+                        }
+                    }
+                }
+            }
+            
+            return null;
+        }
     }
 
 }
