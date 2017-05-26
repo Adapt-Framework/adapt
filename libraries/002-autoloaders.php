@@ -53,14 +53,15 @@ function voodoo($class){
         }else{
             /* Check against registered namespaces */
             $requested_namespace = "\\" . implode("\\", $namespaces);
-            
-            $path = ADAPT_PATH . "{$registered_namespaces[$requested_namespace]['bundle_name']}/{$registered_namespaces[$requested_namespace]['bundle_name']}-{$registered_namespaces[$requested_namespace]['bundle_version']}/";
-            
-            $locations = array('classes/', 'views/', 'controllers/', 'models/', 'interfaces/', 'tests/');
-            foreach($locations as $location){
-                if (file_exists($path . $location . $class_name . ".php")){
-                    require_once($path . $location . $class_name . ".php");
-                    $class_loaded = true;
+            if (isset($registered_namespaces[$requested_namespace])){
+                $path = ADAPT_PATH . "{$registered_namespaces[$requested_namespace]['bundle_name']}/{$registered_namespaces[$requested_namespace]['bundle_name']}-{$registered_namespaces[$requested_namespace]['bundle_version']}/";
+
+                $locations = array('classes/', 'views/', 'controllers/', 'models/', 'interfaces/', 'tests/');
+                foreach($locations as $location){
+                    if (file_exists($path . $location . $class_name . ".php")){
+                        require_once($path . $location . $class_name . ".php");
+                        $class_loaded = true;
+                    }
                 }
             }
         }

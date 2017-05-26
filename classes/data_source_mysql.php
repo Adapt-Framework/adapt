@@ -66,7 +66,9 @@ namespace adapt{
                         }
                         return true;
                     }elseif ($result = mysqli_store_result($host['handle'])){
-                        mysqli_next_result($host['handle']);
+                        if (mysqli_more_results($host['handle'])){
+                            mysqli_next_result($host['handle']);
+                        }
                         return $result;
                     }
                     
