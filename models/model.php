@@ -2138,6 +2138,12 @@ namespace adapt{
             
         }
         
+        /**
+         * Loads a model of the correct type from a GUID
+         * 
+         * @param string $guid
+         * @return \adapt\model|null
+         */
         public static function from_guid($guid){
             $adapt = $GLOBALS['adapt'];
             if ($adapt instanceof \adapt\base && $adapt->data_source instanceof \adapt\data_source_sql){
