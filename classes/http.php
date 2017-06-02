@@ -5,7 +5,7 @@
  *
  * The MIT License (MIT)
  *   
- * Copyright (c) 2016 Matt Bruton
+ * Copyright (c) 2017 Matt Bruton
  * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,7 +28,7 @@
  *
  * @package     adapt
  * @author      Matt Bruton <matt.bruton@gmail.com>
- * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
+ * @copyright   2017 Matt Bruton <matt.bruton@gmail.com>
  * @license     https://opensource.org/licenses/MIT     MIT License
  * @link        http://www.adpatframework.com
  *
@@ -94,7 +94,7 @@ namespace adapt{
          * @ignore
          */
         public function __destruct(){
-            
+            /** @todo Consider closing all open connections */
         }
         
         /**
@@ -230,8 +230,7 @@ namespace adapt{
          * @param array $headers
          * @return array
          */
-        public function put($url, $data, $headers = array())
-        {
+        public function put($url, $data, $headers = array()){
             return $this->request($url, self::PUT, $headers, $data);
         }
 
@@ -253,8 +252,7 @@ namespace adapt{
          * @param array $headers
          * @return array
          */
-        public function delete($url, $data = '', $headers = array())
-        {
+        public function delete($url, $data = '', $headers = array()){
             return $this->request($url, self::DELETE, $headers, $data);
         }
 
@@ -276,8 +274,7 @@ namespace adapt{
          * @param array $headers
          * @return array
          */
-        public function patch($url, $data, $headers = array())
-        {
+        public function patch($url, $data, $headers = array()){
             return $this->request($url, self::PATCH, $headers, $data);
         }
         
@@ -500,7 +497,7 @@ namespace adapt{
                             }
                         }
                         
-                        /* connection has been close from the server*/
+                        /* Connection has been close from the server*/
                         if(isset($output['headers']['connection']) && $output['headers']['connection'] == 'close'){
                             $this->close_connection($url['host'], $url['port']);
                         }
@@ -531,13 +528,16 @@ namespace adapt{
                                     $redirect_url = "";
                                     
                                     if (substr(strtolower($location), 0, 4) == 'http'){
+                                        /* Handle complete URL's */
                                         $redirect_url = $location;
                                     }elseif(substr($location, 0, 1) == '/'){
+                                        /* Handle absoulte paths */
                                         $redirect_url = $url['protocol'] . '://' . $url['host'] . ':' . $url['port'] . $location;
                                     }else{
-                                        //TODO: 
+                                        /* Handle relative paths */
+                                        $redirect_url = $url['protocol'] . '://' . $url['host'] . ':' . $url['port'] . $url['path'] . '/' . $location;
                                     }
-                                    //print $redirect_url . "\n";
+                                    
                                     if ($output['status'] == 303){
                                         $output = $this->request($redirect_url, 'get', $headers, $data, $redirect_count);
                                     }else{
@@ -701,5 +701,3 @@ namespace adapt{
     
     
 }
-
-?>
