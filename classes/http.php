@@ -240,7 +240,7 @@ namespace adapt{
          * <code>
          * $http = new http();
          *
-         * $response = $http->delete('http://example.com/post/1', ['auth_token' => 'example', 'Content-Type: application/json']);
+         * $response = $http->delete('http://example.com/post/1', ['auth_token' => 'example'], ['Content-Type: application/json']);
          * if ($response['status'] == 200) {
          *      print $response['content'];
          * }
@@ -262,7 +262,7 @@ namespace adapt{
          * <code>
          * $http = new http();
          *
-         * $response = $http->patch('http://example.com/post/1', ['auth_token' => 'example', 'Content-Type: application/json']);
+         * $response = $http->patch('http://example.com/post/1', ['auth_token' => 'example'], ['Content-Type: application/json']);
          * if ($response['status'] == 200) {
          *      print $response['content'];
          * }
