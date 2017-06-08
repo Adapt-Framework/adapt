@@ -10,7 +10,9 @@ namespace adapt{
     
     defined('ADAPT_STARTED') or die;
     
-    class repository extends \adapt\base{
+    class repository extends base{
+        
+        const REPOSITORY_URL = "http://repository.matt.wales/v1";
         
         protected $_url;
         protected $_session_token;
@@ -22,7 +24,8 @@ namespace adapt{
             parent::__construct();
             
             $this->_http = new http();
-            $this->_url = $this->setting('repository.url');
+            //$this->_url = $this->setting('repository.url');
+            $this->_url = self::REPOSITORY_URL;
             
             if (is_null($username)){
                 $username = $this->setting('repository.username');
@@ -349,7 +352,7 @@ namespace adapt{
                 'filters' => [
                     'page' => $page,
                     'items_per_page' => $items_per_page,
-                    'order_by' => $order_by,
+                    'order_by' => 'rb.label',
                 ]
             ];
             
@@ -357,14 +360,13 @@ namespace adapt{
                 $payload['filters']['type'] = $type;
             }
             
-            if (!is_null($search_string)){
+            if (!is_null($search_string) && $search_string != ''){
                 $payload['filters']['q'] = $search_string;
             }
-            
+            //print new html_pre(print_r($payload, true));
             $response = $this->_request("/bundles", $payload);
-            
             if ($response['content']['status'] == "success"){
-                return $response['content']['information']['results'];
+                return $response['content']['information'];
             }
             
             return false;
@@ -447,15 +449,14 @@ namespace adapt{
                 $payload['repository_bundle']['name'] = $bundle_name_or_guid;
             }
             
-            if ($version != 'latest'){
+            if ($version != 'latest' && $version != ''){
                 $payload['repository_bundle_version'] = ['version' => $version];
             }
             
-            $response = $this->_request("/bundles/versions", $payload);
-            
-            if ($response['status'] == 200){
-                $key = "repostiory/bundles/" . $bundle_name_or_guid;
-                $this->store->set($key, $response['content'], "application/x-bundle");
+            $response = $this->_request("/bundles/versions/download", $payload);
+            if ($response['status'] == '200'){
+                $key = "repository/bundles/" . $bundle_name_or_guid;
+                $this->file_store->set($key, $response['content'], "application/x-bundle");
                 return $key;
             }
             
