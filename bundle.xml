@@ -138,7 +138,7 @@
         <setting>
           <name>repository.url</name>
           <label>Repoistory URL</label>
-          <default_value>https://repository.adaptframework.com/v1</default_value>
+          <default_value>http://repository.matt.wales/v1</default_value>
         </setting>
         <setting>
           <name>repository.username</name>
