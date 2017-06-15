@@ -627,6 +627,13 @@
             <default_value>No</default_value>
             <nullable>No</nullable>
           </field>
+          <field name="unique_value">
+            <label>Unique?</label>
+            <description>Should this field be unique?</description>
+            <data_type>enum('Yes', 'No')</data_type>
+            <default_value>No</default_value>
+            <nullable>No</nullable>
+          </field>
           <field name="signed">
             <label>Signed?</label>
             <description>Should the numeric value be signed?</description>

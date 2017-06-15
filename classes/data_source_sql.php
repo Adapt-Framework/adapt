@@ -688,6 +688,7 @@ namespace adapt{
          * * **data_type_id** The data type id for this field
          * * **primary_key** Either **Yes** or **No**
          * * **signed** Is this field signed? Either **Yes** or **No**.
+         * * **unique_value** Is this value unique in the table? Either **Yes** or **No**
          * * **nullable** Is this field nullable? Either **Yes** or **No**
          * * **auto_increment** Should this field auto increment? Either **Yes** or **No**
          * * **timestamp** Is this a timestamp field? Either **Yes** or **No**
@@ -710,7 +711,7 @@ namespace adapt{
             $allowed_keys = array(
                 'bundle_name', 'table_name', 'field_name', 'referenced_table_name',
                 'referenced_field_name', 'label', 'placeholder_label', 'description',
-                'data_type_id', 'primary_key', 'signed', 'nullable', 'auto_increment',
+                'data_type_id', 'primary_key', 'signed', 'unique_value', 'nullable', 'auto_increment',
                 'timestamp', 'max_length', 'default_value', 'allowed_values',
                 'lookup_table', 'depends_on_table_name', 'depends_on_field_name',
                 'depends_on_value', 'date_created'
@@ -755,7 +756,7 @@ namespace adapt{
                     if ($key != 'date_created'){
                         if (isset($field_array[$key])){
                             $value = $field_array[$key];
-                            //print "VALUE: " . print_r($value, true) . "\n";
+                            
                             $should_die = false;
                             // Check if we need to resolve lookups
                             if (is_array($value) && isset($value['lookup_from'])){
@@ -776,7 +777,6 @@ namespace adapt{
                                 
                                 $results = $sql->execute()
                                     ->results(0); //Cache for 5 days
-                                //print_r($results);di
                                 $value = $results[0][$value['lookup_from'] . "_id"];
                                 
                                 $should_die = true;
