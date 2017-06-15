@@ -86,11 +86,7 @@ namespace adapt{
             if ($this->_repository && $this->_repository instanceof repository){
                 return $this->_repository;
             }else{
-                $url = $this->setting('repository.url') ?: "https://repository.adaptframework.com/v1";
-                //$url = "http://repository.matt.wales/v1";
-                $username = $this->setting('repository.username');
-                $password = $this->setting('repository.password');
-                $this->_repository = new repository($url, $username, $password);
+                $this->_repository = new repository();
                 
                 return $this->_repository;
             }
@@ -495,23 +491,33 @@ namespace adapt{
          * @return boolean
          */
         public function fetch_bundle($bundle_name, $bundle_version = null){
-            if ($bundle_version = $this->repository->has($bundle_name, $bundle_version)){
-                if ($this->repository->get($bundle_name, $bundle_version) !== false){
-                    return true;
+            $key = $this->repository->download_bundle_version($bundle_name, $version);
+            
+            if ($key === false){
+                $this->error("Unable to fetch bundle");
+                $this->error($this->repository->errors(true));
+                
+                return false;
+            }
+            
+            $unbundler = new unbundler();
+            if ($unbundler->load($key)){
+                $bundle_xml = xml::parse($unbundler->extract_file("bundle.xml"));
+                if ($bundle_xml instanceof xml){
+                    $name = $bundle_xml->find('bundle > name')->first()->text();
+                    $version = $bundle_xml->find('bundle > version')->first()->text();
+                    $path = ADAPT_PATH . $name . "/" . $name . "-" . $version;
+                    $unbundler->make_dir($path);
+                    $unbundler->extract_all($path);
+
+                    return $name;
                 }else{
-                    $errors = $this->repository->errors(true);
-                    foreach($errors as $error){
-                        $this->error($error);
-                    }
-                    
+                    $this->error("Unable to read bundle.xml for {$bundle_name} v{$bundle_version}");
                     return false;
                 }
             }else{
-                $errors = $this->repository->errors(true);
-                foreach($errors as $error){
-                    $this->error($error);
-                }
-                
+                $this->error("Unable to process bundle.");
+                $this->error($unbundler->errors(true));
                 return false;
             }
         }

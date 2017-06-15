@@ -136,11 +136,6 @@
       </category>
       <category name="Repository settings">
         <setting>
-          <name>repository.url</name>
-          <label>Repoistory URL</label>
-          <default_value>https://repository.adaptframework.com/v1</default_value>
-        </setting>
-        <setting>
           <name>repository.username</name>
           <label>Repoistory Username</label>
         </setting>
@@ -628,6 +623,13 @@
           <field name="primary_key">
             <label>Primary key?</label>
             <description>Is this field a primary key?</description>
+            <data_type>enum('Yes', 'No')</data_type>
+            <default_value>No</default_value>
+            <nullable>No</nullable>
+          </field>
+          <field name="unique_value">
+            <label>Unique?</label>
+            <description>Should this field be unique?</description>
             <data_type>enum('Yes', 'No')</data_type>
             <default_value>No</default_value>
             <nullable>No</nullable>
