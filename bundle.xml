@@ -3,7 +3,7 @@
   <bundle>
     <label>Adapt Framework</label>
     <name>adapt</name>
-    <version>2.0.5</version>
+    <version>2.0.6</version>
     <version_status>release</version_status>
     <availability>public</availability>
     <type>php_framework</type>
@@ -135,11 +135,6 @@
         </setting>
       </category>
       <category name="Repository settings">
-        <setting>
-          <name>repository.url</name>
-          <label>Repoistory URL</label>
-          <default_value>http://repository.matt.wales/v1</default_value>
-        </setting>
         <setting>
           <name>repository.username</name>
           <label>Repoistory Username</label>
