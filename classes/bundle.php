@@ -1461,7 +1461,7 @@ namespace adapt{
                                          */
                                         $ignore_record = false;
                                         
-                                        if (in_array('__name', $field_names)){ // Disabled due to the fact that name fields are not unique
+                                        if (in_array('name', $field_names)){ // Disabled due to the fact that name fields are not unique
                                             // Intentionally we are skipping the
                                             // date_deleted field on the basis that
                                             // if this record is deleted, it should
@@ -1485,7 +1485,7 @@ namespace adapt{
                                                         $sql->set($field_name, sql::q($row[$field_name]));
                                                     }
                                                 }
-                                                $sql->where(new sql_cond($table_name, sql::EQUALS, sql::q($row[$field_name])));
+                                                $sql->where(new sql_cond($table_name . '_id', sql::EQUALS, sql::q($results[0][$table_name . '_id'])));
                                                 
                                                 $sql->execute();
                                             }
@@ -1624,20 +1624,29 @@ namespace adapt{
                                             }
                                         }else{
                                             // Drop each field
+                                            $has_dropped_fields = false;
+                                            
                                             $sql->alter_table($table_name);
                                             foreach($fields as $field_name){
-                                                $sql->drop($field_name);
+                                                if (in_array($field_name, array_keys($schema_by_field_name))){
+                                                    $sql->drop($field_name);
+                                                    $has_dropped_fields = true;
+                                                }
                                             }
                                             
                                             $this->store('adapt.installing_bundle', $this->name);
-                                            $sql->execute();
+                                            $errors = [];
+                                            
+                                            if ($has_dropped_fields){
+                                                $sql->execute();
+                                                $errors = $sql->errors(true);
+                                            }
                                             $this->remove_store('adapt.installing_bundle');
                                             
-                                            $errors = $sql->errors(true);
                                             if (count($errors)){
                                                 $this->error($errors);
                                                 return false;
-                                            }else{
+                                            }elseif ($has_dropped_fields){
                                                 // Update the field table
                                                 $sql = $this->data_source->sql;
                                                 
