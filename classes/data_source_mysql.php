@@ -535,7 +535,6 @@ namespace adapt{
                             return $statement;
                         }
                     }else{
-                        //TODO: Error: Invalid table name
                         $this->error("Unable to insert data into non-existant table '{$sql->insert_into_table_name}'");
                         return null;
                     }
@@ -556,8 +555,6 @@ namespace adapt{
                         if ($field instanceof \adapt\sql){
                             $statement .= $this->render_sql($field);
                         }else{
-                            //$field = $this->escape($field);
-                            //$statement .= "\"{$field}\"";
                             $statement .= $field;
                         }
                         
@@ -656,12 +653,6 @@ namespace adapt{
                                 $statement .= $group['field'];
                             }
                             
-                            //if ($group['ascending']){
-                            //    $statement .= " ASC";
-                            //}else{
-                            //    $statement .= " DESC";
-                            //}
-                            
                             if ($group['with_rollup']){
                                 $statement .= " WITH ROLLUP";
                             }
@@ -759,15 +750,12 @@ namespace adapt{
                     $first = true;
                     
                     foreach($set as $field => $value){
-                        //TODO: Validate  values
-                        //TODO: Take into account alias
                         if (!$first) $statement .= ",\n";
                         $statement .= "`{$field}` = ";
                         
                         if ($value instanceof sql){
                             $statement .= $this->render_sql($value);
                         }else{
-                            //$value = $this->escape($value);
                             $statement .= "{$value}";
                         }
                         
@@ -864,6 +852,19 @@ namespace adapt{
                         }
                         
                         if ($field['nullable'] === false) $statement .= " NOT NULL";
+                        if ($field['unique'] === true){
+                            $statement .= " UNIQUE";
+//                            $data_type_details = $this->parse_data_type($field['data_type']);
+//                            
+//                            switch($data_type_details['data_type']){
+//                            case "char":
+//                            case "varchar":
+//                                if ($data_type_details['params'][0] >= 256){
+//                                
+//                                }
+//                            }
+                            
+                        }
                         if (!is_null($field['default_value'])) $statement .= " DEFAULT \"" . $this->escape($field['default_value']) . "\"";
                         $first = false;
                     }
@@ -967,12 +968,31 @@ namespace adapt{
             return $statement;
         }
         
-        /*
-         * Data validation
+        /**
+         * Breaks a native data type into it's parts
+         * 
+         * @access public
+         * @param string
+         * The native type
+         * @return array
+         * Returns an array of the data types parts
          */
-        //public function validate($table_name, $field_name, $value){
-        //    
-        //}
+        public function parse_data_type($native_data_type){
+            $params = [];
+            
+            if (mb_stripos($native_data_type, "(") !== false){
+                $native_data_type = preg_replace("/\)/", "", $native_data_type);
+                list($native_data_type, $raw_params) = explode("(", $native_data_type);
+                $params = explode(",", $raw_params);
+                foreach($params as &$p) $p = mb_trim($p);
+            }
+            
+            $native_data_type = mb_trim(mb_strtolower($native_data_type));
+            return [
+                'data_type' => strtolower($native_data_type),
+                'params' => $params
+            ];
+        }
         
         /**
          * Converts a data type from a string into an array
