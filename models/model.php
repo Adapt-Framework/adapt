@@ -638,23 +638,22 @@ namespace adapt{
                 $fields = array_keys($this->_data);
                 
                 if (in_array('name', $fields)){
+                    /* Get the structure of the name field */
+                    $name_structure = $this->data_source->get_field_structure($this->table_name, 'name');
+                    
+                    if (mb_strlen($name) > $name_structure['max_length']){
+                        $name = mb_substr($name, 0, $name_structure['max_length']);
+                    }
+                    
                     $sql = $this->data_source->sql;
                     
                     $sql->select(new sql('*'))
                         ->from($this->table_name);
                     
-                    /* Do we have a date_deleted field? */
-                    if (in_array('date_deleted', $fields)){
-                        
-                        $name_condition = new sql_cond('name', sql::EQUALS, sql::q($name));
-                        $date_deleted_condition = new sql_cond('date_deleted', sql::IS, new sql_null());
-                        
-                        $sql->where(new sql_and($name_condition, $date_deleted_condition));
-                        
-                    }else{
-                        
-                        $sql->where(new sql_cond('name', sql::EQUALS, sql::q($name)));
-                    }
+                    $name_condition = new sql_cond('name', sql::EQUALS, sql::q($name));
+                    $date_deleted_condition = new sql_cond('date_deleted', sql::IS, new sql_null());
+
+                    $sql->where(new sql_and($name_condition, $date_deleted_condition));
                     
                     /* Get the results */
                     $results = $sql->execute(0)->results();
