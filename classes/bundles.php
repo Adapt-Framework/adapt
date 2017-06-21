@@ -516,7 +516,7 @@ namespace adapt{
                     return false;
                 }
             }else{
-                $this->error("Unable to process bundle.");
+                $this->error(trim("Unable to process '{$bundle_name}' {$bundle_version}"));
                 $this->error($unbundler->errors(true));
                 return false;
             }
