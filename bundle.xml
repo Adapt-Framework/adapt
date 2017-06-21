@@ -746,6 +746,15 @@
             <nullable>No</nullable>
           </field>
         </table>
+        <table name="web_host">
+            <field name="web_host_id" data-type="bigint" key="primary" auto-increment="Yes" label="Web host #" />
+            <field name="status" data-type="enum('Offline', 'Updating', 'Online')" default-value="Online" label="Status" />
+            <field name="request_count" data-type="bigint" label="Request count" />
+            <field name="hostname" data-type="varchar" max-length="255" label="Hostname" />
+            <field name="host_ip" data-type="varchar" max-length="255" label="Host IP" />
+            <field name="application_name" data-type="varchar" max-length="255" label="Application name" />
+            <field name="application_version" data-type="varchar" max-length="16" label="Application version" />
+        </table>
       </add>
     </schema>
   </bundle>

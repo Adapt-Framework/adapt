@@ -665,7 +665,6 @@ namespace adapt{
                                                         }
                                                     }
                                                 }
-                                                
                                             }
                                         }
                                         $this->_schema['add'] = array(
@@ -1350,7 +1349,7 @@ namespace adapt{
                                         /* Write the table */
                                         $sql->execute();
                                         
-                                        if (in_array($table_name, array('data_type', 'field', 'bundle_version'))){
+                                        if (in_array($table_name, array('data_type', 'field', 'bundle_version', 'web_host'))){
                                             
                                             if (!is_array($this->_schema['add']['records'])){
                                                 $this->_schema['add']['records'] = array();
