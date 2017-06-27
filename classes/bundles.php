@@ -627,7 +627,7 @@ namespace adapt{
                 
                 if (is_array($this->_data_source_bundle_cache)){
                     foreach($this->_data_source_bundle_cache as $bundle){
-                        if ($bundle['name'] == $bundle_name && $bundle['version'] == $bundle_version){
+                        if ($bundle['bundle_name'] == $bundle_name && $bundle['version'] == $bundle_version){
                             return true;
                         }
                     }
