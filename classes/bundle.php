@@ -815,7 +815,7 @@ namespace adapt{
             $model = new model_bundle_version();
             $model->load_by_name_and_version($this->name, $latest_version);
             $model->errors(true);
-            $model->name = $this->name;
+            $model->bundle_name = $this->name;
             $model->version = $latest_version;
             $model->type = $this->type;
             $model->local = 'No';
@@ -1844,7 +1844,7 @@ namespace adapt{
                         //foreach($errors as $error) $this->error("Model 'bundle_version' returned the error \"{$error}\" from the bundle {$this->name}");
                     }
                     
-                    $model->name = $this->name;
+                    $model->bundle_name = $this->name;
                     $model->type = $this->type;
                     $model->version = $this->version;
                     $model->local = "Yes";
@@ -1859,7 +1859,7 @@ namespace adapt{
                         $sql = $this->data_source->sql;
                         $sql->update('bundle_version')->set('installed', q('Yes'))->where(
                             new sql_and(
-                               new sql_cond('name', sql::EQUALS, q($this->name)),
+                               new sql_cond('bundle_name', sql::EQUALS, q($this->name)),
                                new sql_cond('version', sql::NOT_EQUALS, q($this->version)),
                                new sql_cond('date_deleted', sql::IS, new sql_now())
                             )

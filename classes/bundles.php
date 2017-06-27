@@ -462,7 +462,7 @@ namespace adapt{
         public function update_system(){
             if ($this->data_source && $this->data_source instanceof data_source_sql){
                 $sql = $this->data_source->sql;
-                $sql->select('name', 'version')
+                $sql->select('bundle_name', 'version')
                     ->from('bundle_version')
                     ->where(
                         new sql_and(
@@ -474,7 +474,7 @@ namespace adapt{
                 $results = $sql->execute()->results();
 
                 foreach($results as $result){
-                    $this->update($result['name'], $result['version']);
+                    $this->update($result['bundle_name'], $result['version']);
                 }
             }
         }
