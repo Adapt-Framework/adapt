@@ -590,6 +590,12 @@ namespace adapt{
                                                                 $fields_to_add[$table_name][$field_name]['index'] = "No";
                                                             }
                                                             
+                                                            if (strtolower($child->attr('unique')) == 'yes'){
+                                                                $fields_to_add[$table_name][$field_name]['unique_value'] = "Yes";
+                                                            }else{
+                                                                $fields_to_add[$table_name][$field_name]['unique_value'] = "No";
+                                                            }
+                                                            
                                                             if ($child->attr('index-size')){
                                                                 $fields_to_add[$table_name][$field_name]['index_size'] = $child->attr('index-size');
                                                             }
@@ -609,7 +615,7 @@ namespace adapt{
                                                             );
                                                             
                                                             $yes_no_fields = array(
-                                                                'signed' => 'No', 'nullable' => 'Yes', 'timestamp' => 'No'
+                                                                'signed' => 'No', 'unique_value' => 'No', 'nullable' => 'Yes', 'timestamp' => 'No'
                                                             );
                                                             
                                                             foreach($keys as $key => $value){
@@ -809,7 +815,7 @@ namespace adapt{
             $model = new model_bundle_version();
             $model->load_by_name_and_version($this->name, $latest_version);
             $model->errors(true);
-            $model->name = $this->name;
+            $model->bundle_name = $this->name;
             $model->version = $latest_version;
             $model->type = $this->type;
             $model->local = 'No';
@@ -1045,6 +1051,11 @@ namespace adapt{
                                         
                                         foreach($fields as $field_name => $attributes){
                                             
+                                            /* Make sure fields named 'name' are unique */
+                                            if ($field_name == 'name'){
+                                                $attributes['unique_value'] = 'Yes';
+                                            }
+                                            
                                             /* Build the attributes for the field */
                                             $data_type = $attributes['data_type'];
                                             if ($data_type == 'varchar'){
@@ -1067,6 +1078,12 @@ namespace adapt{
 
                                             $nullable = true;
                                             if (isset($attributes['nullable']) && $attributes['nullable'] == 'No') $nullable = false;
+                                            
+                                            $signed = true;
+                                            if (isset($attributes['signed']) && $attributes['signed'] == 'No') $signed = false;
+                                            
+                                            $unique = false;
+                                            if (isset($attributes['unique_value']) && $attributes['unique_value'] == 'Yes') $unique = true;
 
                                             $default_value = null;
                                             if (isset($attributes['default_value'])) $default_value = $attributes['default_value'];
@@ -1094,6 +1111,7 @@ namespace adapt{
                                                     'description' => $attributes['description'],
                                                     'data_type_id' => array('lookup_from' => 'data_type', 'with_conditions' => ['name' => $attributes['data_type']]),
                                                     'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
+                                                    'unique_value' => $attributes['unqiue_value'] == "Yes" ? "Yes" : "No",
                                                     'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
                                                     'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",
                                                     'auto_increment' => $attributes['auto_increment'] == "Yes" ? "Yes" : "No",
@@ -1109,12 +1127,12 @@ namespace adapt{
                                                 
                                                 // Ignore the field if it's currently marked as primary
                                                 if ($attributes['primary_key'] != 'Yes'){
-                                                    $sql->change($field_name, $field_name, $data_type, $nullable, $default_value, false, false);
+                                                    $sql->change($field_name, $field_name, $data_type, $nullable, $default_value, $unique, $signed);
                                                 }
                                                 
                                             }else{
                                                 
-                                                $sql->add($field_name, $data_type, $nullable, $default_value, false, false, $last_field);
+                                                $sql->add($field_name, $data_type, $nullable, $default_value, $unique, $signed, $last_field);
                                                 $last_field = $field_name;
 
                                                 if (isset($attributes['primary_key']) && $attributes['primary_key'] == 'Yes'){
@@ -1151,6 +1169,7 @@ namespace adapt{
                                                     'description' => $attributes['description'],
                                                     'data_type_id' => array('lookup_from' => 'data_type', 'with_conditions' => ['name' => $attributes['data_type']]),
                                                     'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
+                                                    'unique_value' => $attributes['unique_value'] == "Yes" ? "Yes" : "No",
                                                     'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
                                                     'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",
                                                     'auto_increment' => $attributes['auto_increment'] == "Yes" ? "Yes" : "No",
@@ -1166,10 +1185,6 @@ namespace adapt{
 
                                                 $field_registrations[] = $field_registration;
                                             }
-                                            
-                                            
-                                            
-                                            
                                         }
                                         
                                         /* We need to make our bundle name available to the sql object
@@ -1190,6 +1205,12 @@ namespace adapt{
                                         $sql->create_table($table_name);
                                         
                                         foreach($fields as $field_name => $attributes){
+                                            
+                                            /* Make sure fields named 'name' are unique */
+                                            if ($field_name == 'name'){
+                                                $attributes['unique_value'] = 'Yes';
+                                            }
+                                            
                                             $data_type = $attributes['data_type'];
                                             if ($data_type == 'varchar'){
                                                 $data_type .= "({$attributes['max_length']})";
@@ -1212,10 +1233,16 @@ namespace adapt{
                                             $nullable = true;
                                             if (isset($attributes['nullable']) && $attributes['nullable'] == 'No') $nullable = false;
                                             
+                                            $unique = false;
+                                            if (isset($attributes['unique_value']) && $attributes['unique_value'] == 'Yes') $unique = true;
+                                            
+                                            $signed = true;
+                                            if (isset($attributes['signed']) && $attributes['signed'] == 'No') $signed = false;
+                                            
                                             $default_value = null;
                                             if (isset($attributes['default_value'])) $default_value = $attributes['default_value'];
                                             
-                                            $sql->add($field_name, $data_type, $nullable, $default_value);
+                                            $sql->add($field_name, $data_type, $nullable, $default_value, $unique, $signed);
                                             
                                             if (isset($attributes['primary_key']) && $attributes['primary_key'] == 'Yes'){
                                                 $auto_increment = true;
@@ -1251,6 +1278,7 @@ namespace adapt{
                                                 'data_type_id' => array('lookup_from' => 'data_type', 'with_conditions' => ['name' => $attributes['data_type']]),
                                                 'primary_key' => $attributes['primary_key'] == "Yes" ? "Yes" : "No",
                                                 'signed' => $attributes['signed'] == "Yes" ? "Yes" : "No",
+                                                'unique_value' => $attributes['unique_value'] == "Yes" ? "Yes" : "No",
                                                 'nullable' => $attributes['nullable'] == "No" ? "No" : "Yes",
                                                 'auto_increment' => $attributes['auto_increment'] == "Yes" ? "Yes" : "No",
                                                 'timestamp' => $attributes['timestamp'] == "Yes" ? "Yes" : "No",
@@ -1282,6 +1310,7 @@ namespace adapt{
                                             'data_type_id' => array('lookup_from' => 'data_type', 'with_conditions' => ['name' => 'datetime']),
                                             'primary_key' => 'No',
                                             'signed' => 'No',
+                                            'unique_value' => 'No',
                                             'nullable' => 'Yes',
                                             'auto_increment' => 'No',
                                             'timestamp' => 'No',
@@ -1306,6 +1335,7 @@ namespace adapt{
                                             'data_type_id' => array('lookup_from' => 'data_type', 'with_conditions' => ['name' => 'timestamp']),
                                             'primary_key' => 'No',
                                             'signed' => 'No',
+                                            'unique_value' => 'No',
                                             'nullable' => 'Yes',
                                             'auto_increment' => 'No',
                                             'timestamp' => 'Yes',
@@ -1330,6 +1360,7 @@ namespace adapt{
                                             'data_type_id' => array('lookup_from' => 'data_type', 'with_conditions' => ['name' => 'datetime']),
                                             'primary_key' => 'No',
                                             'signed' => 'No',
+                                            'unique_value' => 'No',
                                             'nullable' => 'Yes',
                                             'auto_increment' => 'No',
                                             'timestamp' => 'No',
@@ -1461,7 +1492,7 @@ namespace adapt{
                                          */
                                         $ignore_record = false;
                                         
-                                        if (in_array('__name', $field_names)){ // Disabled due to the fact that name fields are not unique
+                                        if (in_array('name', $field_names)){ // Disabled due to the fact that name fields are not unique
                                             // Intentionally we are skipping the
                                             // date_deleted field on the basis that
                                             // if this record is deleted, it should
@@ -1485,7 +1516,7 @@ namespace adapt{
                                                         $sql->set($field_name, sql::q($row[$field_name]));
                                                     }
                                                 }
-                                                $sql->where(new sql_cond($table_name, sql::EQUALS, sql::q($row[$field_name])));
+                                                $sql->where(new sql_cond($table_name . '_id', sql::EQUALS, sql::q($results[0][$table_name . '_id'])));
                                                 
                                                 $sql->execute();
                                             }
@@ -1624,20 +1655,29 @@ namespace adapt{
                                             }
                                         }else{
                                             // Drop each field
+                                            $has_dropped_fields = false;
+                                            
                                             $sql->alter_table($table_name);
                                             foreach($fields as $field_name){
-                                                $sql->drop($field_name);
+                                                if (in_array($field_name, array_keys($schema_by_field_name))){
+                                                    $sql->drop($field_name);
+                                                    $has_dropped_fields = true;
+                                                }
                                             }
                                             
                                             $this->store('adapt.installing_bundle', $this->name);
-                                            $sql->execute();
+                                            $errors = [];
+                                            
+                                            if ($has_dropped_fields){
+                                                $sql->execute();
+                                                $errors = $sql->errors(true);
+                                            }
                                             $this->remove_store('adapt.installing_bundle');
                                             
-                                            $errors = $sql->errors(true);
                                             if (count($errors)){
                                                 $this->error($errors);
                                                 return false;
-                                            }else{
+                                            }elseif ($has_dropped_fields){
                                                 // Update the field table
                                                 $sql = $this->data_source->sql;
                                                 
@@ -1804,7 +1844,7 @@ namespace adapt{
                         //foreach($errors as $error) $this->error("Model 'bundle_version' returned the error \"{$error}\" from the bundle {$this->name}");
                     }
                     
-                    $model->name = $this->name;
+                    $model->bundle_name = $this->name;
                     $model->type = $this->type;
                     $model->version = $this->version;
                     $model->local = "Yes";
@@ -1819,7 +1859,7 @@ namespace adapt{
                         $sql = $this->data_source->sql;
                         $sql->update('bundle_version')->set('installed', q('Yes'))->where(
                             new sql_and(
-                               new sql_cond('name', sql::EQUALS, q($this->name)),
+                               new sql_cond('bundle_name', sql::EQUALS, q($this->name)),
                                new sql_cond('version', sql::NOT_EQUALS, q($this->version)),
                                new sql_cond('date_deleted', sql::IS, new sql_now())
                             )

@@ -462,7 +462,7 @@ namespace adapt{
         public function update_system(){
             if ($this->data_source && $this->data_source instanceof data_source_sql){
                 $sql = $this->data_source->sql;
-                $sql->select('name', 'version')
+                $sql->select('bundle_name', 'version')
                     ->from('bundle_version')
                     ->where(
                         new sql_and(
@@ -474,7 +474,7 @@ namespace adapt{
                 $results = $sql->execute()->results();
 
                 foreach($results as $result){
-                    $this->update($result['name'], $result['version']);
+                    $this->update($result['bundle_name'], $result['version']);
                 }
             }
         }
@@ -516,7 +516,7 @@ namespace adapt{
                     return false;
                 }
             }else{
-                $this->error("Unable to process bundle.");
+                $this->error(trim("Unable to process '{$bundle_name}' {$bundle_version}"));
                 $this->error($unbundler->errors(true));
                 return false;
             }
@@ -627,7 +627,7 @@ namespace adapt{
                 
                 if (is_array($this->_data_source_bundle_cache)){
                     foreach($this->_data_source_bundle_cache as $bundle){
-                        if ($bundle['name'] == $bundle_name && $bundle['version'] == $bundle_version){
+                        if ($bundle['bundle_name'] == $bundle_name && $bundle['version'] == $bundle_version){
                             return true;
                         }
                     }
