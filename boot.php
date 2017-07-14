@@ -143,7 +143,7 @@ if ($adapt->bundles->boot_application()){
         $adapt->trigger(\adapt\base::EVENT_READY);
         
     }else{
-        
+        print "Ending earlier...\n";die();
         /* Do we have a root view controller? */
         if (class_exists("\\application\\controller_root")){
             

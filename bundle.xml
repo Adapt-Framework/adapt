@@ -170,6 +170,17 @@
           </allowed_values>
         </setting>
       </category>
+      <category name="Web hosts">
+          <setting>
+              <name>adapt.has_multiple_web_hosts</name>
+              <label>The application has multiple web hosts</label>
+              <default_value>No</default_value>
+              <allowed_values>
+                  <value>Yes</value>
+                  <value>No</value>
+              </allowed_values>
+          </setting>
+      </category>
     </settings>
     <schema>
       <add>
@@ -710,6 +721,15 @@
             <nullable>Yes</nullable>
           </field>
         </table>
+        <table name="bundle">
+            <field name="bundle_id" key="primary" auto-increment="Yes" label="Bundle #" data-type="bigint" nullable="Yes" />
+            <field name="status" data-type="enum('Available', 'Installing', 'Installed')" default-value="Available" nullable="No" />
+            <field name="bundle_name" data-type="varchar" max-length="128" label="Bundle name" nullable="No" />
+            <field name="bundle_version" data-type="varchar" max-length="16" label="Bundle version" nullable="No" />
+            <field name="type" data-type="varchar" max-length="64" label="Bundle type" nullable="No" />
+            <field name="installing_host" data-type="varchar" max-length="255" nullable="Yes" label="Installing host" />
+            <field name="installing_pid" data-type="bigint" nullable="Yes" label="Installing PID" />
+        </table>
         <table name="bundle_version">
           <field name="bundle_version_id" key="primary" auto-increment="Yes">
             <label>Bundle #</label>
@@ -723,6 +743,26 @@
             <data_type>varchar</data_type>
             <max_length>128</max_length>
             <nullable>No</nullable>
+          </field>
+          <field name="status">
+              <label>Status</label>
+              <description>The status of the bundle</description>
+              <data_type>enum('Installed', 'Installing')</data_type>
+              <default_value>Installing</default_value>
+              <nullable>No</nullable>
+          </field>
+          <field name="installing_host">
+              <label>Installing host</label>
+              <description>The host installing the bundle</description>
+              <data_type>varchar</data_type>
+              <max_length>255</max_length>
+              <nullable>Yes</nullable>
+          </field>
+          <field name="installing_pid">
+              <label>Installing PID</label>
+              <description>The process id that is installing the bundle</description>
+              <data_type>int</data_type>
+              <nullable>Yes</nullable>
           </field>
           <field name="type">
             <label>Bundle type</label>

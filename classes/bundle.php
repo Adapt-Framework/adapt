@@ -970,7 +970,6 @@ namespace adapt{
                 
                 if ($this->type == 'application'){
                     $dependency_list = $this->bundles->get_dependency_list($this->name, $this->version);
-                    
                     if (is_array($dependency_list)){
                         $dependency_list = array_reverse($dependency_list);
                         
@@ -1018,6 +1017,7 @@ namespace adapt{
         public function install(){
             if (!$this->is_installed() && !$this->is_installing()){
                 /* Mark as installing */
+                $this->bundles->set_bundle_installing($this->name, $this->version);
                 $this->file_store->set("adapt/installation/{$this->name}-{$this->version}", "true", "text/plain");
                 
                 if (is_array($this->_schema) && $this->data_source instanceof data_source_sql){
