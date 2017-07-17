@@ -483,6 +483,7 @@ namespace adapt{
             }
             
             $response = $this->_request("/bundles/versions/download", $payload);
+            
             if ($response['status'] == '200'){
                 $key = "repository/bundles/" . $bundle_name_or_guid;
                 $this->file_store->set($key, $response['content'], "application/x-bundle");

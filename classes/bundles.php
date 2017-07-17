@@ -389,9 +389,23 @@ namespace adapt{
                             /* Get a list of installed bundles */
                             $installed_bundles = self::list_installed_bundles();
                             
-                            //print_r($available_bundles);
-                            //print_r($installed_bundles);
-                            //die();
+                            foreach($installed_bundles as $name => $versions){
+                                if (in_array($name, array_keys($available_bundles))){
+                                    foreach($versions as $version){
+                                        if (!in_array($version, $available_bundles[$name])){
+                                            if (!$this->fetch_bundle($name, $version)){
+                                                return false;
+                                            }
+                                        }
+                                    }
+                                }else{
+                                    foreach($versions as $version){
+                                        if (!$this->fetch_bundle($name, $version)){
+                                            return false;
+                                        }
+                                    }
+                                }
+                            }
                         }
                         
                         if (!$dependencies_resolved){
@@ -506,7 +520,7 @@ namespace adapt{
          * @return boolean
          */
         public function fetch_bundle($bundle_name, $bundle_version = null){
-            $key = $this->repository->download_bundle_version($bundle_name, $version);
+            $key = $this->repository->download_bundle_version($bundle_name, $bundle_version);
             
             if ($key === false){
                 $this->error("Unable to fetch bundle");
@@ -541,13 +555,39 @@ namespace adapt{
          * Marks a bundle as installing
          */
         public function set_bundle_installing($bundle_name, $bundle_version){
-            print "Requested to install {$bundle_name}\n";
-            print_r($_SERVER);
-            print "PID: " . getmypid() . "\n";
-            print "iNode: " . getmyinode() . "\n";
-            print "Host: " . gethostname() . "\n";
+            $bundle = new model_bundle();
+            if (!$bundle->load_by_name($bundle_name)){
+                $bundle->errors(true);
+            }
             
-            die();
+            if (!$bundle->is_loaded){
+                $bundle->name = $bundle_name;
+                $bundle->type = "unavailable";
+                if (!$bundle->save()){
+                    $this->error("Unable to create bundle record for {$bundle_name} v{$bundle_version}");
+                    return false;
+                }
+                
+            }
+            
+            $version = $bundle->get_version($bundle_version);
+            
+            if (!$version instanceof model_bundle_version){
+                $version = new model_bundle_version();
+                $version->bundle_id = $bundle->bundle_id;
+                $version->status = "Installing";
+                $version->version = $bundle_version;
+                $version->installing_host = gethostname();
+                $version->installing_pid = getmypid();
+                $version->save();
+            }elseif($version->status == model_bundle_version::STATUS_INSTALLING){
+                if ($version->installing_host != gethostname() || $version->installing_pid != getmypid()){
+                    $this->error("This bundle is already being installed");
+                    return false;
+                }
+            }
+            
+            return true;
         }
         
         /**
@@ -560,55 +600,66 @@ namespace adapt{
          * The version of the bundle.
          * @return boolean
          */
-        public function set_bundle_installed($bundle_name, $bundle_version){
-            if ($this->data_source && $this->data_source instanceof data_source_sql){
-                
-                if (!is_array($this->_data_source_bundle_cache)){
-                    $cache = $this->cache->get("adapt/data_source/bundle.cache");
-                    
-                    if (is_array($cache)) $this->_data_source_bundle_cache = $cache;
-                }
-                
-                if (!is_array($this->_data_source_bundle_cache)){
-                    $this->_data_source_bundle_cache = array();
-                    
-                    $results = $this
-                        ->data_source
-                        ->sql
-                        ->select('*')
-                        ->from('bundle_version')
-                        ->where(
-                            new sql_and(
-                                new sql_cond('date_deleted', sql::IS, new sql_null()),
-                                new sql_cond('installed', sql::EQUALS, sql::q('Yes'))
-                            )
-                        )
-                        ->execute(0)
-                        ->results();
-                    
-                    $this->_data_source_bundle_cache = $results;
-                    
-                    $this->_data_source_bundle_cache_changed = true;
-                }
-                
-                if (is_array($this->_data_source_bundle_cache)){
-                    foreach($this->_data_source_bundle_cache as $bundle){
-                        if ($bundle['name'] == $bundle_name && $bundle['version'] == $bundle_version){
-                            return true;
-                        }
-                    }
-                    
-                    $this->_data_source_bundle_cache[] = array('name' => $bundle_name, 'version' => $bundle_version);
-                    $this->_data_source_bundle_cache_changed = true;
-                    $this->_bundle_cache_changed = true; //Because the the bundle->_is_installed has changed
-                    
-                    return true;
-                }
-                
-                
+        public function set_bundle_installed($bundle_name, $bundle_version, $bundle_type){
+            $bundle = new model_bundle();
+            if (!$bundle->load_by_name($bundle_name)){
+                $this->error("Unknown bundle {$bundle_name}");
+                return false;
             }
             
-            return false;
+            $version = $bundle->get_version($bundle_version);
+            
+            if (!$version instanceof model_bundle_version || !$version->is_loaded){
+                $this->error("Unknown version {$bundle_version}");
+                return false;
+            }
+            
+            if ($version->status == model_bundle_version::STATUS_INSTALLING){
+                if ($version->installing_host == gethostname() && $version->installing_pid == getmypid()){
+                    $version->status = model_bundle_version::STATUS_INSTALLED;
+                    $bundle->type = $bundle_type;
+                    $bundle->save();
+                    return $version->save();
+                }
+            }
+            
+            return true;
+        }
+        
+        /**
+         * Is a bundle installing?
+         * 
+         * @access public
+         * @param string $bundle_name
+         * The name of the bundle
+         * @param string $bundle_version
+         * The version of the bundle
+         * @return boolean
+         */
+        public function is_bundle_installing($bundle_name, $bundle_version){
+            $bundle = new model_bundle();
+            
+            if (!$bundle->load_by_name($bundle_name)){
+                return false;
+            }
+            
+            $version = $bundle->get_version($bundle_version);
+            if (!$version instanceof model_bundle_version || !$version->is_loaded){
+                return false;
+            }
+            
+            if ($version->status != model_bundle_version::STATUS_INSTALLING){
+                return false;
+            }
+            
+            /* Check that the installation is still active */
+            if (!$version->is_actively_installing){
+                $version->installing_host = new sql_null();
+                $version->installing_pid = new sql_null();
+                $version->save();
+            }
+            
+            return true;
         }
         
         /**
@@ -622,48 +673,22 @@ namespace adapt{
          * @return boolean
          */
         public function is_bundle_installed($bundle_name, $bundle_version){
-            if ($this->data_source && $this->data_source instanceof data_source_sql){
-                
-                if (!is_array($this->_data_source_bundle_cache)){
-                    $cache = $this->cache->get("adapt/data_source/bundle.cache");
-                    
-                    if (is_array($cache)) $this->_data_source_bundle_cache = $cache;
-                }
-                
-                if (!is_array($this->_data_source_bundle_cache)){
-                    $this->_data_source_bundle_cache = array();
-                    
-                    $results = $this
-                        ->data_source
-                        ->sql
-                        ->select('*')
-                        ->from('bundle_version')
-                        ->where(
-                            new sql_and(
-                                new sql_cond('date_deleted', sql::IS, new sql_null()),
-                                new sql_cond('installed', sql::EQUALS, sql::q('Yes'))
-                            )
-                        )
-                        ->execute(0)
-                        ->results();
-                    
-                    
-                    $this->_data_source_bundle_cache = $results;
-                    
-                    $this->_data_source_bundle_cache_changed = true;
-                }
-                
-                if (is_array($this->_data_source_bundle_cache)){
-                    foreach($this->_data_source_bundle_cache as $bundle){
-                        if ($bundle['bundle_name'] == $bundle_name && $bundle['version'] == $bundle_version){
-                            return true;
-                        }
-                    }
-                    
-                }
+            $bundle = new model_bundle();
+            
+            if (!$bundle->load_by_name($bundle_name)){
                 return false;
             }
-            return false;
+            
+            $version = $bundle->get_version($bundle_version);
+            if (!$version instanceof model_bundle_version || !$version->is_loaded){
+                return false;
+            }
+            
+            if ($version->status != model_bundle_version::STATUS_INSTALLED){
+                return false;
+            }
+            
+            return true;
         }
         
         /**
@@ -1168,22 +1193,29 @@ namespace adapt{
             
             if ($adapt->data_source instanceof \adapt\data_source_sql){
                 $sql = $adapt->data_source->sql;
-                $sql->select('bundle_name', 'version')
-                    ->from('bundle_version')
+                
+                $sql->select('b.name', 'bv.version')
+                    ->from('bundle', 'b')
+                    ->join('bundle_version', 'bv',
+                        new sql_and(
+                            new sql_cond('b.bundle_id', sql::EQUALS, 'bv.bundle_id'),
+                            new sql_cond('bv.status', sql::EQUALS, q(model_bundle_version::STATUS_INSTALLED)),
+                            new sql_cond('bv.date_deleted', sql::IS, sql::NULL)
+                        )
+                    )
                     ->where(
                         new sql_and(
-                            new sql_cond('installed', sql::EQUALS, q('Yes')),
-                            new sql_cond('date_deleted', sql::IS, sql::NULL)
+                            new sql_cond('b.date_deleted', sql::IS, sql::NULL)
                         )
-                    );
+                    ); 
                 
                 $results = $sql->execute(0)->results();
                 
                 foreach($results as $result){
-                    if (!isset($output[$result['bundle_name']])){
-                        $output[$result['bundle_name']] = [$result['version']];
+                    if (!isset($output[$result['name']])){
+                        $output[$result['name']] = [$result['version']];
                     }else{
-                        $output[$result['bundle_name']][] = $result['version'];
+                        $output[$result['name']][] = $result['version'];
                     }
                 }
             }

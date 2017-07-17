@@ -181,6 +181,13 @@
               </allowed_values>
           </setting>
       </category>
+      <category name="Bundles">
+          <setting>
+          <name>adapt.max_bundle_install_time</name>
+          <label>How long can bundles take to install (minutes)?</label>
+          <default_value>3</default_value>
+        </setting>
+      </category>
     </settings>
     <schema>
       <add>
@@ -723,14 +730,18 @@
         </table>
         <table name="bundle">
             <field name="bundle_id" key="primary" auto-increment="Yes" label="Bundle #" data-type="bigint" nullable="Yes" />
-            <field name="status" data-type="enum('Available', 'Installing', 'Installed')" default-value="Available" nullable="No" />
-            <field name="bundle_name" data-type="varchar" max-length="128" label="Bundle name" nullable="No" />
-            <field name="bundle_version" data-type="varchar" max-length="16" label="Bundle version" nullable="No" />
+            <field name="name" data-type="varchar" max-length="128" label="Bundle name" nullable="No" />
             <field name="type" data-type="varchar" max-length="64" label="Bundle type" nullable="No" />
+        </table>
+        <table name="bundle_version">
+            <field name="bundle_version_id" key="primary" auto-increment="Yes" label="Bundle version #" data-type="bigint" nullable="Yes" />
+            <field name="bundle_id" key="foreign" referenced-table-name="bundle" referenced-field-name="bundle_id" data-type="bigint" label="Bundle #" />
+            <field name="status" data-type="enum('Available', 'Installing', 'Installed')" default-value="Available" nullable="No" />
+            <field name="version" data-type="varchar" max-length="16" label="Bundle version" nullable="No" />
             <field name="installing_host" data-type="varchar" max-length="255" nullable="Yes" label="Installing host" />
             <field name="installing_pid" data-type="bigint" nullable="Yes" label="Installing PID" />
         </table>
-        <table name="bundle_version">
+<!--        <table name="bundle_version">
           <field name="bundle_version_id" key="primary" auto-increment="Yes">
             <label>Bundle #</label>
             <description>A unique ID representing this bundle on this system.</description>
@@ -791,7 +802,7 @@
             <data_type>enum('Yes', 'No')</data_type>
             <default_value>No</default_value>
             <nullable>No</nullable>
-          </field>
+          </field>-->
         </table>
       </add>
     </schema>
