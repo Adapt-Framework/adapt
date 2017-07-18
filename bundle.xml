@@ -1,830 +1,775 @@
 <?xml version="1.0" encoding="utf-8"?>
 <adapt_framework>
-  <bundle>
-    <label>Adapt Framework</label>
-    <name>adapt</name>
-    <version>2.0.8</version>
-    <version_status>release</version_status>
-    <availability>public</availability>
-    <type>php_framework</type>
-    <namespace>\adapt</namespace>
-    <description>Adapt framework is designed for rapid web application development and deployment, built to scale it can meet the needs of the most demanding websites.</description>
-    <copyright>2017 Matt Bruton</copyright>
-    <license>MIT</license>
-    <vendor>
-        <name>Adapt Framework</name>
-        <website>https://www.adaptframework.com</website>
-    </vendor>
-    <authors>
-        <author>
-            <name>Matt Bruton</name>
-            <email>matt.bruton@gmail.com</email>
-        </author>
-    </authors>
-    <contributors>
-        <contributor>
-            <name>Joe Hockaday</name>
-            <email>jdhockad@hotmail.com</email>
-        </contributor>
-        <contributor>
-            <name>Sion Purnell</name>
-            <email>yepitsmesion@hotmail.co.uk</email>
-        </contributor>
-      <contributor>
-        <name>Tom Davies</name>
-        <email>tom@c10ud.com</email>
-      </contributor>
-    </contributors>
-    <settings>
-      <category name="XML &amp; HTML Settings">
-        <setting>
-          <name>xml.readable</name>
-          <label>Output readable XML/HTML?</label>
-          <default_value>No</default_value>
-          <allowed_values>
-            <value>Yes</value>
-            <value>No</value>
-          </allowed_values>
-        </setting>
-        <setting>
-          <name>html.format</name>
-          <label>HTML Format</label>
-          <default_value>html5</default_value>
-          <allowed_values>
-            <value>html5</value>
-            <value>xhtml</value>
-          </allowed_values>
-        </setting>
-        <setting>
-          <name>html.closed_tags</name>
-          <label>Closed HTML tags</label>
-          <default_values>
-            <value>img</value>
-            <value>link</value>
-            <value>meta</value>
-            <value>br</value>
-            <value>hr</value>
-            <value>area</value>
-            <value>base</value>
-            <value>col</value>
-            <value>command</value>
-            <value>embed</value>
-            <value>input</value>
-            <value>link</value>
-            <value>meta</value>
-            <value>param</value>
-            <value>source</value>
-          </default_values>
-        </setting>
-      </category>
-      <category name="MySQL Settings">
-        <setting>
-          <name>mysql.default_engine</name>
-          <label>Default storage engine</label>
-          <default_value>InnoDB</default_value>
-        </setting>
-        <setting>
-          <name>mysql.default_character_set</name>
-          <label>Default character set</label>
-          <default_value>utf8</default_value>
-        </setting>
-        <setting>
-          <name>mysql.default_collation</name>
-          <label>Default collation</label>
-          <default_value>utf8_general_ci</default_value>
-        </setting>
-      </category>
-      <category name="Database connecton">
-        <setting>
-          <name>datasource.driver</name>
-          <label>Driver</label>
-        </setting>
-        <setting>
-          <name>datasource.host</name>
-          <label>Host</label>
-        </setting>
-        <setting>
-          <name>datasource.port</name>
-          <label>Port</label>
-        </setting>
-        <setting>
-          <name>datasource.schema</name>
-          <label>Schema</label>
-        </setting>
-        <setting>
-          <name>datasource.username</name>
-          <label>Username</label>
-        </setting>
-        <setting>
-          <name>datasource.password</name>
-          <label>Password</label>
-        </setting>
-        <setting>
-          <name>datasource.writable</name>
-          <label>Writable?</label>
-        </setting>
-      </category>
-      <category name="Applications">
-        <setting>
-          <name>adapt.default_application_name</name>
-          <label>Which application should be booted?</label>
-        </setting>
-        <setting>
-          <name>adapt.default_application_version</name>
-          <label>Which version of the application should be booted?</label>
-        </setting>
-      </category>
-      <category name="Repository settings">
-        <setting>
-          <name>repository.username</name>
-          <label>Repoistory Username</label>
-        </setting>
-        <setting>
-          <name>repository.password</name>
-          <label>Repoistory Password</label>
-        </setting>
-        <setting>
-            <name>repository.automatic_updates</name>
-            <label>Should the platform automatic update?</label>
-            <default_value>Yes</default_value>
-        </setting>
-        <setting>
-            <name>repository.check_for_updates</name>
-            <label>How often in hours should the platform check for updates?</label>
-            <default_value>24</default_value>
-        </setting>
-        <setting>
-            <name>repository.automatic_upgrades</name>
-            <label>Should the platform automatic upgrade?</label>
-            <default_value>No</default_value>
-        </setting>
-        <setting>
-            <name>repository.check_for_upgrades</name>
-            <label>How often in hours should the platform check for upgrades?</label>
-            <default_value>24</default_value>
-        </setting>
-      </category>
-      <category name="Caching">
-        <setting>
-          <name>adapt.sql_cache_expires_after</name>
-          <label>How long should we hold results for SQL statements? (In seconds)</label>
-          <default_value>60</default_value>
-        </setting>
-        <setting>
-          <name>adapt.view_cache_expires_after</name>
-          <label>How long should we cache views for? (In seconds)</label>
-          <default_value>600</default_value>
-        </setting>
-        <setting>
-          <name>adapt.page_cache_expires_after</name>
-          <label>How long should we cache pages? (In seconds)</label>
-          <default_value>300</default_value>
-        </setting>
-        <setting>
-          <name>adapt.disable_caching</name>
-          <label>Disable all caching</label>
-          <default_value>No</default_value>
-          <allowed_values>
-            <value>Yes</value>
-            <value>No</value>
-          </allowed_values>
-        </setting>
-      </category>
-      <category name="Web hosts">
-          <setting>
-              <name>adapt.has_multiple_web_hosts</name>
-              <label>The application has multiple web hosts</label>
-              <default_value>No</default_value>
-              <allowed_values>
-                  <value>Yes</value>
-                  <value>No</value>
-              </allowed_values>
-          </setting>
-      </category>
-      <category name="Bundles">
-          <setting>
-          <name>adapt.max_bundle_install_time</name>
-          <label>How long can bundles take to install (minutes)?</label>
-          <default_value>3</default_value>
-        </setting>
-      </category>
-    </settings>
-    <schema>
-      <add>
-        <table name="data_type">
-          <field name="data_type_id" key="primary" auto-increment="Yes">
-            <label>Data type #</label>
-            <description>A unique ID for this data type</description>
-            <data_type>bigint</data_type>
-          </field>
-          <field name="bundle_name">
-            <label>Bundle name</label>
-            <description>The bundle that created this data type</description>
-            <data_type>varchar</data_type>
-            <max_length>128</max_length>
-            <nullable>No</nullable>
-          </field>
-          <field name="name" index="Yes" index-size="32">
-            <label>Name</label>
-            <description>The data type name</description>
-            <data_type>varchar</data_type>
-            <max_length>128</max_length>
-            <nullable>No</nullable>
-          </field>
-          <field name="based_on_data_type">
-            <label>Based on</label>
-            <description>The name of the data type this one is based on</description>
-            <data_type>text</data_type>
-            <nullable>Yes</nullable>
-          </field>
-          <field name="validator">
-            <label>Validator</label>
-            <description>The name of the validator used to validate this data type</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-          </field>
-          <field name="formatter">
-            <label>Formatter</label>
-            <description>The name of the formatter used to formatter this data type</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-          </field>
-          <field name="unformatter">
-            <label>Unformatter</label>
-            <description>The name of the unformatter used to unformat this data type</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-          </field>
-          <field name="datetime_format">
-            <label>Datetime format</label>
-            <description>If this is a datatime field then this is the default display format</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-          </field>
-          <field name="max_length">
-            <label>Max length</label>
-            <description>The max length of this data type</description>
-            <data_type>int</data_type>
-          </field>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>tinyint</name>
-            <validator>tinyint</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>smallint</name>
-            <validator>smallint</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>meduimint</name>
-            <validator>mediumint</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>int</name>
-            <validator>int</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>integer</name>
-            <validator>int</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>bigint</name>
-            <validator>bigint</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>serial</name>
-            <validator>serial</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>bit</name>
-            <validator>bit</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>boolean</name>
-            <validator>boolean</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>bool</name>
-            <validator>boolean</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>float</name>
-            <validator>float</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>double</name>
-            <validator>double</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>decimal</name>
-            <validator>decimal</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>char</name>
-            <validator>char</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>binary</name>
-            <validator>binary</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>varchar</name>
-            <validator>varchar</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>varbinary</name>
-            <validator>varbinary</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>tinyblob</name>
-            <validator>tinyblob</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>blob</name>
-            <validator>blob</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>mediumblob</name>
-            <validator>mediumblob</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>longblob</name>
-            <validator>longblob</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>tinytext</name>
-            <validator>tinytext</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>text</name>
-            <validator>text</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>mediumtext</name>
-            <validator>mediumtext</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>longtext</name>
-            <validator>longtext</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>enum</name>
-            <validator></validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>set</name>
-            <validator></validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>year</name>
-            <validator>year</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format>Y</datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>date</name>
-            <validator>date</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format>Y-m-d</datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>time</name>
-            <validator>time</validator>
-            <formatter>time</formatter>
-            <unformatter>time</unformatter>
-            <datetime_format>H:i:s</datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>datetime</name>
-            <validator>datetime</validator>
-            <formatter>datetime</formatter>
-            <unformatter>datetime</unformatter>
-            <datetime_format>Y-m-d H:i:s</datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>timestamp</name>
-            <validator>datetime</validator>
-            <formatter>datetime</formatter>
-            <unformatter>datetime</unformatter>
-            <datetime_format>Y-m-d H:i:s</datetime_format>
-            <max_length></max_length>
-            <based_on_data_type></based_on_data_type>
-          </record>
-          <record>
-            <bundle_name>adapt</bundle_name>
-            <name>guid</name>
-            <validator>guid</validator>
-            <formatter></formatter>
-            <unformatter></unformatter>
-            <datetime_format></datetime_format>
-            <max_length></max_length>
-            <based_on_data_type>varchar(256)</based_on_data_type>
-          </record>
-        </table>
-        <table name="field">
-          <field name="field_id" key="primary" auto-increment="Yes">
-            <label>Field #</label>
-            <data_type>bigint</data_type>
-          </field>
-          <field name="bundle_name">
-            <label>Bundle name</label>
-            <description>The bundle that created this field</description>
-            <data_type>varchar</data_type>
-            <max_length>128</max_length>
-            <nullable>No</nullable>
-          </field>
-          <field name="table_name">
-            <label>Table name</label>
-            <description>The table to which this field belongs</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-            <nullable>No</nullable>
-          </field>
-          <field name="field_name" index="Yes" index-size="32">
-            <label>Field name</label>
-            <description>The name of this field</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-            <nullable>No</nullable>
-          </field>
-          <field name="referenced_table_name">
-            <label>Referenced table name</label>
-            <description>The name of the table being referenced</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-          </field>
-          <field name="referenced_field_name">
-            <label>Referenced field name</label>
-            <description>The name of the field being referenced</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-          </field>
-          <field name="label">
-            <label>The label for this field</label>
-            <description>A descriptive label to be displayed next to the field.</description>
-            <data_type>varchar</data_type>
-            <max_length>128</max_length>
-          </field>
-          <field name="placeholder_label">
-            <label>A placeholder label for this field</label>
-            <description>Appears in the background of the field while it is empty.</description>
-            <data_type>varchar</data_type>
-            <max_length>128</max_length>
-          </field>
-          <field name="description">
-            <label>A description of the field</label>
-            <description>A descriptive description of the field</description>
-            <data_type>text</data_type>
-          </field>
-          <field name="data_type_id" key="foreign" referenced-table-name="data_type" referenced-field-name="data_type_id">
-            <label>Data type</label>
-            <description>The data type used to capture and store data for this field</description>
-            <data_type>bigint</data_type>
-            <max_length>128</max_length>
-          </field>
-          <field name="primary_key">
-            <label>Primary key?</label>
-            <description>Is this field a primary key?</description>
-            <data_type>enum('Yes', 'No')</data_type>
-            <default_value>No</default_value>
-            <nullable>No</nullable>
-          </field>
-          <field name="unique_value">
-            <label>Unique?</label>
-            <description>Should this field be unique?</description>
-            <data_type>enum('Yes', 'No')</data_type>
-            <default_value>No</default_value>
-            <nullable>No</nullable>
-          </field>
-          <field name="signed">
-            <label>Signed?</label>
-            <description>Should the numeric value be signed?</description>
-            <data_type>enum('Yes', 'No')</data_type>
-            <default_value>Yes</default_value>
-            <nullable>No</nullable>
-          </field>
-          <field name="nullable">
-            <label>Nullable?</label>
-            <description>Can this field be null?</description>
-            <data_type>enum('Yes', 'No')</data_type>
-            <default_value>Yes</default_value>
-            <nullable>No</nullable>
-          </field>
-          <field name="auto_increment">
-            <label>Auto increment?</label>
-            <description>Should this field auto-increment?</description>
-            <data_type>enum('Yes', 'No')</data_type>
-            <default_value>No</default_value>
-            <nullable>No</nullable>
-          </field>
-          <field name="timestamp">
-            <label>Timestamp?</label>
-            <description>Is this field a timestamp?</description>
-            <data_type>enum('Yes', 'No')</data_type>
-            <default_value>No</default_value>
-            <nullable>No</nullable>
-          </field>
-          <field name="max_length">
-            <label>Max length?</label>
-            <description>What is the maximum length of this field?</description>
-            <data_type>int</data_type>
-            <nullable>Yes</nullable>
-          </field>
-          <field name="default_value">
-            <label>Default value</label>
-            <description>The default value for this field.</description>
-            <data_type>varchar</data_type>
-            <max_length>128</max_length>
-            <nullable>Yes</nullable>
-          </field>
-          <field name="allowed_values">
-            <label>Allowed values</label>
-            <description>A JSON encoded array containing values, or keys and values.</description>
-            <data_type>text</data_type>
-            <nullable>Yes</nullable>
-          </field>
-          <field name="lookup_table">
-            <label>Lookup table</label>
-            <description>Which table should be used for the values of this field?</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-            <nullable>Yes</nullable>
-          </field>
-          <field name="depends_on_table_name">
-            <label>Dependent table</label>
-            <description>Which table is this field dependent on?</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-            <nullable>Yes</nullable>
-          </field>
-          <field name="depends_on_field_name">
-            <label>Dependent field</label>
-            <description>Which field is this field dependent on?</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-            <nullable>Yes</nullable>
-          </field>
-          <field name="depends_on_value">
-            <label>Dependent value</label>
-            <description>What value should the dependent field be?</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-            <nullable>Yes</nullable>
-          </field>
-        </table>
-        <table name="bundle">
-            <field name="bundle_id" key="primary" auto-increment="Yes" label="Bundle #" data-type="bigint" nullable="Yes" />
-            <field name="name" data-type="varchar" max-length="128" label="Bundle name" nullable="No" />
-            <field name="type" data-type="varchar" max-length="64" label="Bundle type" nullable="No" />
-        </table>
-        <table name="bundle_version">
-            <field name="bundle_version_id" key="primary" auto-increment="Yes" label="Bundle version #" data-type="bigint" nullable="Yes" />
-            <field name="bundle_id" key="foreign" referenced-table-name="bundle" referenced-field-name="bundle_id" data-type="bigint" label="Bundle #" />
-            <field name="status" data-type="enum('Available', 'Installing', 'Installed')" default-value="Available" nullable="No" />
-            <field name="version" data-type="varchar" max-length="16" label="Bundle version" nullable="No" />
-            <field name="installing_host" data-type="varchar" max-length="255" nullable="Yes" label="Installing host" />
-            <field name="installing_pid" data-type="bigint" nullable="Yes" label="Installing PID" />
-        </table>
-<!--        <table name="bundle_version">
-          <field name="bundle_version_id" key="primary" auto-increment="Yes">
-            <label>Bundle #</label>
-            <description>A unique ID representing this bundle on this system.</description>
-            <data_type>bigint</data_type>
-            <nullable>Yes</nullable>
-          </field>
-          <field name="bundle_name">
-            <label>Name</label>
-            <description>The name of the bundle</description>
-            <data_type>varchar</data_type>
-            <max_length>128</max_length>
-            <nullable>No</nullable>
-          </field>
-          <field name="status">
-              <label>Status</label>
-              <description>The status of the bundle</description>
-              <data_type>enum('Installed', 'Installing')</data_type>
-              <default_value>Installing</default_value>
-              <nullable>No</nullable>
-          </field>
-          <field name="installing_host">
-              <label>Installing host</label>
-              <description>The host installing the bundle</description>
-              <data_type>varchar</data_type>
-              <max_length>255</max_length>
-              <nullable>Yes</nullable>
-          </field>
-          <field name="installing_pid">
-              <label>Installing PID</label>
-              <description>The process id that is installing the bundle</description>
-              <data_type>int</data_type>
-              <nullable>Yes</nullable>
-          </field>
-          <field name="type">
-            <label>Bundle type</label>
-            <description>The type of bundle this is</description>
-            <data_type>varchar</data_type>
-            <max_length>64</max_length>
-            <nullable>No</nullable>
-          </field>
-          <field name="version">
-            <label>Version</label>
-            <description>The version of the bundle</description>
-            <data_type>varchar</data_type>
-            <max_length>16</max_length>
-            <nullable>No</nullable>
-          </field>
-          <field name="local">
-            <label>Is local?</label>
-            <description>Is the bundle available locally?</description>
-            <data_type>enum('Yes', 'No')</data_type>
-            <default_value>No</default_value>
-            <nullable>No</nullable>
-          </field>
-          <field name="installed">
-            <label>Installed?</label>
-            <description>Has the bundle been installed in this data source?</description>
-            <data_type>enum('Yes', 'No')</data_type>
-            <default_value>No</default_value>
-            <nullable>No</nullable>
-          </field>-->
-        </table>
-      </add>
-    </schema>
-  </bundle>
+    <bundle>
+        <label>Adapt Framework</label>
+        <name>adapt</name>
+        <version>2.0.9</version>
+        <version_status>release</version_status>
+        <availability>public</availability>
+        <type>php_framework</type>
+        <namespace>\adapt</namespace>
+        <description>Adapt framework is designed for rapid web application development and deployment, built to scale it can meet the needs of the most demanding websites.</description>
+        <copyright>2017 Matt Bruton</copyright>
+        <license>MIT</license>
+        <vendor>
+            <name>Adapt Framework</name>
+            <website>https://www.adaptframework.com</website>
+        </vendor>
+        <authors>
+            <author>
+                <name>Matt Bruton</name>
+                <email>matt.bruton@gmail.com</email>
+            </author>
+        </authors>
+        <contributors>
+            <contributor>
+                <name>Joe Hockaday</name>
+                <email>jdhockad@hotmail.com</email>
+            </contributor>
+            <contributor>
+                <name>Sion Purnell</name>
+                <email>yepitsmesion@hotmail.co.uk</email>
+            </contributor>
+            <contributor>
+                <name>Tom Davies</name>
+                <email>tom@c10ud.com</email>
+            </contributor>
+        </contributors>
+        <settings>
+            <category name="XML &amp; HTML Settings">
+                <setting>
+                    <name>xml.readable</name>
+                    <label>Output readable XML/HTML?</label>
+                    <default_value>No</default_value>
+                    <allowed_values>
+                        <value>Yes</value>
+                        <value>No</value>
+                    </allowed_values>
+                </setting>
+                <setting>
+                    <name>html.format</name>
+                    <label>HTML Format</label>
+                    <default_value>html5</default_value>
+                    <allowed_values>
+                        <value>html5</value>
+                        <value>xhtml</value>
+                    </allowed_values>
+                </setting>
+                <setting>
+                    <name>html.closed_tags</name>
+                    <label>Closed HTML tags</label>
+                    <default_values>
+                        <value>img</value>
+                        <value>link</value>
+                        <value>meta</value>
+                        <value>br</value>
+                        <value>hr</value>
+                        <value>area</value>
+                        <value>base</value>
+                        <value>col</value>
+                        <value>command</value>
+                        <value>embed</value>
+                        <value>input</value>
+                        <value>link</value>
+                        <value>meta</value>
+                        <value>param</value>
+                        <value>source</value>
+                    </default_values>
+                </setting>
+            </category>
+            <category name="MySQL Settings">
+                <setting>
+                    <name>mysql.default_engine</name>
+                    <label>Default storage engine</label>
+                    <default_value>InnoDB</default_value>
+                </setting>
+                <setting>
+                    <name>mysql.default_character_set</name>
+                    <label>Default character set</label>
+                    <default_value>utf8</default_value>
+                </setting>
+                <setting>
+                    <name>mysql.default_collation</name>
+                    <label>Default collation</label>
+                    <default_value>utf8_general_ci</default_value>
+                </setting>
+            </category>
+            <category name="Database connecton">
+                <setting>
+                    <name>datasource.driver</name>
+                    <label>Driver</label>
+                </setting>
+                <setting>
+                    <name>datasource.host</name>
+                    <label>Host</label>
+                </setting>
+                <setting>
+                    <name>datasource.port</name>
+                    <label>Port</label>
+                </setting>
+                <setting>
+                    <name>datasource.schema</name>
+                    <label>Schema</label>
+                </setting>
+                <setting>
+                    <name>datasource.username</name>
+                    <label>Username</label>
+                </setting>
+                <setting>
+                    <name>datasource.password</name>
+                    <label>Password</label>
+                </setting>
+                <setting>
+                    <name>datasource.writable</name>
+                    <label>Writable?</label>
+                </setting>
+            </category>
+            <category name="Applications">
+                <setting>
+                    <name>adapt.default_application_name</name>
+                    <label>Which application should be booted?</label>
+                </setting>
+                <setting>
+                    <name>adapt.default_application_version</name>
+                    <label>Which version of the application should be booted?</label>
+                </setting>
+            </category>
+            <category name="Repository settings">
+                <setting>
+                    <name>repository.username</name>
+                    <label>Repoistory Username</label>
+                </setting>
+                <setting>
+                    <name>repository.password</name>
+                    <label>Repoistory Password</label>
+                </setting>
+                <setting>
+                    <name>repository.automatic_updates</name>
+                    <label>Should the platform automatic update?</label>
+                    <default_value>Yes</default_value>
+                    <allowed_values>
+                        <value>Yes</value>
+                        <value>No</value>
+                    </allowed_values>
+                </setting>
+                <setting>
+                    <name>repository.check_for_updates</name>
+                    <label>How often in hours should the platform check for updates?</label>
+                    <default_value>24</default_value>
+                </setting>
+                <setting>
+                    <name>repository.automatic_upgrades</name>
+                    <label>Should the platform automatic upgrade?</label>
+                    <default_value>No</default_value>
+                    <allowed_values>
+                        <value>Yes</value>
+                        <value>No</value>
+                    </allowed_values>
+                </setting>
+                <setting>
+                    <name>repository.check_for_upgrades</name>
+                    <label>How often in hours should the platform check for upgrades?</label>
+                    <default_value>24</default_value>
+                </setting>
+            </category>
+            <category name="Caching">
+                <setting>
+                    <name>adapt.sql_cache_expires_after</name>
+                    <label>How long should we hold results for SQL statements? (In seconds)</label>
+                    <default_value>60</default_value>
+                </setting>
+                <setting>
+                    <name>adapt.view_cache_expires_after</name>
+                    <label>How long should we cache views for? (In seconds)</label>
+                    <default_value>600</default_value>
+                </setting>
+                <setting>
+                    <name>adapt.page_cache_expires_after</name>
+                    <label>How long should we cache pages? (In seconds)</label>
+                    <default_value>300</default_value>
+                </setting>
+                <setting>
+                    <name>adapt.disable_caching</name>
+                    <label>Disable all caching</label>
+                    <default_value>No</default_value>
+                    <allowed_values>
+                        <value>Yes</value>
+                        <value>No</value>
+                    </allowed_values>
+                </setting>
+            </category>
+            <category name="Web hosts">
+                <setting>
+                    <name>adapt.has_multiple_web_hosts</name>
+                    <label>The application has multiple web hosts</label>
+                    <default_value>No</default_value>
+                    <allowed_values>
+                        <value>Yes</value>
+                        <value>No</value>
+                    </allowed_values>
+                </setting>
+            </category>
+            <category name="Bundles">
+                <setting>
+                    <name>adapt.max_bundle_install_time</name>
+                    <label>How long can bundles take to install (minutes)?</label>
+                    <default_value>3</default_value>
+                </setting>
+            </category>
+        </settings>
+        <schema>
+            <add>
+                <table name="data_type">
+                    <field name="data_type_id" key="primary" auto-increment="Yes">
+                        <label>Data type #</label>
+                        <description>A unique ID for this data type</description>
+                        <data_type>bigint</data_type>
+                    </field>
+                    <field name="bundle_name">
+                        <label>Bundle name</label>
+                        <description>The bundle that created this data type</description>
+                        <data_type>varchar</data_type>
+                        <max_length>128</max_length>
+                        <nullable>No</nullable>
+                    </field>
+                    <field name="name" index="Yes" index-size="32">
+                        <label>Name</label>
+                        <description>The data type name</description>
+                        <data_type>varchar</data_type>
+                        <max_length>128</max_length>
+                        <nullable>No</nullable>
+                    </field>
+                    <field name="based_on_data_type">
+                        <label>Based on</label>
+                        <description>The name of the data type this one is based on</description>
+                        <data_type>text</data_type>
+                        <nullable>Yes</nullable>
+                    </field>
+                    <field name="validator">
+                        <label>Validator</label>
+                        <description>The name of the validator used to validate this data type</description>
+                        <data_type>varchar</data_type>
+                        <max_length>64</max_length>
+                    </field>
+                    <field name="formatter">
+                        <label>Formatter</label>
+                        <description>The name of the formatter used to formatter this data type</description>
+                        <data_type>varchar</data_type>
+                        <max_length>64</max_length>
+                    </field>
+                    <field name="unformatter">
+                        <label>Unformatter</label>
+                        <description>The name of the unformatter used to unformat this data type</description>
+                        <data_type>varchar</data_type>
+                        <max_length>64</max_length>
+                    </field>
+                    <field name="datetime_format">
+                        <label>Datetime format</label>
+                        <description>If this is a datatime field then this is the default display format</description>
+                        <data_type>varchar</data_type>
+                        <max_length>64</max_length>
+                    </field>
+                    <field name="max_length">
+                        <label>Max length</label>
+                        <description>The max length of this data type</description>
+                        <data_type>int</data_type>
+                    </field>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>tinyint</name>
+                        <validator>tinyint</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>smallint</name>
+                        <validator>smallint</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>meduimint</name>
+                        <validator>mediumint</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>int</name>
+                        <validator>int</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>integer</name>
+                        <validator>int</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>bigint</name>
+                        <validator>bigint</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>serial</name>
+                        <validator>serial</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>bit</name>
+                        <validator>bit</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>boolean</name>
+                        <validator>boolean</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>bool</name>
+                        <validator>boolean</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>float</name>
+                        <validator>float</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>double</name>
+                        <validator>double</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>decimal</name>
+                        <validator>decimal</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>char</name>
+                        <validator>char</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>binary</name>
+                        <validator>binary</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>varchar</name>
+                        <validator>varchar</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>varbinary</name>
+                        <validator>varbinary</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>tinyblob</name>
+                        <validator>tinyblob</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>blob</name>
+                        <validator>blob</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>mediumblob</name>
+                        <validator>mediumblob</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>longblob</name>
+                        <validator>longblob</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>tinytext</name>
+                        <validator>tinytext</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>text</name>
+                        <validator>text</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>mediumtext</name>
+                        <validator>mediumtext</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>longtext</name>
+                        <validator>longtext</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>enum</name>
+                        <validator></validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>set</name>
+                        <validator></validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>year</name>
+                        <validator>year</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format>Y</datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>date</name>
+                        <validator>date</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format>Y-m-d</datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>time</name>
+                        <validator>time</validator>
+                        <formatter>time</formatter>
+                        <unformatter>time</unformatter>
+                        <datetime_format>H:i:s</datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>datetime</name>
+                        <validator>datetime</validator>
+                        <formatter>datetime</formatter>
+                        <unformatter>datetime</unformatter>
+                        <datetime_format>Y-m-d H:i:s</datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>timestamp</name>
+                        <validator>datetime</validator>
+                        <formatter>datetime</formatter>
+                        <unformatter>datetime</unformatter>
+                        <datetime_format>Y-m-d H:i:s</datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type></based_on_data_type>
+                    </record>
+                    <record>
+                        <bundle_name>adapt</bundle_name>
+                        <name>guid</name>
+                        <validator>guid</validator>
+                        <formatter></formatter>
+                        <unformatter></unformatter>
+                        <datetime_format></datetime_format>
+                        <max_length></max_length>
+                        <based_on_data_type>varchar(256)</based_on_data_type>
+                    </record>
+                </table>
+                <table name="field">
+                    <field name="field_id" key="primary" auto-increment="Yes">
+                        <label>Field #</label>
+                        <data_type>bigint</data_type>
+                    </field>
+                    <field name="bundle_name">
+                        <label>Bundle name</label>
+                        <description>The bundle that created this field</description>
+                        <data_type>varchar</data_type>
+                        <max_length>128</max_length>
+                        <nullable>No</nullable>
+                    </field>
+                    <field name="table_name">
+                        <label>Table name</label>
+                        <description>The table to which this field belongs</description>
+                        <data_type>varchar</data_type>
+                        <max_length>64</max_length>
+                        <nullable>No</nullable>
+                    </field>
+                    <field name="field_name" index="Yes" index-size="32">
+                        <label>Field name</label>
+                        <description>The name of this field</description>
+                        <data_type>varchar</data_type>
+                        <max_length>64</max_length>
+                        <nullable>No</nullable>
+                    </field>
+                    <field name="referenced_table_name">
+                        <label>Referenced table name</label>
+                        <description>The name of the table being referenced</description>
+                        <data_type>varchar</data_type>
+                        <max_length>64</max_length>
+                    </field>
+                    <field name="referenced_field_name">
+                        <label>Referenced field name</label>
+                        <description>The name of the field being referenced</description>
+                        <data_type>varchar</data_type>
+                        <max_length>64</max_length>
+                    </field>
+                    <field name="label">
+                        <label>The label for this field</label>
+                        <description>A descriptive label to be displayed next to the field.</description>
+                        <data_type>varchar</data_type>
+                        <max_length>128</max_length>
+                    </field>
+                    <field name="placeholder_label">
+                        <label>A placeholder label for this field</label>
+                        <description>Appears in the background of the field while it is empty.</description>
+                        <data_type>varchar</data_type>
+                        <max_length>128</max_length>
+                    </field>
+                    <field name="description">
+                        <label>A description of the field</label>
+                        <description>A descriptive description of the field</description>
+                        <data_type>text</data_type>
+                    </field>
+                    <field name="data_type_id" key="foreign" referenced-table-name="data_type" referenced-field-name="data_type_id">
+                        <label>Data type</label>
+                        <description>The data type used to capture and store data for this field</description>
+                        <data_type>bigint</data_type>
+                        <max_length>128</max_length>
+                    </field>
+                    <field name="primary_key">
+                        <label>Primary key?</label>
+                        <description>Is this field a primary key?</description>
+                        <data_type>enum('Yes', 'No')</data_type>
+                        <default_value>No</default_value>
+                        <nullable>No</nullable>
+                    </field>
+                    <field name="unique_value">
+                        <label>Unique?</label>
+                        <description>Should this field be unique?</description>
+                        <data_type>enum('Yes', 'No')</data_type>
+                        <default_value>No</default_value>
+                        <nullable>No</nullable>
+                    </field>
+                    <field name="signed">
+                        <label>Signed?</label>
+                        <description>Should the numeric value be signed?</description>
+                        <data_type>enum('Yes', 'No')</data_type>
+                        <default_value>Yes</default_value>
+                        <nullable>No</nullable>
+                    </field>
+                    <field name="nullable">
+                        <label>Nullable?</label>
+                        <description>Can this field be null?</description>
+                        <data_type>enum('Yes', 'No')</data_type>
+                        <default_value>Yes</default_value>
+                        <nullable>No</nullable>
+                    </field>
+                    <field name="auto_increment">
+                        <label>Auto increment?</label>
+                        <description>Should this field auto-increment?</description>
+                        <data_type>enum('Yes', 'No')</data_type>
+                        <default_value>No</default_value>
+                        <nullable>No</nullable>
+                    </field>
+                    <field name="timestamp">
+                        <label>Timestamp?</label>
+                        <description>Is this field a timestamp?</description>
+                        <data_type>enum('Yes', 'No')</data_type>
+                        <default_value>No</default_value>
+                        <nullable>No</nullable>
+                    </field>
+                    <field name="max_length">
+                        <label>Max length?</label>
+                        <description>What is the maximum length of this field?</description>
+                        <data_type>int</data_type>
+                        <nullable>Yes</nullable>
+                    </field>
+                    <field name="default_value">
+                        <label>Default value</label>
+                        <description>The default value for this field.</description>
+                        <data_type>varchar</data_type>
+                        <max_length>128</max_length>
+                        <nullable>Yes</nullable>
+                    </field>
+                    <field name="allowed_values">
+                        <label>Allowed values</label>
+                        <description>A JSON encoded array containing values, or keys and values.</description>
+                        <data_type>text</data_type>
+                        <nullable>Yes</nullable>
+                    </field>
+                    <field name="lookup_table">
+                        <label>Lookup table</label>
+                        <description>Which table should be used for the values of this field?</description>
+                        <data_type>varchar</data_type>
+                        <max_length>64</max_length>
+                        <nullable>Yes</nullable>
+                    </field>
+                    <field name="depends_on_table_name">
+                        <label>Dependent table</label>
+                        <description>Which table is this field dependent on?</description>
+                        <data_type>varchar</data_type>
+                        <max_length>64</max_length>
+                        <nullable>Yes</nullable>
+                    </field>
+                    <field name="depends_on_field_name">
+                        <label>Dependent field</label>
+                        <description>Which field is this field dependent on?</description>
+                        <data_type>varchar</data_type>
+                        <max_length>64</max_length>
+                        <nullable>Yes</nullable>
+                    </field>
+                    <field name="depends_on_value">
+                      <label>Dependent value</label>
+                      <description>What value should the dependent field be?</description>
+                      <data_type>varchar</data_type>
+                      <max_length>64</max_length>
+                      <nullable>Yes</nullable>
+                    </field>
+                </table>
+                <table name="bundle">
+                    <field name="bundle_id" key="primary" auto-increment="Yes" label="Bundle #" data-type="bigint" nullable="Yes" />
+                    <field name="name" data-type="varchar" max-length="128" label="Bundle name" nullable="No" />
+                    <field name="type" data-type="varchar" max-length="64" label="Bundle type" nullable="No" />
+                </table>
+                <table name="bundle_version">
+                    <field name="bundle_version_id" key="primary" auto-increment="Yes" label="Bundle version #" data-type="bigint" nullable="Yes" />
+                    <field name="bundle_id" key="foreign" referenced-table-name="bundle" referenced-field-name="bundle_id" data-type="bigint" label="Bundle #" />
+                    <field name="status" data-type="enum('Available', 'Installing', 'Installed')" default-value="Available" nullable="No" />
+                    <field name="version" data-type="varchar" max-length="16" label="Bundle version" nullable="No" />
+                    <field name="installing_host" data-type="varchar" max-length="255" nullable="Yes" label="Installing host" />
+                    <field name="installing_pid" data-type="bigint" nullable="Yes" label="Installing PID" />
+                </table>
+            </add>
+        </schema>
+    </bundle>
 </adapt_framework>
