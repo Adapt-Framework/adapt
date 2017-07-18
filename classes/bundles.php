@@ -436,11 +436,25 @@ namespace adapt{
                             if ($application->boot()){
                                 /**
                                  * Update the platform as required
+                                 * This should occur before the application boots
                                  */
                                $should_update = $this->setting('repository.automatic_updates') ?: "Yes";
                                $update_time = $this->setting('repository.check_for_updates') ?: 24;
+                               $should_upgrade = $this->setting('repository.automatic_upgrades') ?: "No";
+                               $upgrade_time = $this->setting('repository.check_for_upgrades') ?: 24;
+                               $did_upgrade = false;
                                
-                               if ($should_update == 'Yes'){
+                               if ($should_upgrade == "Yes"){
+                                   $cache_key = "adapt/check_for_upgrades";
+                                   $can_upgrade = $this->cache->get($cache_key);
+                                   if ($can_upgrade != "1"){
+                                       $this->upgrade_application($application->name);
+                                       $this->cache->set($cache_key, "1", 60 * 60 * $upgrade_time);
+                                       $did_upgrade = true;
+                                   }
+                               }
+                               
+                               if (!$did_upgrade && $should_update == 'Yes'){
                                    $cache_key = "adapt/check_for_updates";
                                    $can_update = $this->cache->get($cache_key);
                                    if ($can_update != "1"){
@@ -471,7 +485,32 @@ namespace adapt{
         }
         
         public function upgrade_application($application_name, $version = null){
+            $bundle = $this->load_bundle($application_name);
+            if (!$bundle->is_loaded){
+                $this->error("Unknown application {$application_name}");
+                return false;
+            }
             
+            if ($bundle->type != "application"){
+                $this->error("'{$application_name}' is not an application");
+                return false;
+            }
+            
+            $new_version = $bundle->upgrade($version);
+            
+            if ($new_version === false){
+                $this->error("Unable to upgrade the application {$application_name}");
+                return false;
+            }
+            
+            if ($this->setting('adapt.default_application_name') == $application_name){
+                list($major, $minor, $revision) = explode(".", $new_version);
+                if ($this->setting('adapt.default_application_version') != "{$major}.{$minor}"){
+                    /* Update the global settings */
+                    $this->set_global_setting('adapt.default_application_version', $new_version);
+                    $this->save_global_settings();
+                }
+            }
         }
         
         public function update($bundle_name, $bundle_version){
@@ -491,12 +530,19 @@ namespace adapt{
         public function update_system(){
             if ($this->data_source && $this->data_source instanceof data_source_sql){
                 $sql = $this->data_source->sql;
-                $sql->select('bundle_name', 'version')
-                    ->from('bundle_version')
+                
+                $sql->select('b.name', 'bv.version')
+                    ->from('bundle', 'b')
+                    ->join('bundle_version', 'bv',
+                        new sql_and(
+                            new sql_cond('bv.bundle_id', sql::EQUALS, 'b.bundle_id'),
+                            new sql_cond('bv.date_deleted', sql::IS, sql::NULL),
+                            new sql_cond('bv.status', sql::EQUALS, q(model_bundle_version::STATUS_INSTALLED))
+                        )
+                    )
                     ->where(
                         new sql_and(
-                            new sql_cond('installed', sql::EQUALS, q('Yes')),
-                            new sql_cond('date_deleted', sql::IS, new sql_null())
+                            new sql_cond('b.date_deleted', sql::IS, sql::NULL)
                         )
                     );
 
@@ -792,73 +838,6 @@ namespace adapt{
          * Returns an array of dependencies.
          */
         public function get_dependency_list($bundle_name, $bundle_version){
-            return $this->get_dependency_listx($bundle_name, $bundle_version);
-            
-            $cache_key = "adapt/dependency.list.{$bundle_name}-{$bundle_version}";
-            
-            $list = $this->cache->get($cache_key);
-            
-            if (is_array($list)){
-                return $list;
-            }
-            
-            $list = [];
-            $required_bundles = $this->has_all_dependencies($bundle_name, $bundle_version);
-            
-            if (is_array($required_bundles)){
-                foreach($required_bundles as $required_bundle => $required_versions){
-                    $this->error("Unable to find {$required_bundle}");
-                }
-                return false;
-            }
-            
-            $bundle = $this->load_bundle($bundle_name, $bundle_version);
-            
-            if (!$bundle->is_loaded){
-                $this->error("Unable to load bundle {$bundle_name}-{$bundle_version}");
-                return false;
-            }
-            
-            $dependencies = $bundle->depends_on;
-            foreach($dependencies as $dependency_name => $dependency_version){
-                if (is_array($dependency_version)){
-                    $dependency_version = static::get_newest_version($dependency_version);
-                }
-                
-                if (!in_array($dependency_name, array_keys($list))){
-                    $list[$dependency_name] = $dependency_version;
-                }else{
-                    $list[$dependency_name] = static::get_newest_version($list[$dependency_name], $dependency_version);
-                }
-                
-                /* Recurse to get our childrens dependencies */
-                $child_dependencies = $this->get_dependency_list($dependency_name, $list[$dependency_name]);
-                foreach($child_dependencies as $child_dependency){
-                    if (is_array($child_dependency['version'])){
-                        $child_dependency['version'] = static::get_newest_version($child_dependency['version']);
-                    }
-                    if (!in_array($child_dependency['name'], array_keys($list))){
-                        $list[$child_dependency['name']] = $child_dependency['version'];
-                    }else{
-                        $list[$child_dependency['name']] = static::get_newest_version($list[$child_dependency['name']], $child_dependency['version']);
-                    }
-                }
-            }
-            
-            $final = [];
-            foreach($list as $name => $version){
-                $final[] = [
-                    'name' => $name,
-                    'version' => $version
-                ];
-            }
-            
-            $this->cache->serialize($cache_key, $final, rand(60 * 60 * 24 * 5, 60 * 60 * 24 * 10)); // Between 5 and 10 days
-            
-            return $final;
-        }
-        
-        public function get_dependency_listx($bundle_name, $bundle_version){
             $cache_key = "adapt/dependency.list.{$bundle_name}-{$bundle_version}";
             if (is_null($bundle_version) || $bundle_version == ""){
                 $cache_key = "adapt/dependency.list.{$bundle_name}";

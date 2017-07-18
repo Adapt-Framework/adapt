@@ -53,8 +53,7 @@ namespace adapt{
             parent::__construct();
             
             $this->_http = new http();
-            //$this->_url = $this->setting('repository.url');
-            $this->_url = self::REPOSITORY_URL;
+            $this->_url = $this->setting('repository.url') ?: self::REPOSITORY_URL;
             
             if (is_null($username)){
                 $username = $this->setting('repository.username');

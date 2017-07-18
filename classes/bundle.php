@@ -800,56 +800,24 @@ namespace adapt{
                 return false;
             }
             
-            // Get the latest version
+            /*/* Get the latest version */
             $latest_version = $this->bundles->repository->has($this->name, $version);
             if ($latest_version === false){
                 return false;
             }
             
-            // Check if we are the latest
+            /* Check if we are the latest */
             if (bundles::get_newest_version($version, $latest_version) == $this->version){
-                return false; // Already the latest revision
-            }
-            
-            // Add the bundle to the bundle version table
-            $model = new model_bundle_version();
-            $model->load_by_name_and_version($this->name, $latest_version);
-            $model->errors(true);
-            $model->bundle_name = $this->name;
-            $model->version = $latest_version;
-            $model->type = $this->type;
-            $model->local = 'No';
-            $model->installed = 'No';
-            
-            if (!$model->save()){
-                $this->error("Unable to save bundle version information");
-                $this->error($model->errors(true));
                 return false;
             }
             
-            // Download the revision
+            /* Download the revision */
             if ($this->bundles->repository->get($this->name, $latest_version) === false){
                 $this->error("Unable to download the latest revision");
                 return false;
             }
-            
-            // Mark as local
-            $model->local = 'Yes';
-            $model->save();
-            
-            //Invalidate the bundle object cache
-            
-            // Mark the current version as not installed
-            $model = new model_bundle_version();
-            if (!$model->load_by_name_and_version($this->name, $this->version)){
-                $this->error('Unable to uninstall the previous version');
-                return false;
-            }
-            
-            $model->installed = 'No';
-            $model->save();
-            
-            // Trigger the on update event
+
+            /* Trigger the on update event */
             $this->trigger(self::EVENT_ON_UPDATE, ['bundle_name' => $this->name, 'current_version' => $this->version, 'new_version' => $latest_version]);
             
             return $latest_version;

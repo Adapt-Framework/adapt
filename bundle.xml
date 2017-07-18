@@ -143,6 +143,26 @@
           <name>repository.password</name>
           <label>Repoistory Password</label>
         </setting>
+        <setting>
+            <name>repository.automatic_updates</name>
+            <label>Should the platform automatic update?</label>
+            <default_value>Yes</default_value>
+        </setting>
+        <setting>
+            <name>repository.check_for_updates</name>
+            <label>How often in hours should the platform check for updates?</label>
+            <default_value>24</default_value>
+        </setting>
+        <setting>
+            <name>repository.automatic_upgrades</name>
+            <label>Should the platform automatic upgrade?</label>
+            <default_value>No</default_value>
+        </setting>
+        <setting>
+            <name>repository.check_for_upgrades</name>
+            <label>How often in hours should the platform check for upgrades?</label>
+            <default_value>24</default_value>
+        </setting>
       </category>
       <category name="Caching">
         <setting>
