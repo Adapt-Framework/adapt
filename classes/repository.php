@@ -458,9 +458,9 @@ namespace adapt{
             if ($version != 'latest'){
                 $payload['repository_bundle_version'] = ['version' => $version];
             }
-            
-            $response = $this->_request("/bundles/versions", $payload);
-            
+            print_r($payload);
+            $response = $this->_request("/bundles/versions/read", $payload);
+            print_r($response);die();
             if ($response['content']['status'] == "success"){
                 return $response['content']['information']['results'];
             }

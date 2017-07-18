@@ -800,7 +800,9 @@ namespace adapt{
                 return false;
             }
             
-            /*/* Get the latest version */
+            /* Get the latest version */
+            $data = $this->bundles->repository->read_bundle_version($this->name, $version);
+            print_r($data);die();
             $latest_version = $this->bundles->repository->has($this->name, $version);
             if ($latest_version === false){
                 return false;

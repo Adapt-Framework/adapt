@@ -114,12 +114,6 @@ namespace adapt{
             
             return $output;
         }
-        
-        /** @ignore */
-        public function view_about(){
-            print 'foo';
-        }
     }
 }
 
-?>
