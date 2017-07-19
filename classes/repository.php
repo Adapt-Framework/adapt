@@ -120,7 +120,6 @@ namespace adapt{
             }
             
             $response = $this->http->post($this->url . $endpoint, $payload, ['content-type' => $content_type]);
-            
             if ($response && is_array($response)){
                 switch($response['status']){
                 case '200':
@@ -458,11 +457,11 @@ namespace adapt{
             if ($version != 'latest'){
                 $payload['repository_bundle_version'] = ['version' => $version];
             }
-            print_r($payload);
+            
             $response = $this->_request("/bundles/versions/read", $payload);
-            print_r($response);die();
+            
             if ($response['content']['status'] == "success"){
-                return $response['content']['information']['results'];
+                return $response['content']['information'][$response['content']['information']['object_type']];
             }
             
             return false;

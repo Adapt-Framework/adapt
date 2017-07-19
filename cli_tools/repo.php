@@ -4,7 +4,7 @@ error_reporting(E_ERROR | E_PARSE);
 
 define('TEMP_PATH', sys_get_temp_dir() . '/');
 define('ADAPT_PATH', "../../../");
-define('ADAPT_VERSION', "2.0.8");
+define('ADAPT_VERSION', "2.0.9");
 define('ADAPT_STARTED', true);
 require(ADAPT_PATH . 'adapt/adapt-' . ADAPT_VERSION . '/boot.php');
 
@@ -49,12 +49,12 @@ if (strpos($options, "r")){
     
     foreach($results as $result){
         $bundle = $adapt->bundles->load_bundle($result['name']);
-        if ($verbose) print "\033[0;37mUpdating \033[1;37m{$result['name']} \033[0;37mfrom \033[1;37mv{$bundle->version} \033[0;37m";
+        if ($verbose) print "\033[0;37mUpdating \033[1;37m{$result['name']} \033[0;37mfrom \033[1;37mv{$bundle->version}\033[0;37m";
         $version = $bundle->update($bundle->version);
         if ($version === false){
-            if ($verbose) print "\033[1;31mNo updates\033[0;37m\n";
+            if ($verbose) print " \033[1;31mNo updates\033[0;37m\n";
         }else{
-            if ($verbose) print "to \033[1;32m{$version}\033[0;37m\n";
+            if ($verbose) print " to \033[1;32m{$version}\033[0;37m\n";
         }
     }
 }
@@ -63,4 +63,36 @@ if (strpos($options, "u")){
     if ($verbose) print "Upgrading \033[1;37m\t{$application->name}\033[0;37m\n";
     
     $latest_version = $application->upgrade();
+    if ($latest_version === false){
+        if ($verbose) print "\033[1;31mNo upgrade available for this application\n\033[0;37m";
+    }else{
+        if ($verbose) print "\033[0;37mApplication was upgraded to \033[1;37mv{$latest_version}\033[0;37m\n";
+    }
+}
+
+if (strpos($options, "p")){
+    if (!$bundle_name){
+        print "\033[1;31mBundle name required\033[0;37m\n";
+        exit(1);
+    }
+    
+    if (!is_dir(ADAPT_PATH . $bundle_name)){
+        print "\033[1;31mUnknown bundle '{$bundle_name}'\033[0;37m\n";
+        exit(1);
+    }
+    
+    $dirs = scandir(ADAPT_PATH . $bundle_name);
+    $versions = [];
+    foreach($dirs as $dir){
+        if (substr($dir, 0, strlen($bundle_name)) == $bundle_name){
+            list($name, $version) = explode("-", $dir);
+            if (preg_match("/^[0-9]+\.[0-9]+\.[0-9]+$/", $version)){
+                $versions[] = $version;
+            }
+        }
+    }
+    
+    $latest_version = \adapt\bundles::get_newest_version($versions);
+    
+    print "LV: {$latest_version}\n";
 }
