@@ -94,5 +94,31 @@ if (strpos($options, "p")){
     
     $latest_version = \adapt\bundles::get_newest_version($versions);
     
-    print "LV: {$latest_version}\n";
+    /* Get the bundle.xml */
+    $xml = file_get_contents(ADAPT_PATH . "/{$bundle_name}/{$bundle_name}-{$latest_version}/bundle.xml");
+    $xml = \adapt\xml::parse($xml);
+    
+    if (!$xml instanceof \adapt\xml){
+        print "\033[1;31mUnable to read the bundle.xml for {$bundle_name}-{$latest_version}\033[0;37m\n";
+        exit(1);
+    }
+    
+    /* Bundle the bundle */
+    $bundler = new \adapt\bundler();
+    
+    if (!$bundler->bundle(ADAPT_PATH . "/{$bundle_name}/{$bundle_name}-{$latest_version}", TEMP_PATH . "{$bundle_name}-{$latest_version}.bundle")){
+        print "\033[1;31mUnable to create the bundle file for {$bundle_name}-{$latest_version}\033[0;37m\n";
+        exit(1);
+    }
+    
+    /* Publish the bundle */
+    $response = $adapt->bundles->repository->create_bundle(TEMP_PATH . "{$bundle_name}-{$latest_version}.bundle");
+    
+    if (!$response){
+        $errors = $adapt->bundles->repository->errors(true);
+        foreach($errors as $error){
+            print "\033[1;31m{$error}\033[0;37m\n";
+        }
+        exit(1);
+    }
 }

@@ -109,17 +109,17 @@ namespace adapt{
         }
         
         protected function _request($endpoint, $payload, $content_type = "application/json"){
-            if (!is_null($this->session_token)){
-                $payload['token'] = $this->session_token;
-            }
-            
             if ($content_type == "application/json" && is_array($payload)){
+                if (!is_null($this->session_token)){
+                    $payload['token'] = $this->session_token;
+                }
                 $payload = json_encode($payload);
             }elseif ($content_type != "application/json"){
                 $endpoint .= "?token=" . $this->session_token;
             }
             
             $response = $this->http->post($this->url . $endpoint, $payload, ['content-type' => $content_type]);
+            
             if ($response && is_array($response)){
                 switch($response['status']){
                 case '200':
@@ -129,6 +129,9 @@ namespace adapt{
                                 $response['content'] = json_decode($response['content'], true);
                                 if ($response['content']['status'] == "failed"){
                                     $this->error($response['content']['error']['message']);
+                                    if (isset($response['content']['error']['errors'])){
+                                        $this->error($response['content']['error']['errors']);
+                                    }
                                     /* We are not returning so the the calling method can process the error */
                                 }
                             }else{
@@ -413,7 +416,7 @@ namespace adapt{
             $response = $this->_request("/bundles/create", file_get_contents($bundle_file_location), "application/x-bundle");
             
             if ($response['content']['status'] == "success"){
-                return $response['content']['information']['results'];
+                return $response['content']['information'];
             }
             
             return false;
