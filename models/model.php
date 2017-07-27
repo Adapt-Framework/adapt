@@ -1584,7 +1584,6 @@ namespace adapt{
                 
                 /* Do we have a record? */
                 if (isset($data[$this->table_name]) && is_array($data[$this->table_name])){
-                    
                     /* How many records do we have? */
                     $record_count = 0;
                     $record_processed = null;
@@ -1693,7 +1692,7 @@ namespace adapt{
                                             /* Only push if the keys match */
                                             $keys_required = count($keys);
                                             foreach($keys as $key){
-                                                if ($this->$key == $record[$table_name][$key]) $keys_required--;
+                                                if ($child->$key == $record[$table_name][$key]) $keys_required--;
                                             }
                                             
                                             if ($keys_required == 0){
