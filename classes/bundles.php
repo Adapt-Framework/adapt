@@ -806,7 +806,7 @@ namespace adapt{
                             );
                         }
                         
-                        $this->cache->serialize($cache_key, $list, rand(60 * 60 * 24 * 5, 60 * 60 * 24 * 10)); // Between 5 and 10 days
+                        $this->cache->serialize($cache_key, $list, (60 * 60 * 24 * 365)); // 365 days
                         
                     }else{
                         $this->error("Unable to load bundle {$bundle_name}-{$bundle_version}");
