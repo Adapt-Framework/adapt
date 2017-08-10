@@ -72,7 +72,7 @@ namespace adapt{
                         return $result;
                     }
                     
-                    $this->error("Unable to retrieve result set");
+                    $this->error("Unable to retrieve result set for: {$sql}");
                     return false;
                 }else{
                     $error = mysqli_error($host['handle']);
