@@ -269,6 +269,27 @@ namespace adapt{
         }
         
         /**
+         * Cache control
+         * (Temp)
+         */
+        public function _cache_cache_control(){
+            $results = $this
+                ->data_source
+                ->sql
+                ->select('*')
+                ->from('page_cache_control')
+                ->where(
+                    new sql_and(
+                        new sql_cond('date_deleted', sql::IS, sql::NULL)
+                    )
+                )
+                ->execute(0)
+                ->results();
+            
+            $this->cache->serialize("page_cache_control", $results, 60 * 60 * 24);
+        }
+            
+        /**
          * Boots an application.
          *
          * When $application_name is missing Adapt will seek the value
@@ -289,8 +310,16 @@ namespace adapt{
             /* Load global settings */
             $this->load_global_settings();
             
+//            $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//            $GLOBALS['time'] = microtime();
+//            print "Time to load global settings: {$time_to_here}\n";
+            
             /* Apply global settings */
             $this->apply_global_settings();
+            
+//            $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//            $GLOBALS['time'] = microtime();
+//            print "Time to apply global settings: {$time_to_here}\n";
             
             if (is_null($application_name)){
                 /* Do we have an application listed in settings? */
@@ -330,6 +359,11 @@ namespace adapt{
                     $this->error("Unable to find a valid application to boot.");
                     return false;
                 }else{
+                    
+//                    $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                    $GLOBALS['time'] = microtime();
+//                    print "Time find an application to boot ($application_name): {$time_to_here}\n";
+                    
                     /* Connect any data sources we have */
                     $drivers = $this->get_global_setting('datasource.driver');
                     $hosts = $this->get_global_setting('datasource.host');
@@ -371,8 +405,16 @@ namespace adapt{
                         // $this->error('Unable to connect to the database, the data source settings in settings.xml are not valid.');
                     }
                     
+//                    $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                    $GLOBALS['time'] = microtime();
+//                    print "Time to connect to the data source: {$time_to_here}\n";
+                    
                     /* Load the application */
                     $application = $this->load_bundle($application_name, $application_version);
+                    
+//                    $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                    $GLOBALS['time'] = microtime();
+//                    print "Time to load the application: {$time_to_here}\n";
                     
                     if ($application instanceof bundle && $application->is_loaded){
                         //Maybe impletement boot statergies here, if (we have one){...}
@@ -400,11 +442,21 @@ namespace adapt{
                         
                         if ($dependencies_resolved){
                             $this->cache->set($cache_key, 1, 60 * 60 * 24 * 365);
+                            
+//                            $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                            $GLOBALS['time'] = microtime();
+//                            print "Time to resolve dependencies: {$time_to_here}\n";
+                            
                             /* Set the running application for the auto loader */
                             $this->setting("adapt.running_application", $application->namespace);
                             
                             /* Boot the application */
                             if ($application->boot()){
+                                
+//                                $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                                $GLOBALS['time'] = microtime();
+//                                print "Time to boot the application: {$time_to_here}\n";
+                                
                                 /**
                                  * Update the platform as required
                                  */
@@ -419,8 +471,12 @@ namespace adapt{
                                        $this->cache->set($cache_key, "1", 60 * 60 * $update_time);
                                    }
                                }
-                                
-                                return true;
+                               
+//                               $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                               $GLOBALS['time'] = microtime();
+//                               print "Time to check for updates: {$time_to_here}\n";
+                               
+                               return true;
                             }else{
                                 $errors = $application->errors(true);
                                 foreach($errors as $error) $this->error($error);
@@ -720,7 +776,7 @@ namespace adapt{
             
             
             if (count($required_dependencies) == 0){
-                $this->cache->set($cache_key, "1", 900);
+                $this->cache->set($cache_key, "1", 60 * 60 * 24 * 365);
                 return true;
             }
             
@@ -806,7 +862,7 @@ namespace adapt{
                             );
                         }
                         
-                        $this->cache->serialize($cache_key, $list, rand(60 * 60 * 24 * 5, 60 * 60 * 24 * 10)); // Between 5 and 10 days
+                        $this->cache->serialize($cache_key, $list, 60 * 60 * 24 * 365);
                         
                     }else{
                         $this->error("Unable to load bundle {$bundle_name}-{$bundle_version}");
@@ -854,51 +910,113 @@ namespace adapt{
          * Returns a bundle.
          */
         public function load_bundle($bundle_name, $bundle_version = null){
+//            $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//            $GLOBALS['time'] = microtime();
+//            print "Start {$bundle_name} boot: {$time_to_here}\n";
+            
             if (!is_array($this->_bundle_cache)){
                 $data = $this->cache->get("adapt/bundle_objects");
+                
+//                $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                $GLOBALS['time'] = microtime();
+//                print "Time to load bundle cache: {$time_to_here}\n";
                 
                 if (is_array($data)){
                     $this->_bundle_class_paths = $data['paths'];
                     if (is_array($this->_bundle_class_paths)){
                         foreach($this->_bundle_class_paths as $path){
+                            //print "Requiring {$path}...\n";
                             require_once($path);
                         }
                     }
                     
+//                    $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                    $GLOBALS['time'] = microtime();
+//                    print "Time to require paths: {$time_to_here}\n";
+                    
                     $this->_bundle_cache = unserialize($data['objects']);
+                    
+//                    $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                    $GLOBALS['time'] = microtime();
+//                    print "Time to de-serialize: {$time_to_here}\n";
                 }
             }
             
             if (is_array($this->_bundle_cache)){
                 
-                foreach($this->_bundle_cache as $bundle => $versions){
-                    if ($bundle_name == $bundle){
+                if (isset($this->_bundle_cache[$bundle_name])){
+                    //print "Found {$bundle_name}...\n";
+                    
+                    $versions = $this->_bundle_cache[$bundle_name];
+                    $version_keys = array_keys($versions);
+                    
+                    if (is_null($bundle_version)){
+                        $version = self::get_newest_version($version_keys);
+                        $bundle = $versions[$version];
+                        $this->register_namespace($bundle->namespace, $bundle_name, $version);
                         
-                        $version_keys = array_keys($versions);
-                        if (is_null($bundle_version)){
-                            $version = self::get_newest_version($version_keys);
-                            $bundle = $versions[$version];
-                            $this->register_namespace($bundle->namespace, $bundle_name, $version);
-                            return $bundle;
-                        }else{
-                            $matched_versions = array();
-                            foreach($version_keys as $version){
-                                if (self::matches_version($bundle_version, $version)){
-                                    $matched_versions[] = $version;
-                                }
-                            }
-                            
-                            $version = self::get_newest_version($matched_versions);
-                            if ($version){
-                                $bundle = $versions[$version];
-                                $this->register_namespace($bundle->namespace, $bundle_name, $version);
-                                return $bundle;
+                        return $bundle;
+                    }else{
+                        $matched_versions = array();
+                        foreach($version_keys as $version){
+                            if (self::matches_version($bundle_version, $version)){
+                                $matched_versions[] = $version;
                             }
                         }
-                        
-                        break;
+
+                        $version = self::get_newest_version($matched_versions);
+                        if ($version){
+                            $bundle = $versions[$version];
+                            $this->register_namespace($bundle->namespace, $bundle_name, $version);
+
+//                            $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                            $GLOBALS['time'] = microtime();
+//                            print "Time to load {$bundle_name} from cache (with version): {$time_to_here}\n";
+
+                            return $bundle;
+                        }
                     }
                 }
+                
+//                foreach($this->_bundle_cache as $bundle => $versions){
+//                    print "Seeking {$bundle}...\n";
+//                    if ($bundle_name == $bundle){
+//                        
+//                        $version_keys = array_keys($versions);
+//                        if (is_null($bundle_version)){
+//                            $version = self::get_newest_version($version_keys);
+//                            $bundle = $versions[$version];
+//                            $this->register_namespace($bundle->namespace, $bundle_name, $version);
+//                            
+//                            $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                            $GLOBALS['time'] = microtime();
+//                            print "Time to load ({$bundle_name}) from cache (without version): {$time_to_here}\n";
+//                            
+//                            return $bundle;
+//                        }else{
+//                            $matched_versions = array();
+//                            foreach($version_keys as $version){
+//                                if (self::matches_version($bundle_version, $version)){
+//                                    $matched_versions[] = $version;
+//                                }
+//                            }
+//                            
+//                            $version = self::get_newest_version($matched_versions);
+//                            if ($version){
+//                                $bundle = $versions[$version];
+//                                $this->register_namespace($bundle->namespace, $bundle_name, $version);
+//                                
+//                                $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                                $GLOBALS['time'] = microtime();
+//                                print "Time to load {$bundle_name} from cache (with version): {$time_to_here}\n";
+//                                
+//                                return $bundle;
+//                            }
+//                        }
+//                        
+//                        break;
+//                    }
+//                }
                 
             }else{
                 $this->_bundle_cache = array();
@@ -980,13 +1098,12 @@ namespace adapt{
         public function save_bundle_cache(){
             if ($this->_bundle_cache_changed){
                 $this->_bundle_cache_changed = false;
-                //$this->cache->serialize("adapt/namespaces", $this->store('adapt.namespaces'), 60 * 60 * 24 * 5);
-                $this->cache->serialize("adapt/bundle_objects", array('paths' => $this->_bundle_class_paths, 'objects' => serialize($this->_bundle_cache)), 60 * 60 * 24 * 5);
+                $this->cache->serialize("adapt/bundle_objects", array('paths' => $this->_bundle_class_paths, 'objects' => serialize($this->_bundle_cache)), 60 * 60 * 24 * 365);
             }
             
             if ($this->_data_source_bundle_cache_changed){
                 $this->_data_source_bundle_cache_changed = false;
-                $this->cache->serialize("adapt/data_source/bundle.cache", $this->_data_source_bundle_cache, 60 * 60 * 24 * 3);
+                $this->cache->serialize("adapt/data_source/bundle.cache", $this->_data_source_bundle_cache, 60 * 60 * 24 * 365);
             }
         }
         

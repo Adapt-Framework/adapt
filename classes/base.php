@@ -680,7 +680,12 @@ namespace adapt{
          * Returns the current document object model.
          */
         public function pget_dom(){
-            return $this->store('adapt.root_view');
+            $view = $this->store('adapt.root_view');
+            if (is_null($view)){
+                $view = new page();
+                $this->store('adapt.root_view', $view);
+            }
+            return $view;
         }
         
         /**

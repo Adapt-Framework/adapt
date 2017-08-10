@@ -87,6 +87,7 @@ namespace adapt{
             if (strtolower($this->setting('adapt.disable_caching')) != 'yes'){
                 $key = $this->_get_key($key);
                 $data = $this->file_store->get($key);
+                
                 if (!is_null($data)){
                     $expires = $this->file_store->get_meta_data($key, 'expires');
                     if (!is_null($expires)){
@@ -102,6 +103,7 @@ namespace adapt{
                     }
                 }
             }
+            
             return null;
         }
         
@@ -172,6 +174,15 @@ namespace adapt{
         }
         
         /**
+         * Deletes an entire cache path
+         * 
+         */
+        public function delete_page_path($page_cache_key){
+            $key = $this->_get_key("host/" . $_SERVER['HTTP_HOST'] . "/pages/" . $page_cache_key);
+            $this->file_store->delete_path($key);
+        }
+        
+        /**
          * Caches a SQL result
          *
          * @access public
@@ -229,12 +240,12 @@ namespace adapt{
          * When missing the value held against the setting 'adapt.page_cache_expires_after'
          * is used.
          */
-        public function page($key, $html, $expires = null){
+        public function page($key, $data, $expires = null, $content_type = "text/html"){
             if (is_null($expires)){
                 $expires = $this->setting('adapt.page_cache_expires_after');
             }
             
-            $this->set($key, $html, $expires, 'text/html');
+            $this->set($key, $data, $expires, $content_type);
         }
         
         /**

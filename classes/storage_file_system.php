@@ -267,6 +267,25 @@ namespace adapt{
             return false;
         }
         
+        public function delete_path($path){
+            if (is_dir($this->_store_path . $path)){
+                if (substr($path, strlen($path) - 1, 1) != "/"){
+                    $path .= "/";
+                }
+                $files = glob($this->_store_path . $path . "*", GLOB_MARK);
+                foreach($files as $file){
+                    if (is_dir($file)){
+                        /* strip the store path and recurse */
+                        $file = substr($file, strlen($this->_store_path));
+                        $this->delete_path($file);
+                    }else{
+                        unlink($file);
+                    }
+                }
+                rmdir($this->_store_path . $path);
+            }
+        }
+        
         public function get_size($key){
             if ($this->is_key_valid($key)){
                 $path = $this->_store_path . $key;

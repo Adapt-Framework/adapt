@@ -753,6 +753,13 @@
             <nullable>No</nullable>
           </field>
         </table>
+        <table name="page_cache_control">
+            <field name="page_cache_control_id" label="#" data-type="bigint" key="Primary" auto-increment="Yes" />
+            <field name="url_pattern" label="URL Pattern" data-type="varchar" max-length="2048" />
+            <field name="segments" label="Segments" data-type="varchar" max-length="2048" />
+            <field name="cache_key" label="Cache key" description="When provided this key is used for the cache control" data-type="varchar" max-length="128" />
+            <field name="cache_time" label="Cache time (seconds)" data-type="int" />
+        </table>
       </add>
     </schema>
   </bundle>

@@ -54,6 +54,22 @@ function array_remove($array, $index){
     return $array;
 }
 
+function array_to_key($array){
+    $output = "";
+    
+    if (is_array($array)){
+        foreach($array as $key => $value){
+            $output .= "{$key}=";
+            if (is_array($value)){
+                $output .= array_to_key($value) . ";";
+            }else{
+                $output .= "{$value};";
+            }
+        }
+    }
+    
+    return $output;
+}
 
 
 /*

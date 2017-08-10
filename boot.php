@@ -25,7 +25,8 @@
  * THE SOFTWARE.
  *  
  */
-
+//global $time;
+//$time = microtime();
 /*
  * Prevent direct access
  */
@@ -104,35 +105,145 @@ $adapt->file_store = new \adapt\storage_file_system();
 $adapt->cache = new \adapt\cache();
 
 /* Set the dom */
-$adapt->dom = new \adapt\page();
+//$adapt->dom = new \adapt\page();
 
-/*
- * Is the current page cached?
- */
-if (!isset($adapt->request['actions'])){
-    if ($_SERVER && is_array($_SERVER) && isset($_SERVER['REQUEST_URI'])){
-        $key = $_SERVER['REQUEST_URI'];
-        $page = $adapt->cache->get($key);
-        if ($page){
-            $content_type = $adapt->cache->get_content_type($key);
+/* Check if our inbound request is JSON and parse it */
+$content_type = 'text/html';
+if (isset($_SERVER['CONTENT_TYPE'])){
+    list($content_type, $charset) = explode(";", $_SERVER['CONTENT_TYPE']);
+}
+if ($content_type == "application/json"){
+    $json = @file_get_contents('php://input');
+
+    if (is_json($json)){
+        $request = $adapt->request;
+        $json = json_decode($json, true);
+
+        $request = array_merge($request, $json);
+        $adapt->store('adapt.request', $request);
+    }
+}
+
+/* Handle page caching and segmentation */
+$cache_control = $adapt->cache->get("page_cache_control");
+$cache_key = null;
+$cache_time = $adapt->setting('adapt.page_cache_expires_after')?: 300;
+if ($cache_control && is_array($cache_control) && 1==2){
+    $found = false;
+    $cache_key = "host/" . $_SERVER['HTTP_HOST'] .  "/pages/";// . sha1($adapt->request['url'] . "?");
+    
+    foreach($cache_control as $profile){
+        if (preg_match("@{$profile['url_pattern']}@", "/" . $adapt->request['url'])){
+            $found = true;
             
-            if ($content_type){
-                header("content-type: {$content_type}");
-                print $page;
-                exit(0);
+            if (!is_null($profile['cache_key'])){
+                $cache_key .= $profile['cache_key'];
             }
+            
+            if ($profile['cache_time'] > 0){
+                $cache_time = $profile['cache_time'];
+                $segments = explode(";", $profile['segments']);
+                if (count($segments)){
+                    $segment_key = "";
+                    foreach($segments as $segment){
+                        if ($segment == "all"){
+                            $segment_key = array_to_key($adapt->request);
+
+                            foreach($_COOKIE as $key => $value){
+                                $segment_key .= "{$key}={$value};";
+                            }
+                        }else{
+                            $segment_key .= "{$segment}={$adapt->request[$segment]};";
+                        }
+                    }
+                    $cache_key .= "/segments/" . sha1($segment_key);
+                }
+            }
+            
+            break;
+        }
+    }
+    
+    if (!$found){
+        $cache_key .= sha1($adapt->request['url'] . "?");
+        $segment_key = array_to_key($adapt->request);
+
+        foreach($_COOKIE as $key => $value){
+            $segment_key .= "{$key}={$value};";
+        }
+        
+        $cache_key .= "/segments/" . sha1($segment_key);
+    }
+}
+//print $cache_key;die();
+/* Can we load from the cache? */
+if (!is_null($cache_key)){
+    $page = $adapt->cache->get($cache_key);
+    
+    if (!is_null($page)){
+        $content_type = $adapt->cache->get_content_type($cache_key);
+        if ($content_type){
+            header("content-type: {$content_type}");
+            print $page;
+            exit(0);
         }
     }
 }
 
+
+/* Load the settings */
+//$adapt->bundles->load_global_settings();
+//$non_cachable_urls = $adapt->bundles->get_global_setting('adapt.non_cachable_urls');
+//$url = "/" . $adapt->request['url'];
+//$cachable = true;
+//
+//foreach($non_cachable_urls as $non_cachable_url){
+//    if ($non_cachable_url == $url){
+//        $cachable = false;
+//        break;
+//    }
+//}
+
+//print_r($adapt->request);die();
+//print_r($non_cachable_urls);die();
+
+/*
+ * Is the current page cached?
+ */
+//$cachable = false;
+//if ($cachable){
+//    $request_key = array_to_key($adapt->request);
+//
+//    foreach($_COOKIE as $key => $value){
+//        $request_key .= "{$key}={$value};";
+//    }
+//
+//    $request_key = "pages/" . sha1($request_key);
+//
+//    $page = $adapt->cache->get($request_key);
+//    if (!is_null($page)){
+//        $content_type = $adapt->cache->get_content_type($request_key);
+//        if ($content_type){
+//            header("content-type: {$content_type}");
+//            print $page;
+//            exit(0);
+//        }
+//    }
+//}
+
 /*
  * Boot the system
  */
-
+//$time_to_here = microtime() - $time;
+//$time = microtime();
+//print "Time to boot framework: {$time_to_here}\n";
 if ($adapt->bundles->boot_application()){
     
     $adapt->bundles->save_bundle_cache();
     $adapt->bundles->save_global_settings();
+    
+    // Temp code
+    $adapt->bundles->_cache_cache_control();
     
     //if (isset($_SERVER['SHELL'])){
     if (!isset($_SERVER['HTTP_HOST'])){
@@ -188,26 +299,29 @@ if ($adapt->bundles->boot_application()){
                 header("content-type: {$content_type}");
                 
                 if ($output){
+                    
+                    /* Cache the result */
+                    if (strtolower($adapt->setting('adapt.disable_caching')) != "yes"){
+                        $adapt->cache->page($cache_key, $output, $cache_time, $content_type);
+                    }
+                    
                     /* Send only the current output to the browser (Likely AJAX) */
                     print $output;
                 }else{
                     /* Send out the whole page */
-                    if ($adapt->dom instanceof \adapt\page && $adapt->dom->cache_time > 0){
-                        if (!isset($this->request['actions'])){
-                            /* We can cache the page */
-                            
-                            /*
-                             * @todo: Review how this should work.
-                             * In testing we get weird cache paths
-                             * because we are using REQUEST_URI as
-                             * the key but this isn't a valid cache
-                             * path.
-                             */
-                            //$key = $_SERVER['REQUEST_URI'];
-                            //$adapt->cache->page($key, $output, $adapt->dom->cache_time, $content_type);
+                    if ($adapt->dom){
+                        $output = $adapt->dom;
+                        if ($output instanceof \adapt\page){
+                            $output = $output->render();
                         }
+                        
+                        /* Cache the result */
+                        if (strtolower($adapt->setting('adapt.disable_caching')) != "yes"){
+                            $adapt->cache->page($request_key, $output, $adapt->setting('adapt.page_cache_expires_after')?: 300, $content_type);
+                        }
+                        
+                        print $output;
                     }
-                    print $adapt->dom;
                 }
                 
             }else{

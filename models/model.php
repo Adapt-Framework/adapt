@@ -362,6 +362,7 @@ namespace adapt{
                 if (is_object($data) && $data instanceof base && !$this->has($data)){
                     $this->_children[] = $data;
                     $this->trigger(self::EVENT_ON_ADD, array('added_item' => $data));
+                    $this->_has_changed = true;
                     return true;
                 }else{
                     $this->error('Unable to add item, item must be an instance of \\adapt\\base');
@@ -417,12 +418,15 @@ namespace adapt{
                 for($i = 0; $i < count($this->_children); $i++){
                     if ($this->_children[$i] === $index_or_child){
                         $this->_children = array_remove($this->_children, $i);
+                        $this->_has_changed = true;
                     }
                 }
             }elseif(is_int($index_or_child) && $index_or_child >= 0 && $index_or_child < count($this->_children)){
                 $this->_children = array_remove($this->_children, $index_or_child);
+                $this->_has_changed = true;
             }elseif(is_null($index_or_child)){
                 $this->_children = array();
+                $this->_has_changed = true;
             }
         }
         
@@ -1182,6 +1186,11 @@ namespace adapt{
                             /* Execute the statement */
                             $sql->execute();
                             
+                            /* Clear the hash cache */
+                            $id_field = $this->table_name . "_id";
+                            $cache_key = "model/hash/{$this->table_name}/{$this->$id_field}";
+                            $this->cache->delete($cache_key);
+                            
                             /* Did the sql statement succeed? */
                             $errors = $sql->errors(true);
                             
@@ -1285,6 +1294,21 @@ namespace adapt{
          * A hash array containing the models data.
          */
         public function to_hash(){
+            $cache_key = null;
+            if ($this->is_loaded){
+                $id_field = $this->table_name . "_id";
+                $date_modified = $this->date_modified;
+                if ($date_modified && is_string($date_modified)){
+                    $date = new date($date_modified);
+                    $cache_key = "model/hash/{$this->table_name}/{$this->$id_field}/{$date->date('YmdHis')}";
+                    $hash = $this->cache->get($cache_key);
+
+                    if ($hash && is_array($hash)){
+                        //return $hash;
+                    }
+                }
+            }
+            
             $output = array();
             $hash = array();
             
@@ -1370,6 +1394,11 @@ namespace adapt{
                     //    }
                     //}
                 }
+            }
+            
+            /* Cache the result */
+            if (!is_null($cache_key)){
+                $this->cache->serialize($cache_key, $output, 60 * 60 * 2);
             }
             
             return $output;

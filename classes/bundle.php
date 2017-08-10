@@ -969,7 +969,16 @@ namespace adapt{
                 $this->apply_settings();
                 
                 if ($this->type == 'application'){
+                    
+//                    $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                    $GLOBALS['time'] = microtime();
+//                    print "Time to start application boot: {$time_to_here}\n";
+                    
                     $dependency_list = $this->bundles->get_dependency_list($this->name, $this->version);
+                    
+//                    $time_to_here = round(microtime() - $GLOBALS['time'], 5);
+//                    $GLOBALS['time'] = microtime();
+//                    print "Time to resolve application dependencies: {$time_to_here}\n";
                     
                     if (is_array($dependency_list)){
                         $dependency_list = array_reverse($dependency_list);
@@ -983,6 +992,11 @@ namespace adapt{
                                     $this->error($bundle->errors(true));
                                     return false;
                                 }
+                                
+                                //$time_to_here = round(microtime() - $GLOBALS['time'], 5);
+                                //$GLOBALS['time'] = microtime();
+                                //print "Time to boot {$bundle->name}: {$time_to_here}\n";
+                                
                             }else{
                                 $this->error("Unable to boot '{$bundle_data['name']}', the boot process failed.");
                                 $this->error($this->bundles->errors(true));
@@ -1381,7 +1395,7 @@ namespace adapt{
                                         /* Write the table */
                                         $sql->execute();
                                         
-                                        if (in_array($table_name, array('data_type', 'field', 'bundle_version'))){
+                                        if (in_array($table_name, array('data_type', 'field', 'bundle_version', 'page_cache_control'))){
                                             
                                             if (!is_array($this->_schema['add']['records'])){
                                                 $this->_schema['add']['records'] = array();
