@@ -1861,7 +1861,7 @@ namespace adapt{
                             new sql_and(
                                new sql_cond('bundle_name', sql::EQUALS, q($this->name)),
                                new sql_cond('version', sql::NOT_EQUALS, q($this->version)),
-                               new sql_cond('date_deleted', sql::IS, new sql_now())
+                               new sql_cond('date_deleted', sql::IS, new sql_null())
                             )
                         )->execute();
                         
