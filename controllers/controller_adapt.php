@@ -117,6 +117,7 @@ namespace adapt{
         
         /** @ignore */
         public function view_about(){
+	    return;
             print 'foo';
         }
     }
