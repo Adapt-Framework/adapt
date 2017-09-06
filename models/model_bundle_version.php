@@ -50,7 +50,7 @@ namespace adapt{
                     ->from('bundle_version')
                     ->where(
                         new sql_and(
-                            new sql_cond('name', sql::EQUALS, sql::q($bundle_name)),
+                            new sql_cond('bundle_name', sql::EQUALS, sql::q($bundle_name)),
                             new sql_cond('version', sql::EQUALS, sql::q($bundle_version)),
                             new sql_cond('date_deleted', sql::IS, new sql_null())
                         )
