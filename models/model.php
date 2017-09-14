@@ -135,9 +135,10 @@ namespace adapt{
         /** @ignore */
         protected $_changed_fields;
 
-        /** @ignore */
+
+	    /** @ignore */
         protected $_suppress_fields = [];
-        
+
         /**
          * Constructor
          *
@@ -184,11 +185,12 @@ namespace adapt{
             $this->_auto_load_only_tables = array();
             $this->_is_loaded = false;
             $this->_has_changed = false;
-            $this->_suppress_fields = $this->suppress_fields_list;
+
+	    $this->_suppress_fields = $this->suppress_fields_list;
             if ($this->_suppress_fields === null) {
                 $this->_suppress_fields = [];
             }
-            
+
             if (isset($this->_table_name) && is_array($this->schema)){
                 
                 foreach($this->schema as $field){
@@ -1309,11 +1311,19 @@ namespace adapt{
                         $hash[$key] = null;
                     }
                 }elseif(is_null($value)){
+<<<<<<< HEAD
                     if (!in_array($key, $this->_suppress_fields)) {
                         $hash[$key] = null;
                     }
                 }else{
                     if (!in_array($key, $this->_suppress_fields)) {
+=======
+		     if (!in_array($key, $this->_suppress_fields)) {
+                        $hash[$key] = null;
+                    }
+                }else{
+	     	    if (!in_array($key, $this->_suppress_fields)) {
+>>>>>>> 5ddae998822c1e96e1cb93b7f95f3249b4fd73db
                         $hash[$key] = $this->data_source->format($this->table_name, $key, $value);
                     }
                 }
@@ -1532,14 +1542,22 @@ namespace adapt{
                         $hash[$key] = null;
                     }
                 }elseif(is_null($value)){
+<<<<<<< HEAD
                     if (!in_array($key, $this->_suppress_fields)) {
+=======
+		    if (!in_array($key, $this->_suppress_fields)) {
+>>>>>>> 5ddae998822c1e96e1cb93b7f95f3249b4fd73db
                         $hash[$key] = null;
                     }
                 }else{
                     if (!in_array($key, $this->_suppress_fields)) {
                         $hash[$key] = $this->data_source->format($this->table_name, $key, $value);
                     }
+<<<<<<< HEAD
                 }
+=======
+		}
+>>>>>>> 5ddae998822c1e96e1cb93b7f95f3249b4fd73db
             }
             
             $class = new \ReflectionClass(get_class($this));
