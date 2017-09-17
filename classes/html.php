@@ -109,12 +109,12 @@ namespace adapt{
         /**
          * Add a HTML class to the element.
          *
-         * @access publc
+         * @access public
          * @param string
          * The class to add.
          */
         public function add_class($class){
-            if (is_array($class)) foreach ($class as $c) return $this->add_class($c);
+            if (is_array($class)) foreach ($class as $c) $this->add_class($c);
             $class = mb_trim($class);
             $classes = $this->attribute('class');
             $classes = explode(" ", $classes);
@@ -131,7 +131,7 @@ namespace adapt{
          * The class to remove from the element.
          */
         public function remove_class($class){
-            if (is_array($class)) foreach ($class as $c) return $this->remove_class($c);
+            if (is_array($class)) foreach ($class as $c) $this->remove_class($c);
             $classes = $this->attribute('class');
             $classes = explode(" ", $classes);
             $temp = array();
@@ -146,6 +146,7 @@ namespace adapt{
          * @access public
          * @param string
          * The class to check.
+         * @return boolean
          */
         public function has_class($class){
             $classes = $this->attribute('class');
@@ -272,7 +273,7 @@ namespace adapt{
         
         /**
          * Converts HTML5 single tags such as <input> to <input></input> so
-         * it is compatable with XML and can be parsed by xml::parse.
+         * it is compatible with XML and can be parsed by xml::parse.
          *
          * @access public
          * @param xml
@@ -280,8 +281,6 @@ namespace adapt{
          * @return html
          */
         public static function fix_parsed_tags($item){
-            $closed_tags = $GLOBALS['adapt']->setting('html.closed_tags');
-            
             if ($item instanceof xml){
                 /* We need to convert this tag to html */
                 
@@ -323,4 +322,3 @@ namespace adapt{
 
 }
 
-?>
