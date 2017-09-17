@@ -802,14 +802,15 @@ namespace adapt{
             
             /* Get the latest version */
             $data = $this->bundles->repository->read_bundle_version($this->name, $version);
-            print_r($data);die();
-            $latest_version = $this->bundles->repository->has($this->name, $version);
-            if ($latest_version === false){
+            if ($data == false){
+                /* Clear the error state */
+                $this->bundles->repository->error(true);
                 return false;
             }
+            $latest_version = $data['version'];
             
             /* Check if we are the latest */
-            if (bundles::get_newest_version($version, $latest_version) == $this->version){
+            if (bundles::get_newest_version($this->version, $latest_version) == $this->version){
                 return false;
             }
             

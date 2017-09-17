@@ -109,11 +109,10 @@ namespace adapt{
         }
         
         protected function _request($endpoint, $payload, $content_type = "application/json"){
-            if (!is_null($this->session_token)){
-                $payload['token'] = $this->session_token;
-            }
-            
             if ($content_type == "application/json" && is_array($payload)){
+                if (!is_null($this->session_token)){
+                    $payload['token'] = $this->session_token;
+                }
                 $payload = json_encode($payload);
             }elseif ($content_type != "application/json"){
                 $endpoint .= "?token=" . $this->session_token;
@@ -130,6 +129,9 @@ namespace adapt{
                                 $response['content'] = json_decode($response['content'], true);
                                 if ($response['content']['status'] == "failed"){
                                     $this->error($response['content']['error']['message']);
+                                    if (isset($response['content']['error']['errors'])){
+                                        $this->error($response['content']['error']['errors']);
+                                    }
                                     /* We are not returning so the the calling method can process the error */
                                 }
                             }else{
@@ -414,7 +416,7 @@ namespace adapt{
             $response = $this->_request("/bundles/create", file_get_contents($bundle_file_location), "application/x-bundle");
             
             if ($response['content']['status'] == "success"){
-                return $response['content']['information']['results'];
+                return $response['content']['information'];
             }
             
             return false;
@@ -458,11 +460,11 @@ namespace adapt{
             if ($version != 'latest'){
                 $payload['repository_bundle_version'] = ['version' => $version];
             }
-            print_r($payload);
+            
             $response = $this->_request("/bundles/versions/read", $payload);
-            print_r($response);die();
+            
             if ($response['content']['status'] == "success"){
-                return $response['content']['information']['results'];
+                return $response['content']['information'][$response['content']['information']['object_type']];
             }
             
             return false;
