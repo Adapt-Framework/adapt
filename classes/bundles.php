@@ -302,9 +302,9 @@ namespace adapt{
                     $application_version = $version;
                 }else{
                     /* Lets find the first application on the system */
-                    $bundles = self::list_bundles();
+                    $bundles = static::list_bundles();
                     foreach($bundles as $bundle){
-                        $versions = self::list_bundle_versions($bundle);
+                        $versions = static::list_bundle_versions($bundle);
                         $path = ADAPT_PATH . "{$bundle}/{$bundle}-{$versions[0]}/bundle.xml";
                         
                         if (file_exists($path)){
@@ -379,6 +379,35 @@ namespace adapt{
                         $cache_key = "dependencies-resolved-{$application->name}-{$application->version}";
                         $dependencies_resolved = $this->cache->get($cache_key);
                         
+                        /* If we are a multi-host system we need to check our installation is upto date with the
+                         * rest of the cluster
+                         */
+                        if ($this->setting('adapt.has_multiple_web_hosts') == "Yes"){
+                            /* Get a list of local bundles */
+                            $available_bundles = self::list_all_bundle_versions();
+                            
+                            /* Get a list of installed bundles */
+                            $installed_bundles = self::list_installed_bundles();
+                            
+                            foreach($installed_bundles as $name => $versions){
+                                if (in_array($name, array_keys($available_bundles))){
+                                    foreach($versions as $version){
+                                        if (!in_array($version, $available_bundles[$name])){
+                                            if (!$this->fetch_bundle($name, $version)){
+                                                return false;
+                                            }
+                                        }
+                                    }
+                                }else{
+                                    foreach($versions as $version){
+                                        if (!$this->fetch_bundle($name, $version)){
+                                            return false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
                         if (!$dependencies_resolved){
                             $dependencies_resolved = $this->has_all_dependencies($application->name, $application->version);
                             $in_error = false;
@@ -407,11 +436,25 @@ namespace adapt{
                             if ($application->boot()){
                                 /**
                                  * Update the platform as required
+                                 * This should occur before the application boots
                                  */
                                $should_update = $this->setting('repository.automatic_updates') ?: "Yes";
                                $update_time = $this->setting('repository.check_for_updates') ?: 24;
+                               $should_upgrade = $this->setting('repository.automatic_upgrades') ?: "No";
+                               $upgrade_time = $this->setting('repository.check_for_upgrades') ?: 24;
+                               $did_upgrade = false;
                                
-                               if ($should_update == 'Yes'){
+                               if ($should_upgrade == "Yes"){
+                                   $cache_key = "adapt/check_for_upgrades";
+                                   $can_upgrade = $this->cache->get($cache_key);
+                                   if ($can_upgrade != "1"){
+                                       $this->upgrade_application($application->name);
+                                       $this->cache->set($cache_key, "1", 60 * 60 * $upgrade_time);
+                                       $did_upgrade = true;
+                                   }
+                               }
+                               
+                               if (!$did_upgrade && $should_update == 'Yes'){
                                    $cache_key = "adapt/check_for_updates";
                                    $can_update = $this->cache->get($cache_key);
                                    if ($can_update != "1"){
@@ -442,7 +485,32 @@ namespace adapt{
         }
         
         public function upgrade_application($application_name, $version = null){
+            $bundle = $this->load_bundle($application_name);
+            if (!$bundle->is_loaded){
+                $this->error("Unknown application {$application_name}");
+                return false;
+            }
             
+            if ($bundle->type != "application"){
+                $this->error("'{$application_name}' is not an application");
+                return false;
+            }
+            
+            $new_version = $bundle->upgrade($version);
+            
+            if ($new_version === false){
+                $this->error("Unable to upgrade the application {$application_name}");
+                return false;
+            }
+            
+            if ($this->setting('adapt.default_application_name') == $application_name){
+                list($major, $minor, $revision) = explode(".", $new_version);
+                if ($this->setting('adapt.default_application_version') != "{$major}.{$minor}"){
+                    /* Update the global settings */
+                    $this->set_global_setting('adapt.default_application_version', $new_version);
+                    $this->save_global_settings();
+                }
+            }
         }
         
         public function update($bundle_name, $bundle_version){
@@ -462,12 +530,19 @@ namespace adapt{
         public function update_system(){
             if ($this->data_source && $this->data_source instanceof data_source_sql){
                 $sql = $this->data_source->sql;
-                $sql->select('bundle_name', 'version')
-                    ->from('bundle_version')
+                
+                $sql->select('b.name', 'bv.version')
+                    ->from('bundle', 'b')
+                    ->join('bundle_version', 'bv',
+                        new sql_and(
+                            new sql_cond('bv.bundle_id', sql::EQUALS, 'b.bundle_id'),
+                            new sql_cond('bv.date_deleted', sql::IS, sql::NULL),
+                            new sql_cond('bv.status', sql::EQUALS, q(model_bundle_version::STATUS_INSTALLED))
+                        )
+                    )
                     ->where(
                         new sql_and(
-                            new sql_cond('installed', sql::EQUALS, q('Yes')),
-                            new sql_cond('date_deleted', sql::IS, new sql_null())
+                            new sql_cond('b.date_deleted', sql::IS, sql::NULL)
                         )
                     );
 
@@ -491,7 +566,7 @@ namespace adapt{
          * @return boolean
          */
         public function fetch_bundle($bundle_name, $bundle_version = null){
-            $key = $this->repository->download_bundle_version($bundle_name, $version);
+            $key = $this->repository->download_bundle_version($bundle_name, $bundle_version);
             
             if ($key === false){
                 $this->error("Unable to fetch bundle");
@@ -523,6 +598,45 @@ namespace adapt{
         }
         
         /**
+         * Marks a bundle as installing
+         */
+        public function set_bundle_installing($bundle_name, $bundle_version){
+            $bundle = new model_bundle();
+            if (!$bundle->load_by_name($bundle_name)){
+                $bundle->errors(true);
+            }
+            
+            if (!$bundle->is_loaded){
+                $bundle->name = $bundle_name;
+                $bundle->type = "unavailable";
+                if (!$bundle->save()){
+                    $this->error("Unable to create bundle record for {$bundle_name} v{$bundle_version}");
+                    return false;
+                }
+                
+            }
+            
+            $version = $bundle->get_version($bundle_version);
+            
+            if (!$version instanceof model_bundle_version){
+                $version = new model_bundle_version();
+                $version->bundle_id = $bundle->bundle_id;
+                $version->status = "Installing";
+                $version->version = $bundle_version;
+                $version->installing_host = gethostname();
+                $version->installing_pid = getmypid();
+                $version->save();
+            }elseif($version->status == model_bundle_version::STATUS_INSTALLING){
+                if ($version->installing_host != gethostname() || $version->installing_pid != getmypid()){
+                    $this->error("This bundle is already being installed");
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        /**
          * Marks a bundle as installed
          *
          * @access public
@@ -532,55 +646,66 @@ namespace adapt{
          * The version of the bundle.
          * @return boolean
          */
-        public function set_bundle_installed($bundle_name, $bundle_version){
-            if ($this->data_source && $this->data_source instanceof data_source_sql){
-                
-                if (!is_array($this->_data_source_bundle_cache)){
-                    $cache = $this->cache->get("adapt/data_source/bundle.cache");
-                    
-                    if (is_array($cache)) $this->_data_source_bundle_cache = $cache;
-                }
-                
-                if (!is_array($this->_data_source_bundle_cache)){
-                    $this->_data_source_bundle_cache = array();
-                    
-                    $results = $this
-                        ->data_source
-                        ->sql
-                        ->select('*')
-                        ->from('bundle_version')
-                        ->where(
-                            new sql_and(
-                                new sql_cond('date_deleted', sql::IS, new sql_null()),
-                                new sql_cond('installed', sql::EQUALS, sql::q('Yes'))
-                            )
-                        )
-                        ->execute(0)
-                        ->results();
-                    
-                    $this->_data_source_bundle_cache = $results;
-                    
-                    $this->_data_source_bundle_cache_changed = true;
-                }
-                
-                if (is_array($this->_data_source_bundle_cache)){
-                    foreach($this->_data_source_bundle_cache as $bundle){
-                        if ($bundle['name'] == $bundle_name && $bundle['version'] == $bundle_version){
-                            return true;
-                        }
-                    }
-                    
-                    $this->_data_source_bundle_cache[] = array('name' => $bundle_name, 'version' => $bundle_version);
-                    $this->_data_source_bundle_cache_changed = true;
-                    $this->_bundle_cache_changed = true; //Because the the bundle->_is_installed has changed
-                    
-                    return true;
-                }
-                
-                
+        public function set_bundle_installed($bundle_name, $bundle_version, $bundle_type){
+            $bundle = new model_bundle();
+            if (!$bundle->load_by_name($bundle_name)){
+                $this->error("Unknown bundle {$bundle_name}");
+                return false;
             }
             
-            return false;
+            $version = $bundle->get_version($bundle_version);
+            
+            if (!$version instanceof model_bundle_version || !$version->is_loaded){
+                $this->error("Unknown version {$bundle_version}");
+                return false;
+            }
+            
+            if ($version->status == model_bundle_version::STATUS_INSTALLING){
+                if ($version->installing_host == gethostname() && $version->installing_pid == getmypid()){
+                    $version->status = model_bundle_version::STATUS_INSTALLED;
+                    $bundle->type = $bundle_type;
+                    $bundle->save();
+                    return $version->save();
+                }
+            }
+            
+            return true;
+        }
+        
+        /**
+         * Is a bundle installing?
+         * 
+         * @access public
+         * @param string $bundle_name
+         * The name of the bundle
+         * @param string $bundle_version
+         * The version of the bundle
+         * @return boolean
+         */
+        public function is_bundle_installing($bundle_name, $bundle_version){
+            $bundle = new model_bundle();
+            
+            if (!$bundle->load_by_name($bundle_name)){
+                return false;
+            }
+            
+            $version = $bundle->get_version($bundle_version);
+            if (!$version instanceof model_bundle_version || !$version->is_loaded){
+                return false;
+            }
+            
+            if ($version->status != model_bundle_version::STATUS_INSTALLING){
+                return false;
+            }
+            
+            /* Check that the installation is still active */
+            if (!$version->is_actively_installing){
+                $version->installing_host = new sql_null();
+                $version->installing_pid = new sql_null();
+                $version->save();
+            }
+            
+            return true;
         }
         
         /**
@@ -594,48 +719,22 @@ namespace adapt{
          * @return boolean
          */
         public function is_bundle_installed($bundle_name, $bundle_version){
-            if ($this->data_source && $this->data_source instanceof data_source_sql){
-                
-                if (!is_array($this->_data_source_bundle_cache)){
-                    $cache = $this->cache->get("adapt/data_source/bundle.cache");
-                    
-                    if (is_array($cache)) $this->_data_source_bundle_cache = $cache;
-                }
-                
-                if (!is_array($this->_data_source_bundle_cache)){
-                    $this->_data_source_bundle_cache = array();
-                    
-                    $results = $this
-                        ->data_source
-                        ->sql
-                        ->select('*')
-                        ->from('bundle_version')
-                        ->where(
-                            new sql_and(
-                                new sql_cond('date_deleted', sql::IS, new sql_null()),
-                                new sql_cond('installed', sql::EQUALS, sql::q('Yes'))
-                            )
-                        )
-                        ->execute(0)
-                        ->results();
-                    
-                    
-                    $this->_data_source_bundle_cache = $results;
-                    
-                    $this->_data_source_bundle_cache_changed = true;
-                }
-                
-                if (is_array($this->_data_source_bundle_cache)){
-                    foreach($this->_data_source_bundle_cache as $bundle){
-                        if ($bundle['bundle_name'] == $bundle_name && $bundle['version'] == $bundle_version){
-                            return true;
-                        }
-                    }
-                    
-                }
+            $bundle = new model_bundle();
+            
+            if (!$bundle->load_by_name($bundle_name)){
                 return false;
             }
-            return false;
+            
+            $version = $bundle->get_version($bundle_version);
+            if (!$version instanceof model_bundle_version || !$version->is_loaded){
+                return false;
+            }
+            
+            if ($version->status != model_bundle_version::STATUS_INSTALLED){
+                return false;
+            }
+            
+            return true;
         }
         
         /**
@@ -755,9 +854,10 @@ namespace adapt{
                         
                         $dependencies = $bundle->depends_on;
                         if (is_array($dependencies)){
-                            foreach($dependencies as $name => $versions){
-
-                                $version = self::get_newest_version($versions);
+                            foreach($dependencies as $name => $version){
+                                if (is_array($version)){
+                                    $version = static::get_newest_version($version);
+                                }
 
                                 $list[] = array(
                                     'name' => $name,
@@ -765,22 +865,8 @@ namespace adapt{
                                 );
 
                                 $output = $this->get_dependency_list($name, $version);
-                                foreach($output as $item){
-                                    $found = false;
-                                    foreach($list as $list_item){
-
-                                        if (isset($list_item['name']) && $list['name'] == $list_item['name']){
-                                            $found = true;
-                                            break;
-                                        }
-                                    }
-
-                                    if (!$found){
-                                        $list[] = array(
-                                            'name' => $item['name'],
-                                            'version' => $item['version']
-                                        );
-                                    }
+                                if (is_array($output)){
+                                    $list = array_merge($list, $output);
                                 }
                             }
                         }
@@ -798,11 +884,19 @@ namespace adapt{
                         
                         $final = array_reverse($final);
                         $list = array();
+                        //$list = $final;
                         
                         foreach($final as $bname => $versions){
+                            if (is_array($versions)){
+                                if (count($versions) > 1){
+                                    $versions = static::get_newest_version($versions);
+                                }else{
+                                    $versions = $versions[0];
+                                }
+                            }
                             $list[] = array(
                                 'name' => $bname,
-                                'version' => self::get_newest_version($versions)
+                                'version' => $versions
                             );
                         }
                         
@@ -887,7 +981,6 @@ namespace adapt{
                                     $matched_versions[] = $version;
                                 }
                             }
-                            
                             $version = self::get_newest_version($matched_versions);
                             if ($version){
                                 $bundle = $versions[$version];
@@ -918,7 +1011,6 @@ namespace adapt{
                         $matched_versions[] = $version;
                     }
                 }
-                
                 $selected_version = self::get_newest_version($matched_versions);
             }
             
@@ -999,13 +1091,22 @@ namespace adapt{
          * Returns the bundle names of the local bundles.
          */
         public static function list_bundles(){
-            $output = array();
+            $adapt = $GLOBALS['adapt'];
+            $output = $adapt->store('adapt.bundles.list_bundles');
+            
+            if (is_array($output)){
+                return $output;
+            }
+            
+            $output = [];
             
             $bundles = scandir(ADAPT_PATH);
             
             foreach($bundles as $bundle){
                 if (substr($bundle, 0, 1) != "." && $bundle != "store" && $bundle != "settings.xml") $output[] = $bundle;
             }
+            
+            $adapt->store('adapt.bundles.list_bundles', $output);
             
             return $output;
         }
@@ -1019,7 +1120,12 @@ namespace adapt{
          * @return string[]
          */
         public static function list_bundle_versions($bundle_name){
-            $output = array();
+            $adapt = $GLOBALS['adapt'];
+            $output = $adapt->store('adapt.bundles.list_bundle_versions.' . $bundle_name);
+            
+            if (is_array($output)){
+                return $output;
+            }
             
             $bundles = scandir(ADAPT_PATH . $bundle_name . "/");
             
@@ -1027,6 +1133,69 @@ namespace adapt{
                 if (substr($bundle, 0, 1) != "."){
                     list($bundle, $version) = explode("-", $bundle);
                     $output[] = $version;
+                }
+            }
+            
+            $adapt->store('adapt.bundles.list_bundle_versions.' . $bundle_name, $output);
+            
+            return $output;
+        }
+        
+        /**
+         * Lists all bundles and there versions
+         * 
+         * Lists all the bundles available and the versions
+         * that are available.
+         * 
+         * @access public
+         * @return string[]
+         */
+        public static function list_all_bundle_versions(){
+            $output = [];
+            $bundles = self::list_bundles();
+            foreach($bundles as $bundle){
+                $output[$bundle] = self::list_bundle_versions($bundle);
+            }
+            
+            return $output;
+        }
+        
+        /**
+         * Returns a list of all installed bundles
+         * 
+         * @access public
+         * @return string[]
+         */
+        public static function list_installed_bundles(){
+            $output = [];
+            $adapt = $GLOBALS['adapt'];
+            
+            if ($adapt->data_source instanceof \adapt\data_source_sql){
+                $sql = $adapt->data_source->sql;
+                
+                $sql->select('b.name', 'bv.version')
+                    ->from('bundle', 'b')
+                    ->join('bundle_version', 'bv',
+                        new sql_and(
+                            new sql_cond('b.bundle_id', sql::EQUALS, 'bv.bundle_id'),
+                            new sql_cond('bv.status', sql::EQUALS, q(model_bundle_version::STATUS_INSTALLED)),
+                            new sql_cond('bv.date_deleted', sql::IS, sql::NULL)
+                        )
+                    )
+                    ->where(
+                        new sql_and(
+                            new sql_cond('b.date_deleted', sql::IS, sql::NULL)
+                        )
+                    ); 
+                
+                $results = $sql->execute(0)->results();
+                
+                foreach($results as $result){
+                    if (!isset($output[$result['name']])){
+                        $output[$result['name']] = [$result['version']];
+                    }else{
+                        $output[$result['name']][] = $result['version'];
+                    }
                 }
             }
             

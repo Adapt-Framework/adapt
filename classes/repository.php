@@ -53,8 +53,7 @@ namespace adapt{
             parent::__construct();
             
             $this->_http = new http();
-            //$this->_url = $this->setting('repository.url');
-            $this->_url = self::REPOSITORY_URL;
+            $this->_url = $this->setting('repository.url') ?: self::REPOSITORY_URL;
             
             if (is_null($username)){
                 $username = $this->setting('repository.username');
@@ -110,11 +109,10 @@ namespace adapt{
         }
         
         protected function _request($endpoint, $payload, $content_type = "application/json"){
-            if (!is_null($this->session_token)){
-                $payload['token'] = $this->session_token;
-            }
-            
             if ($content_type == "application/json" && is_array($payload)){
+                if (!is_null($this->session_token)){
+                    $payload['token'] = $this->session_token;
+                }
                 $payload = json_encode($payload);
             }elseif ($content_type != "application/json"){
                 $endpoint .= "?token=" . $this->session_token;
@@ -131,6 +129,9 @@ namespace adapt{
                                 $response['content'] = json_decode($response['content'], true);
                                 if ($response['content']['status'] == "failed"){
                                     $this->error($response['content']['error']['message']);
+                                    if (isset($response['content']['error']['errors'])){
+                                        $this->error($response['content']['error']['errors']);
+                                    }
                                     /* We are not returning so the the calling method can process the error */
                                 }
                             }else{
@@ -415,7 +416,7 @@ namespace adapt{
             $response = $this->_request("/bundles/create", file_get_contents($bundle_file_location), "application/x-bundle");
             
             if ($response['content']['status'] == "success"){
-                return $response['content']['information']['results'];
+                return $response['content']['information'];
             }
             
             return false;
@@ -460,10 +461,10 @@ namespace adapt{
                 $payload['repository_bundle_version'] = ['version' => $version];
             }
             
-            $response = $this->_request("/bundles/versions", $payload);
+            $response = $this->_request("/bundles/versions/read", $payload);
             
             if ($response['content']['status'] == "success"){
-                return $response['content']['information']['results'];
+                return $response['content']['information'][$response['content']['information']['object_type']];
             }
             
             return false;
@@ -483,6 +484,7 @@ namespace adapt{
             }
             
             $response = $this->_request("/bundles/versions/download", $payload);
+            
             if ($response['status'] == '200'){
                 $key = "repository/bundles/" . $bundle_name_or_guid;
                 $this->file_store->set($key, $response['content'], "application/x-bundle");

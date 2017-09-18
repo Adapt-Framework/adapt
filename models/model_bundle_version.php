@@ -35,41 +35,122 @@ namespace adapt{
     class model_bundle_version extends model{
         
         const EVENT_ON_LOAD_BY_NAME_AND_VERSION = 'model_bundle_version.load_by_name_and_version';
+        const EVENT_ON_LOAD_LATEST_BY_BUNDLE_NAME = 'model_bundle_version.load_by_latest_bundle_name';
+        
+        const STATUS_AVAILABLE = "Available";
+        const STATUS_INSTALLING = "Installing";
+        const STATUS_INSTALLED = "Installed";
         
         public function __construct($id = null, $data_source = null){
             parent::__construct("bundle_version", $id, $data_source);
         }
         
+        public function pget_is_actively_installing(){
+            $modified = $this->date_modified;
+            $max_install_time = intval($this->setting('adapt.max_bundle_install_time')) ?: 3;
+            
+            if (!$modified){
+                return false;
+            }
+            $date = new date($date_modified);
+            $date->goto_minutes($max_install_time);
+            return $date->is_future(true);
+        }
+        
+        public function load_latest_by_bundle_name($bundle_name){
+            $this->initialise();
+            
+            if (!$bundle_name){
+                $this->error("Bundle name required");
+                return false;
+            }
+            
+            $bundle = new model_bundle();
+            if (!$bundle->load_by_name($bundle_name)){
+                $this->error($bundle->errors(true));
+                return false;
+            }
+            
+            $sql = $this->data_source->sql;
+            
+            $sql->select('bv.version')
+                ->from('bundle_version', 'bv')
+                ->join('bundle', 'b',
+                    new sql_and(
+                        new sql_cond('b.bundle_id', sql::EQUALS, 'bv.bundle_id'),
+                        new sql_cond('b.date_deleted', sql::IS, sql::NULL)
+                    )
+                )
+                ->where(
+                    new sql_and(
+                        new sql_cond('bv.bundle_id', sql::EQUALS, $bundle->bundle_id),
+                        new sql_cond('bv.date_deleted', sql::IS, sql::NULL)
+                    )
+                );
+            
+            $results = $sql->execute(0)->results();
+            
+            if (count($results) == 0){
+                $this->error("Unable to load record");
+                return false;
+            }
+            
+            $versions = [];
+            foreach($results as $result){
+                $versions[] = $result['version'];
+            }
+            
+            $this->trigger(self::EVENT_ON_LOAD_BY_NAME_AND_VERSION);
+            return $this->load_by_name_and_version($bundle_name, bundles::get_newest_version($versions));
+            
+        }
+        
         public function load_by_name_and_version($bundle_name, $bundle_version){
             $this->initialise();
             
-            if ($bundle_name && $bundle_version){
-                $sql = $this->data_source->sql;
-                
-                $sql->select('*')
-                    ->from('bundle_version')
-                    ->where(
-                        new sql_and(
-                            new sql_cond('bundle_name', sql::EQUALS, sql::q($bundle_name)),
-                            new sql_cond('version', sql::EQUALS, sql::q($bundle_version)),
-                            new sql_cond('date_deleted', sql::IS, new sql_null())
-                        )
-                    );
-
-                $results = $sql->execute(0)->results();
-                
-                if (count($results) == 1){
-                    $this->trigger(self::EVENT_ON_LOAD_BY_NAME_AND_VERSION);
-                    return $this->load_by_data($results[0]);
-                }elseif(count($results) == 0){
-                    $this->error("Unable to find a record");
-                }elseif(count($results) > 1){
-                    $this->error(count($results) . " records found, expecting 1.");
-                }
+            if (!$bundle_name){
+                $this->error("Bundle name required");
+                return false;
             }
             
-            $this->initialise();
-            return false;
+            if (!$bundle_version){
+                $this->error("Bundle version required");
+                return false;
+            }
+            
+            $bundle = new model_bundle();
+            if (!$bundle->load_by_name($bundle_name)){
+                $this->error($bundle->errors(true));
+                return false;
+            }
+            
+            $sql = $this->data_source->sql;
+            
+            $sql->select('bv.*')
+                ->from('bundle_version', 'bv')
+                ->join('bundle', 'b',
+                    new sql_and(
+                        new sql_cond('b.bundle_id', sql::EQUALS, 'bv.bundle_id'),
+                        new sql_cond('b.date_deleted', sql::IS, sql::NULL)
+                    )
+                )
+                ->where(
+                    new sql_and(
+                        new sql_cond('bv.bundle_id', sql::EQUALS, $bundle->bundle_id),
+                        new sql_cond('bv.version', sql::EQUALS, q($bundle_version)),
+                        new sql_cond('bv.date_deleted', sql::IS, sql::NULL)
+                    )
+                );
+            
+            $results = $sql->execute(0)->results();
+            
+            if (count($results) != 1){
+                $this->error("Unable to load record");
+                return false;
+            }
+            
+            $this->trigger(self::EVENT_ON_LOAD_BY_NAME_AND_VERSION);
+            return $this->load_by_data($results[0]);
         }
         
         

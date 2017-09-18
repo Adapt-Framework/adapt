@@ -61,14 +61,14 @@ namespace adapt{
                 return false;
             }
             
-            if (!$output){
+            if (!$output_path){
                 $this->error("Output path is required");
                 return false;
             }
             
             $manifest = array();
-            $this->process_directory($argv[1], "/", $manifest);
-
+            $this->process_directory($bundle_path, "/", $manifest);
+            
             $encoded = json_encode($manifest);
 
             $ofp = fopen($output_path, "w");
@@ -85,6 +85,8 @@ namespace adapt{
             }
 
             fclose($ofp);
+            
+            return true;
         }
         
         /** @ignore */
