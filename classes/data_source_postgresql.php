@@ -5,7 +5,7 @@
  *
  * The MIT License (MIT)
  *   
- * Copyright (c) 2016 Matt Bruton
+ * Copyright (c) 2017 Matt Bruton
  * Authored by Matt Bruton (matt.bruton@gmail.com)
  *   
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,7 +28,7 @@
  *
  * @package     adapt
  * @author      Matt Bruton <matt.bruton@gmail.com>
- * @copyright   2016 Matt Bruton <matt.bruton@gmail.com>
+ * @copyright   2017 Matt Bruton <matt.bruton@gmail.com>
  * @license     https://opensource.org/licenses/MIT     MIT License
  * @link        http://www.adpatframework.com
  */
@@ -39,9 +39,9 @@ namespace adapt{
     defined('ADAPT_STARTED') or die;
     
     /**
-     * MySQL / MariaDB Data source driver
+     * PostgreSQL Data source driver
      */
-    class data_source_mysql extends data_source_sql implements interfaces\data_source_sql{
+    class data_source_postgresql extends data_source_sql implements interfaces\data_source_sql{
         
         /**
          * Execute a SQL read or write statement.
@@ -58,25 +58,20 @@ namespace adapt{
             $host = $this->get_host($write);
             
             if (!is_null($host) && isset($host['handle'])){
-                if (mysqli_real_query($host['handle'], $sql)){
+                if ($result = pg_query($host['handle'], $sql)){
                     $this->trigger(self::EVENT_QUERY, array('sql' => $sql, 'host' => $host));
                     if ($write){
-                        if (mysqli_more_results($host['handle'])){
-                            mysqli_next_result($host['handle']);
-                        }
                         return true;
-                    }elseif ($result = mysqli_store_result($host['handle'])){
-                        if (mysqli_more_results($host['handle'])){
-                            mysqli_next_result($host['handle']);
-                        }
+                    }elseif ($result/* = pg_result($host['handle'])*/){
                         return $result;
                     }
                     
                     return false;
                 }else{
-                    $error = mysqli_error($host['handle']);
+                    $error = pg_last_error($host['handle']);
                     $this->error($error);
                     $this->error("Invalid SQL statement: {$sql}");
+                    
                     return false;
                 }
             }
@@ -96,29 +91,30 @@ namespace adapt{
          * @return boolean|array
          */
         public function fetch($statement_handle, $fetch_type = self::FETCH_ASSOC){
-            if (is_object($statement_handle)){
+            if ($statement_handle){
                 switch($fetch_type){
                 case self::FETCH_ASSOC:
-                    return $statement_handle->fetch_assoc();
+                    return pg_fetch_assoc($statement_handle);
                 case self::FETCH_ARRAY:
+                    return pg_fetch_array($statement_handle);
                     return $statement_handle->fetch_array();
                 case self::FETCH_OBJECT:
-                    return $statement_handle->fetch_object();
+                    return pg_fetch_object($statement_handle);
                 case self::FETCH_ALL_ASSOC:
                     $results = array();
-                    while($row = $statement_handle->fetch_assoc()){
+                    while($row = pg_fetch_assoc($statement_handle)){
                         $results[] = $row;
                     }
                     return $results;
                 case self::FETCH_ALL_ARRAY:
                     $results = array();
-                    while($row = $statement_handle->fetch_array()){
+                    while($row = pg_fetch_array($statement_handle)){
                         $results[] = $row;
                     }
                     return $results;
                 case self::FETCH_ALL_OBJECT:
                     $results = array();
-                    while($row = $statement_handle->fetch_object()){
+                    while($row = pg_fetch_object($statement_handle)){
                         $results[] = $row;
                     }
                     return $results;
@@ -133,15 +129,63 @@ namespace adapt{
          * Returns the last inserted record ID
          *
          * @access public
-         * @param string Table name, not implemented
+         * @param string The table name
          * @return integer
          * The ID of the record.
          */
-        public function last_insert_id($table_name = ""){
+        public function last_insert_id($table_name = ''){
             $host = $this->get_host(true);
             if (isset($host) && isset($host['handle'])){
-                return mysqli_insert_id($host['handle']);
+                $results = $this
+                    ->sql
+                    ->select("currval(pg_get_serial_sequence('{$table_name}','{$table_name}_id')) as val")
+                    ->execute()
+                    ->results();
+                if (!isset($results) && count($results) !== 1){
+                    $this->error('Unable to retrieve id');
+                    return false;
+                }
+                return $results[0]['val'];
             }
+        }
+        
+        /**
+         * Builds a connection string
+         * 
+         * @access public
+         * @param array The host record
+         * @param bool Should the string include the database name
+         * @return string
+         */
+        public function connection_string($host, $include_database_name = true){
+            $connection_string = "";
+            
+            if (isset($host['host'])){
+                $connection_string = "host={$host['host']}";
+            }
+            
+            if (isset($host['port'])){
+                $connection_string .= " port={$host['port']}";
+            }
+            
+            if (isset($host['username'])){
+                $connection_string .= " user={$host['username']}";
+            }
+            
+            if (isset($host['password'])){
+                $connection_string .= " password={$host['password']}";
+            }
+            
+            if ($include_database_name && isset($host['schema'])){
+                $connection_string .= " dbname={$host['schema']}";
+            }
+            
+            $encoding = $this->setting('postgresql.default_character_set');
+            if (!is_null($encoding)){
+                $connection_string .= " options='--client_encoding={$encoding}'";
+            }
+            
+            return trim($connection_string);
         }
         
         /**
@@ -152,8 +196,8 @@ namespace adapt{
          *
          * Example usage.
          * <code>
-         * $source = new data_source_mysql();
-         * $source->add_host('hostname', 'username', 'password', 'schema', 3306, true);
+         * $source = new data_source_postgresql();
+         * $source->add_host('hostname', 'username', 'password', 'database', 5432, true);
          * $source->connect($source->get_host(true));
          * </code>
          *
@@ -163,32 +207,43 @@ namespace adapt{
          * @return boolean|mixed
          */
         public function connect($host){
-            //$mysql = new mysqli($host['host'], $host['username'], $host['password'], $host['schema']);
-            $mysql = mysqli_connect($host['host'], $host['username'], $host['password'], $host['schema'], $host['port']);
-            if ($error = mysqli_connect_error($mysql)){
+            $connection_string = $this->connection_string($host);
+            
+            $postgresql = pg_connect($connection_string);
+            
+            if (pg_connection_status($postgresql) !== PGSQL_CONNECTION_OK){
+                /* The database may not exist, so we are going to attempt
+                 * the connection again without the database name
+                 */
+                $connection_string = $this->connection_string($host, false);
+                $postgresql = pg_connect($connection_string);
                 
-                if ($error == "Unknown database '{$host['schema']}'"){
-                    /* Try and create it */
-                    $mysql = mysqli_connect($host['host'], $host['username'], $host['password'], "", $host['port']);
-                    if ($error = mysqli_connect_error($mysql)){
-                        /* Still unable to connect so we are going to bail */
-                    }else{
-                        /* Connected, can we create a database? */
-                        if (mysqli_real_query($mysql, "create database {$host['schema']} character set = {$this->setting('mysql.default_character_set')} collate = {$this->setting('mysql.default_collation')};") && mysqli_real_query($mysql, "use {$host['schema']};")) {
-                            /* We did it! */
-                            $this->trigger(self::EVENT_HOST_CONNECT, array('host' => $host));
-                            return $mysql;
-                        }
-                    }
+                if (pg_connection_status($postgresql) !== PGSQL_CONNECTION_OK){
+                    $this->error("Unable to connect to the postgresql instance");
+                    return false;
                 }
                 
-                $this->error("Unable to connect to {$host['host']}: {$error}");
-                return false;
+                /*
+                 * Lets attempt to create the database
+                 */
+                if (pg_query($postgresql, "CREATE DATABASE {$host['schema']};") === false){
+                    $this->error("Unable to create database '{$host['schema']}'");
+                    return false;
+                }
+                
+                /*
+                 * Lets reconnect with our database param to check all is good
+                 */
+                $postgresql = pg_connect($this->connection_string($host));
+                
+                if (pg_connection_status($postgresql) === PGSQL_CONNECTION_BAD){
+                    $this->error("Unable to connect to database");
+                    return false;
+                }
             }
             
-            
             $this->trigger(self::EVENT_HOST_CONNECT, array('host' => $host));
-            return $mysql;
+            return $postgresql;
         }
         
         /**
@@ -210,7 +265,7 @@ namespace adapt{
          */
         public function disconnect($host){
             if (isset($host['handle'])){
-                mysqli_close($host['handle']);
+                pg_close($host['handle']);
                 $this->trigger(self::EVENT_HOST_DISCONNECT, array('host' => $host));
             }
         }
@@ -227,7 +282,7 @@ namespace adapt{
         public function escape($string){
             $host = $this->get_host();
             if (isset($host['handle'])){
-                return mysqli_real_escape_string($host['handle'], $string);
+                return pg_escape_string($host['handle'], $string);
             }else{
                 return parent::escape($string);
             }
@@ -304,11 +359,9 @@ namespace adapt{
                             $limit = $sql->limit_count;
                             $offset = $sql->limit_offset;
                             if (!is_null($limit)){
-                                $statement .= "LIMIT ";
+                                $statement .= "LIMIT {$limit}\n";
                                 if (isset($offset)){
-                                    $statement .= $offset . ", " . $limit . "\n";
-                                }else{
-                                    $statement .= $limit . "\n";
+                                    $statement .= "OFFSET {$offset}\n";
                                 }
                             }
                             $statement .= "\n";
@@ -361,40 +414,33 @@ namespace adapt{
                             if ($params[1] instanceof sql) $params[1] = $this->render_sql($params[1]);
                             if ($params[2] instanceof sql) $params[2] = $this->render_sql($params[2]);
                             
-                            $statement .= "IF ({$params[0]}, {$params[1]}, {$params[2]})";
+                            $statement .= "CASE WHEN {$params[0]} THEN {$params[1]} ELSE {$params[2]} END";
                         }
                         break;
                     case "abs":
-                    case "acos":
-                    case "asin":
-                    case "atan":
-                    case "atan2":
                     case "ceil":
-                    case "cos":
                     case "exp":
                     case "floor":
                     case "log":
                     case "power":
                     case "round":
                     case "sign":
-                    case "sin":
-                    case "tan":
                     case "ascii":
                     case "char":
                     case "concat":
                     case "format":
                     case "length":
-                    case "lower":
                     case "ltrim":
                     case "replace":
                     case "reverse":
                     case "rtrim":
-                    case "substring":
-                    case "trim":
+                    //case "substring":
+                    case "substr":
                     case "upper":
                     case "current_date":
                     case "current_time":
                     case "current_datetime":
+                    //case "current_timestamp":
                     case "now":
                         $statement = strtoupper($function_name) . "(";
                         $first = true;
@@ -429,7 +475,7 @@ namespace adapt{
                 if(!is_null($sql->insert_into_table_name)){
                     /* Insert statement */
                     if (in_array($sql->insert_into_table_name, array_merge(array('data_type', 'field'), $this->get_dataset_list()))){
-                        $statement = "INSERT INTO `{$sql->insert_into_table_name}`\n";
+                        $statement = "INSERT INTO {$sql->insert_into_table_name}\n";
                         $insert_fields = $sql->insert_into_fields;
                         if (is_array($insert_fields)){
                             $statement .= "(";
@@ -440,7 +486,7 @@ namespace adapt{
                                 }
                                 
                                 $field = $this->escape($field);
-                                $statement .= "`{$field}`";
+                                $statement .= "{$field}";
                                 $first = false;
                             }
                             
@@ -456,7 +502,6 @@ namespace adapt{
                             
                             $statement .= "VALUES\n";
                             
-                            //print new html_pre($statement);
                             if (is_array($insert_fields)){
                                 $keys = $insert_fields;
                             }else{
@@ -464,12 +509,8 @@ namespace adapt{
                                 $keys = array_keys($schema); //TODO: BUG: $schema is not defined!
                             }
                             
-                            //print new html_pre('Keys: ' . print_r($keys, true));
-                            
                             $rows = $sql->insert_into_values;
                             $first_row = true;
-                            
-                            //print new html_pre('Rows: ' . print_r($rows, true));
                             
                             for($j = 0; $j < count($rows); $j++){
                                 $row = $rows[$j];
@@ -509,7 +550,7 @@ namespace adapt{
 //                                            }
                                             
                                             
-                                            $statement .= "\"{$value}\"";
+                                            $statement .= "'{$value}'";
                                         }elseif (is_bool($value)) {
                                             if ($value) {
                                                 $statement .= "true";
@@ -517,7 +558,7 @@ namespace adapt{
                                                 $statement .= "false";
                                             }
                                         } else {
-                                            $statement .= "null";
+                                            $statement .= "DEFAULT";
                                         }
                                     }
                                     
@@ -706,14 +747,12 @@ namespace adapt{
                     $limit = $sql->limit_count;
                     $offset = $sql->limit_offset;
                     if (!is_null($limit)){
-                        $statement .= "LIMIT ";
+                        $statement .= "LIMIT {$limit}\n";
                         if (isset($offset)){
-                            $statement .= $offset . ", " . $limit . "\n";
-                        }else{
-                            $statement .= $limit . "\n";
+                            $statement .= "OFFSET {$offset}\n";
                         }
                     }
-                    $statement .= "\n";
+                    
                     return $statement;
                 }
                 
@@ -728,14 +767,14 @@ namespace adapt{
                         
                         if (is_int($key)){
                             $value = $this->escape($value);
-                            $statement .= "`{$value}`";
+                            $statement .= "{$value}";
                         }else{
                             $value = $this->escape($value);
                             $key = $this->escape($key);
                             if ($key != $value){
-                                $statement .= "`{$key}` AS '{$value}'";
+                                $statement .= "{$key} AS '{$value}'";
                             }else{
-                                $statement .= "`{$key}`";
+                                $statement .= "{$key}";
                             }
                         }
                         
@@ -751,7 +790,7 @@ namespace adapt{
                     
                     foreach($set as $field => $value){
                         if (!$first) $statement .= ",\n";
-                        $statement .= "`{$field}` = ";
+                        $statement .= "{$field} = ";
                         
                         if ($value instanceof sql){
                             $statement .= $this->render_sql($value);
@@ -842,34 +881,28 @@ namespace adapt{
                     /* Add the fields */
                     foreach($fields as $field){
                         if (!$first) $statement .= ",\n";
-                        $statement .= $field['field_name'] . " " . $this->convert_data_type($field['data_type'], $field['signed']);
                         
-                        /* Should we auto increment? */
+                        $auto_increment = false;
                         foreach($primary_keys as $key){
                             if ($key['field_name'] == $field['field_name'] && $key['auto_increment'] == true){
-                                $statement .= " AUTO_INCREMENT";
+                                $auto_increment = true;
+                                break;
                             }
                         }
                         
-                        if ($field['nullable'] === false) $statement .= " NOT NULL";
-                        if ($field['unique'] === true){
-                            $statement .= " UNIQUE";
-//                            $data_type_details = $this->parse_data_type($field['data_type']);
-//                            
-//                            switch($data_type_details['data_type']){
-//                            case "char":
-//                            case "varchar":
-//                                if ($data_type_details['params'][0] >= 256){
-//                                
-//                                }
-//                            }
-                            
+                        if ($auto_increment){
+                            $statement .= $field['field_name'] . " SERIAL";
+                        }else{
+                            $statement .= $field['field_name'] . " " . $this->convert_data_type($field['data_type'], $field['signed']);
+                            if ($field['nullable'] === false) $statement .= " NOT NULL";
+                            if ($field['unique'] === true){
+                                $statement .= " UNIQUE";
+                            }
+                            if (!is_null($field['default_value'])) $statement .= " DEFAULT'" . $this->escape($field['default_value']) . "'";
                         }
-                        if (!is_null($field['default_value'])) $statement .= " DEFAULT \"" . $this->escape($field['default_value']) . "\"";
+                        
                         $first = false;
                     }
-                    
-                    //$statement .= "\n";
                     
                     /* Add any primary keys */
                     $field_names = array();
@@ -887,25 +920,17 @@ namespace adapt{
                     }
                     
                     /* Add indexes */
-                    $indexes = $sql->indexes;
-                    
-                    foreach($indexes as $index){
-                        $statement .= ",\nINDEX ({$index['field_name']}";
-                        if (!is_null($index['size']) && is_numeric($index['size'])){
-                            $statement .= "({$index['size']})";
-                        }
-                        $statement .= ")";
-                    }
+//                    $indexes = $sql->indexes;
+//                    
+//                    foreach($indexes as $index){
+//                        $statement .= ",\nINDEX ({$index['field_name']}";
+//                        if (!is_null($index['size']) && is_numeric($index['size'])){
+//                            $statement .= "({$index['size']})";
+//                        }
+//                        $statement .= ")";
+//                    }
                     
                     $statement .= "\n)";
-                    $engine = $this->setting('mysql.default_engine');
-                    $charset = $this->setting('mysql.default_character_set');
-                    $collation = $this->setting('mysql.default_collation');
-                    
-                    if (isset($engine)) $statement .= " ENGINE = {$engine}";
-                    if (isset($charset)) $statement .= " DEFAULT CHARSET = {$charset}";
-                    //if (isset($charset)) $statement .= " CHARACTER SET={$charset}";
-                    if (isset($collation)) $statement .= " COLLATE={$collation}";
                     
                     $statement .= ";\n";
                     
@@ -927,13 +952,13 @@ namespace adapt{
                         case "add":
                             $statement .= "ADD " . $field['field_name'] . " " . $this->convert_data_type($field['data_type'], $field['signed']);
                             if ($field['nullable'] === false) $statement .= " NOT NULL";
-                            if (!is_null($field['default_value'])) $statement .= " DEFAULT \"" . $this->escape($field['default_value']) . "\"";
+                            if (!is_null($field['default_value'])) $statement .= " DEFAULT '" . $this->escape($field['default_value']) . "'";
                             if (!is_null($field['_after'])) $statement .= " AFTER {$field['_after']}";
                             break;
                         case "change":
                             $statement .= "CHANGE {$field['old_field_name']} " . $field['field_name'] . " " . $this->convert_data_type($field['data_type'], $field['signed']);
                             if ($field['nullable'] === false) $statement .= " NOT NULL";
-                            if (!is_null($field['default_value'])) $statement .= " DEFAULT \"" . $this->escape($field['default_value']) . "\"";
+                            if (!is_null($field['default_value'])) $statement .= " DEFAULT '" . $this->escape($field['default_value']) . "'";
                             if (!is_null($field['_after'])) $statement .= " AFTER {$field['_after']}";
                             break;
                         case "drop":
@@ -1027,8 +1052,6 @@ namespace adapt{
             case "integer":
             case "bigint":
                 $type = mb_strtoupper($type);
-                if (!$signed) $type .= " UNSIGNED";
-                if ($zero_fill) $type .= " ZEROFILL";
                 return $type;
             
             case "serial":
@@ -1058,8 +1081,6 @@ namespace adapt{
                     //Throw error
                     return;
                 }
-                if (!$signed) $type .= " UNSIGNED";
-                if ($zero_fill) $type .= " ZEROFILL";
                 return $type;
                 
             case "float":
@@ -1117,27 +1138,37 @@ namespace adapt{
                 return $type;
             
             case "enum":
-            case "set":
+            //case "set":
                 $type = mb_strtoupper($type);
                 
                 $type .= "(";
                 if (count($params) > 0){
                     for($i = 0; $i < count($params); $i++){
                         if ($i > 0) $type .= ", ";
-                        $type .= "\"" . $this->escape(mb_trim($params[$i], '\s\'"')) . "\"";
+                        $type .= "'" . $this->escape(mb_trim($params[$i], '\s\'"')) . "'";
                     }
                 }
                 $type .= ")";
                 
-                return $type;
+                $name = strtolower(preg_replace("/[^A-Za-z]/", "", $type));
+                
+                $sql = "CREATE TYPE {$name} AS {$type};";
+                
+                $errors = $this->errors();
+                $this->query($sql);
+                $this->errors(true);
+                if (count($errors)) $this->error($errors);
+                
+                return $name;
                 
             case "year":
             case "date":
             case "time":
-            case "datetime":
-            case "timestamp":
                 $type = mb_strtoupper($type);
                 return $type;
+            case "datetime":
+            case "timestamp":
+                return "TIMESTAMP";
             default:
                 /*
                  * We are going to seek the
@@ -1145,75 +1176,9 @@ namespace adapt{
                  */
                 foreach($this->_data_types as $data_type){
                     if ($data_type['name'] == $type && isset($data_type['based_on_data_type'])){
-                        //print "<pre>Converting: {$data_type['name']} to {$data_type['based_on_data_type']}</pre>";
                         return $this->convert_data_type($data_type['based_on_data_type']);
                     }
                 }
-            }
-        }
-        
-        /** @ignore */
-        public function sync_schema(){
-            //base::install();
-            print_r($this->errors());
-            $host = $this->get_host();
-            $sql = $this->sql;
-            $sql->select(new sql('*'))
-                ->from('information_schema.columns')
-                ->where(new sql_condition(new sql('table_schema'), '=', $host['schema']));
-            //print $sql;
-            $results = $sql->execute()->results();
-            //print_r($results);
-            //exit(1);
-            foreach($results as $result){
-                $struct = $this->get_field_structure($result['TABLE_NAME'], $result['COLUMN_NAME']);
-                
-                if (is_null($struct)){
-                    print "Foo\n";
-                    /* We need to add this field */
-                    $model = new model_adapt_field();
-                    $model->table_name = $result['TABLE_NAME'];
-                    $model->field_name = $result['COLUMN_NAME'];
-                    $model->primary_key = $result["COLUMN_KEY"] == "PRI" ? "Yes" : "No";
-                    if ($result['COLUMN_KEY'] == "PRI" && $result['EXTRA'] == "auto_increment" && $result['COLUMN_TYPE'] == 'bigint(20)'){
-                        $model->data_type = "serial";
-                    }else{
-                        if (preg_match("/^(bigint|int)/", $result['COLUMN_TYPE'])){
-                            $model->data_type = preg_replace("/\([0-9]+\)/", "", $result['COLUMN_TYPE']);
-                        }else{
-                            $model->data_type = $result['COLUMN_TYPE'];
-                        }
-                    }
-                    $model->signed = isset($result['NUMERIC_PRECISION']) ? "Yes" :  "No";
-                    if ($result['IS_NULLABLE'] == "NO"){
-                        $model->nullable = "No";
-                    }else{
-                        $model->nullable = "Yes";
-                    }
-                    $model->default_value = $result['COLUMN_DEFAULT'];
-                    if ($result['EXTRA'] == "auto_increment"){
-                        $model->auto_increment = 'Yes';
-                    }else{
-                        $model->auto_increment = 'No';
-                    }
-                    if ($result['data_type'] == 'timestamp'){
-                        $model->timestamp = 'Yes';
-                    }else{
-                        $model->timestamp = 'No';
-                    }
-                    
-                    if (preg_match("/\([0-9]+\)$/", $result['COLUMN_TYPE'])){
-                        $model->min_size = '0';
-                        $model->max_size = preg_replace("/[^0-9]/", "", $result['COLUMN_TYPE']);
-                    }
-                    
-                    //$model->date_created = new sql('now()');
-                    //$model->date_modified = new sql('now()');
-                    $model->save();
-                    
-                }
-                
-                //TODO: References
             }
         }
     }

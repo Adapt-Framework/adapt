@@ -108,6 +108,8 @@ namespace adapt{
         protected $_functions = array();
         protected $_conditions = array();
         
+        protected $_last_insert_id_table = null;
+        
         /*
          * Constructor
          */
@@ -178,7 +180,7 @@ namespace adapt{
         
         public static function q($string){
             $adapt = $GLOBALS['adapt'];
-            $string = "\"" . $adapt->data_source->escape($string) . "\"";
+            $string = "'" . $adapt->data_source->escape($string) . "'";
             
             return $string;
         }
@@ -551,6 +553,8 @@ namespace adapt{
                 'fields' => $fields
             );
             
+            $this->_last_insert_id_table = $table_name;
+            
             return $this;
         }
         
@@ -797,7 +801,7 @@ namespace adapt{
         
         public function id(){
             if ($this->data_source instanceof \adapt\data_source_sql){
-                return $this->data_source->last_insert_id();
+                return $this->data_source->last_insert_id($this->_last_insert_id_table);
             }
             
             return null;

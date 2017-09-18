@@ -46,7 +46,7 @@ namespace adapt\interfaces{
         public function read($sql);
         public function query($sql, $write = false);
         public function fetch($statement_handle, $fetch_type = self::FETCH_ASSOC);
-        public function last_insert_id();
+        public function last_insert_id($table_name = "");
         
         /*
          * Host management

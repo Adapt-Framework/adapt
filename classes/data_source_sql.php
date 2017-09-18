@@ -134,7 +134,7 @@ namespace adapt{
             /* Set the hosts */
             $this->_hosts = array();
             
-            if (!is_null($host) && !is_null($username) && !is_null($password) && !is_null($schema)){
+            if (!is_null($host) && !is_null($username) && !is_null($schema)){
                 $this->add_host($host, $username, $password, $schema, $read_only);
                 $this->load_schema();
             }
@@ -327,7 +327,7 @@ namespace adapt{
          * @return integer
          * The ID of the record.
          */
-        public function last_insert_id(){
+        public function last_insert_id($table_name = ''){
             
         }
         
