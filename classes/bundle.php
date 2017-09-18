@@ -1377,7 +1377,7 @@ namespace adapt{
                                          * so the table can be properly registered.
                                          */
                                         $this->store('adapt.installing_bundle', $this->name);
-                                        
+
                                         /* Write the table */
                                         $sql->execute();
                                         
@@ -1857,10 +1857,10 @@ namespace adapt{
                         
                         // Set previous versions as no-longer installed
                         $sql = $this->data_source->sql;
-                        $sql->update('bundle_version')->set('installed', q('Yes'))->where(
+                        $sql->update('bundle_version')->set('installed', sql::q('Yes'))->where(
                             new sql_and(
-                               new sql_cond('bundle_name', sql::EQUALS, q($this->name)),
-                               new sql_cond('version', sql::NOT_EQUALS, q($this->version)),
+                               new sql_cond('bundle_name', sql::EQUALS, sql::q($this->name)),
+                               new sql_cond('version', sql::NOT_EQUALS, sql::q($this->version)),
                                new sql_cond('date_deleted', sql::IS, new sql_null())
                             )
                         )->execute();
@@ -1879,6 +1879,7 @@ namespace adapt{
                                 }
                             }
                         }
+                        
                         /* Remove installation mark */
                         $this->file_store->delete("adapt/installation/{$this->name}-{$this->version}");
                         return true;
