@@ -120,11 +120,13 @@ namespace adapt{
          * The password for the username for the SQL server.
          * @param string
          * The database name
-         * $param boolean
+         * @param string
+         * The database port
+         * @param boolean
          * Should the host be treated as read-only?  This is useful for Master/slave
          * database set ups.
          */
-        public function __construct($host = null, $username = null, $password = null, $schema = null, $read_only = false){
+        public function __construct($host = null, $username = null, $password = null, $schema = null, $port = null, $read_only = false){
             parent::__construct();
             
             /* Kill the schema */
@@ -138,7 +140,6 @@ namespace adapt{
                 $this->add_host($host, $username, $password, $schema, $read_only);
                 $this->load_schema();
             }
-            
         }
         
         /*
@@ -359,6 +360,7 @@ namespace adapt{
                 'username' => $username,
                 'password' => $password,
                 'schema' => $schema,
+                'port' => $port,
                 'read_only' => $read_only
             );
             

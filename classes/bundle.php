@@ -1377,7 +1377,7 @@ namespace adapt{
                                          * so the table can be properly registered.
                                          */
                                         $this->store('adapt.installing_bundle', $this->name);
-                                        
+
                                         /* Write the table */
                                         $sql->execute();
                                         
@@ -1879,6 +1879,7 @@ namespace adapt{
                                 }
                             }
                         }
+                        
                         /* Remove installation mark */
                         $this->file_store->delete("adapt/installation/{$this->name}-{$this->version}");
                         return true;

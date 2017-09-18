@@ -52,6 +52,7 @@ namespace adapt{
         const EQUALS = "=";
         const GREATER_THAN_OR_EQUALS = ">=";
         const GREATER_THAN = ">";
+        const ILIKE = "ILIKE";
         const IS_NOT_NULL = "IS NOT NULL";
         const IS_NULL = "IS NULL";
         const IS_NOT = "IS NOT";
@@ -1254,7 +1255,4 @@ namespace adapt{
         //}
         
     }
-    
 }
-
-?>

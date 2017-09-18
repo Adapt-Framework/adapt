@@ -7,7 +7,8 @@
  *   
  * Copyright (c) 2017 Matt Bruton
  * Authored by Matt Bruton (matt.bruton@gmail.com)
- *   
+ * Authored by Joe Hockaday (jdhockad@hotmail.com)
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -28,6 +29,7 @@
  *
  * @package     adapt
  * @author      Matt Bruton <matt.bruton@gmail.com>
+ * @author      Joe Hockaday <jdhockad@hotmail.com>
  * @copyright   2017 Matt Bruton <matt.bruton@gmail.com>
  * @license     https://opensource.org/licenses/MIT     MIT License
  * @link        http://www.adpatframework.com
@@ -269,7 +271,7 @@ namespace adapt{
                 $this->trigger(self::EVENT_HOST_DISCONNECT, array('host' => $host));
             }
         }
-        
+
         /**
          * Escapes a value
          *
@@ -287,7 +289,7 @@ namespace adapt{
                 return parent::escape($string);
             }
         }
-        
+
         /**
          * Converts a sql object to a SQL string for the target
          * database platform.
@@ -300,7 +302,7 @@ namespace adapt{
          */
         public function render_sql(\adapt\sql $sql){
             $statement = "";
-            
+
             if ($sql instanceof \adapt\sql){
                 if (!is_null($sql->statement)){
                     if ($statement == ""){
@@ -680,7 +682,7 @@ namespace adapt{
                         }
                     }
                     $statement .= "\n";
-                    
+
                     /* Grouping */
                     $grouping = $sql->grouping;
                     if (is_array($grouping) && count($grouping)){
@@ -703,7 +705,7 @@ namespace adapt{
                         
                         $statement .= "\n";
                     }
-                    
+
                     /* Having */
                     $having = $sql->having_conditions;
                     if (isset($having) && count($having)){
@@ -717,7 +719,7 @@ namespace adapt{
                         }
                     }
                     $statement .= "\n";
-                    
+
                     /* Ordering */
                     $ordering = $sql->ordering;
                     if (is_array($ordering) && count($ordering)){
@@ -730,7 +732,7 @@ namespace adapt{
                             }else{
                                 $statement .= $order['field'];
                             }
-                            
+
                             if ($order['ascending']){
                                 $statement .= " ASC";
                             }else{
@@ -742,7 +744,7 @@ namespace adapt{
                         
                         $statement .= "\n";
                     }
-                    
+
                     /* Limit */
                     $limit = $sql->limit_count;
                     $offset = $sql->limit_offset;
@@ -822,7 +824,7 @@ namespace adapt{
                 /* Delete statement */
                 if (count($sql->delete_from_tables)){
                     $statement = "DELETE FROM `" . implode("`, `", $sql->delete_from_tables) . "`\n";
-                    
+
                     /* Where */
                     $where = $sql->where_conditions;
                     if (isset($where) && count($where)){
@@ -839,7 +841,7 @@ namespace adapt{
                     
                     return $statement;
                 }
-                
+    
                 /* Create database */
                 if(!is_null($sql->create_database_name)){
                     /*
@@ -848,7 +850,7 @@ namespace adapt{
                     $statement = "CREATE DATABASE " . $this->escape($sql->create_database_name) . ";\n";
                     return $statement;
                 }
-                
+
                 /* Drop database */
                 if(!is_null($sql->drop_database_name)){
                     /*
@@ -857,7 +859,7 @@ namespace adapt{
                     $statement = "DROP DATABASE " . $this->escape($sql->drop_database_name) . ";\n";
                     return $statement;
                 }
-                
+
                 /* Drop table */
                 if(!is_null($sql->drop_table_name)){
                     /*
@@ -929,14 +931,14 @@ namespace adapt{
 //                        }
 //                        $statement .= ")";
 //                    }
-                    
+
                     $statement .= "\n)";
-                    
+
                     $statement .= ";\n";
-                    
+
                     return $statement;
                 }
-                
+
                 /*
                  * Alter table
                  */
