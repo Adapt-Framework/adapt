@@ -57,8 +57,13 @@ namespace adapt{
      * Are child models auto loaded?
      * @property-read array $changed_fields
      * The fields that have been changed
+<<<<<<< HEAD
      * @property-read boolean $has_guid
      * Does this object have a GUID?
+=======
+     * @property-read array $suppress_fields
+     * List of fields to suppress on output
+>>>>>>> develop
      */
     class model extends base{
         
@@ -154,6 +159,9 @@ namespace adapt{
         
         /** @ignore */
         protected $_changed_fields;
+
+        /** @ignore */
+        protected $_suppress_fields = [];
         
         /**
          * Constructor
@@ -201,6 +209,10 @@ namespace adapt{
             $this->_auto_load_only_tables = array();
             $this->_is_loaded = false;
             $this->_has_changed = false;
+            $this->_suppress_fields = $this->suppress_fields_list;
+            if ($this->_suppress_fields === null) {
+                $this->_suppress_fields = [];
+            }
             
             if (isset($this->_table_name) && is_array($this->schema)){
                 
@@ -230,6 +242,11 @@ namespace adapt{
         /** @ignore */
         public function pget_schema(){
             return $this->_schema;
+        }
+
+        /** @ignore */
+        public function pget_suppress_fields(){
+            return $this->_suppress_fields;
         }
         
         /** @ignore */
@@ -665,23 +682,22 @@ namespace adapt{
                 $fields = array_keys($this->_data);
                 
                 if (in_array('name', $fields)){
+                    /* Get the structure of the name field */
+                    $name_structure = $this->data_source->get_field_structure($this->table_name, 'name');
+                    
+                    if (mb_strlen($name) > $name_structure['max_length']){
+                        $name = mb_substr($name, 0, $name_structure['max_length']);
+                    }
+                    
                     $sql = $this->data_source->sql;
                     
                     $sql->select(new sql('*'))
                         ->from($this->table_name);
                     
-                    /* Do we have a date_deleted field? */
-                    if (in_array('date_deleted', $fields)){
-                        
-                        $name_condition = new sql_cond('name', sql::EQUALS, sql::q($name));
-                        $date_deleted_condition = new sql_cond('date_deleted', sql::IS, new sql_null());
-                        
-                        $sql->where(new sql_and($name_condition, $date_deleted_condition));
-                        
-                    }else{
-                        
-                        $sql->where(new sql_cond('name', sql::EQUALS, sql::q($name)));
-                    }
+                    $name_condition = new sql_cond('name', sql::EQUALS, sql::q($name));
+                    $date_deleted_condition = new sql_cond('date_deleted', sql::IS, new sql_null());
+
+                    $sql->where(new sql_and($name_condition, $date_deleted_condition));
                     
                     /* Get the results */
                     $results = $sql->execute(0)->results();
@@ -1380,9 +1396,13 @@ namespace adapt{
                         $hash[$key] = null;
                     }
                 }elseif(is_null($value)){
-                    $hash[$key] = null;
+                    if (!in_array($key, $this->_suppress_fields)) {
+                        $hash[$key] = null;
+                    }
                 }else{
-                    $hash[$key] = $this->data_source->format($this->table_name, $key, $value);
+                    if (!in_array($key, $this->_suppress_fields)) {
+                        $hash[$key] = $this->data_source->format($this->table_name, $key, $value);
+                    }
                 }
             }
             
@@ -1490,7 +1510,7 @@ namespace adapt{
                 $data_type = $this->data_source->get_data_type($field_details['data_type_id']);
                 
                 /* Format the value as required */
-                if (!is_null($value)){
+                if (!is_null($value) && !in_array($name, $this->_suppress_fields)){
                     $value = $this->data_source->format($this->table_name, $name, $value);
                 }
                 
@@ -1602,7 +1622,6 @@ namespace adapt{
                 
                 /* Do we have a record? */
                 if (isset($data[$this->table_name]) && is_array($data[$this->table_name])){
-                    
                     /* How many records do we have? */
                     $record_count = 0;
                     $record_processed = null;
@@ -1711,7 +1730,7 @@ namespace adapt{
                                             /* Only push if the keys match */
                                             $keys_required = count($keys);
                                             foreach($keys as $key){
-                                                if ($this->$key == $record[$table_name][$key]) $keys_required--;
+                                                if ($child->$key == $record[$table_name][$key]) $keys_required--;
                                             }
                                             
                                             if ($keys_required == 0){

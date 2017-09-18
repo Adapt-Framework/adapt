@@ -717,7 +717,7 @@
             <data_type>bigint</data_type>
             <nullable>Yes</nullable>
           </field>
-          <field name="name">
+          <field name="bundle_name">
             <label>Name</label>
             <description>The name of the bundle</description>
             <data_type>varchar</data_type>
