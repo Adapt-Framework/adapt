@@ -1836,6 +1836,7 @@ namespace adapt{
                     /* Mark adapt as installed */
                     if (!$this->bundles->set_bundle_installed('adapt', $this->version, $this->type)){
                         $this->error($this->bundles->errors(true));
+
                         return false;
                     }
                 }else{
