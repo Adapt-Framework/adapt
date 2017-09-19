@@ -137,7 +137,7 @@ namespace adapt{
             $this->_hosts = array();
             
             if (!is_null($host) && !is_null($username) && !is_null($schema)){
-                $this->add_host($host, $username, $password, $schema, $read_only);
+                $this->add_host($host, $username, $password, $schema, $port, $read_only);
                 $this->load_schema();
             }
         }

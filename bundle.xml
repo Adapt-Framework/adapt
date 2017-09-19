@@ -770,7 +770,7 @@
                     <field name="installing_pid" data-type="bigint" nullable="Yes" label="Installing PID" />
                 </table>
                 <table name="guid">
-                    <field name="guid" data-type="guid" key="primary" label="GUID" />
+                    <field name="guid" data-type="varchar" max-length="256" key="primary" label="GUID" />
                     <field name="table_name" data-type="varchar" max-length="128" label="Table name" description="The name of the table the GUID was allocated to" />
                 </table>
             </add>

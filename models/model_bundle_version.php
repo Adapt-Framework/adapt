@@ -137,7 +137,7 @@ namespace adapt{
                 ->where(
                     new sql_and(
                         new sql_cond('bv.bundle_id', sql::EQUALS, $bundle->bundle_id),
-                        new sql_cond('bv.version', sql::EQUALS, q($bundle_version)),
+                        new sql_cond('bv.version', sql::EQUALS, sql::q($bundle_version)),
                         new sql_cond('bv.date_deleted', sql::IS, sql::NULL)
                     )
                 );

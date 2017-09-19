@@ -57,13 +57,8 @@ namespace adapt{
      * Are child models auto loaded?
      * @property-read array $changed_fields
      * The fields that have been changed
-<<<<<<< HEAD
      * @property-read boolean $has_guid
      * Does this object have a GUID?
-=======
-     * @property-read array $suppress_fields
-     * List of fields to suppress on output
->>>>>>> develop
      */
     class model extends base{
         
@@ -159,9 +154,6 @@ namespace adapt{
         
         /** @ignore */
         protected $_changed_fields;
-
-        /** @ignore */
-        protected $_suppress_fields = [];
         
         /**
          * Constructor
@@ -209,10 +201,7 @@ namespace adapt{
             $this->_auto_load_only_tables = array();
             $this->_is_loaded = false;
             $this->_has_changed = false;
-            $this->_suppress_fields = $this->suppress_fields_list;
-            if ($this->_suppress_fields === null) {
-                $this->_suppress_fields = [];
-            }
+            
             
             if (isset($this->_table_name) && is_array($this->schema)){
                 
@@ -242,11 +231,6 @@ namespace adapt{
         /** @ignore */
         public function pget_schema(){
             return $this->_schema;
-        }
-
-        /** @ignore */
-        public function pget_suppress_fields(){
-            return $this->_suppress_fields;
         }
         
         /** @ignore */
@@ -504,7 +488,7 @@ namespace adapt{
         }
         
         /**
-         * Returns a list of errors that have occured until now.
+         * Returns a list of errors that have occurred until now.
          *
          * @access public
          * @param boolean
@@ -1396,13 +1380,9 @@ namespace adapt{
                         $hash[$key] = null;
                     }
                 }elseif(is_null($value)){
-                    if (!in_array($key, $this->_suppress_fields)) {
-                        $hash[$key] = null;
-                    }
+                    $hash[$key] = null;
                 }else{
-                    if (!in_array($key, $this->_suppress_fields)) {
-                        $hash[$key] = $this->data_source->format($this->table_name, $key, $value);
-                    }
+                    $hash[$key] = $this->data_source->format($this->table_name, $key, $value);
                 }
             }
             
@@ -1510,9 +1490,7 @@ namespace adapt{
                 $data_type = $this->data_source->get_data_type($field_details['data_type_id']);
                 
                 /* Format the value as required */
-                if (!is_null($value) && !in_array($name, $this->_suppress_fields)){
-                    $value = $this->data_source->format($this->table_name, $name, $value);
-                }
+                $value = $this->data_source->format($this->table_name, $name, $value);
                 
                 
                 $node = new xml($name, $value, array('type' => $data_type['name']));
