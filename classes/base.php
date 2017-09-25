@@ -313,7 +313,7 @@ namespace adapt{
                 }
             }
             
-            throw new \BadMethodCallException();
+            //throw new \BadMethodCallException();
         }
         
         /**

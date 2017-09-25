@@ -367,7 +367,7 @@ namespace adapt{
                 $permission = "permission_{$method}";
                 
                 if (isset($method)){
-                    if (method_exists($this, $method) || is_callable(array($this, $method))){
+                    if (method_exists($this, $method)/* || is_callable(array($this, $method))*/){
                         if (/*(!method_exists($this, $permission) && !is_callable(array($this, $permission)))*/ is_null($this->$permission()) || $this->$permission() == true){
                             
                             // Lets check if we have any params that can be passed in?
@@ -536,4 +536,3 @@ namespace adapt{
 
 }
 
-?>

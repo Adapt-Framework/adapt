@@ -46,6 +46,18 @@ namespace adapt{
     class data_source_postgresql extends data_source_sql implements interfaces\data_source_sql{
         
         /**
+         * Holds the SQL string of the last rendered insert
+         * @access protected
+         */
+        protected $_last_rendered_insert_statement;
+        
+        /**
+         * Holds the last insert id
+         * @access protected
+         */
+        protected $_last_insert_id;
+        
+        /**
          * Execute a SQL read or write statement.
          *
          * @access public
@@ -58,9 +70,21 @@ namespace adapt{
          */
         public function query($sql, $write = false){
             $host = $this->get_host($write);
+            $this->_last_insert_id = null;
             
             if (!is_null($host) && isset($host['handle'])){
                 if ($result = pg_query($host['handle'], $sql)){
+                    
+                    if (!is_null($this->_last_rendered_insert_statement) && $sql == $this->_last_rendered_insert_statement){
+                        
+                        $this->_last_rendered_insert_statement = null;
+                        $results = $this->fetch($result, data_source_sql::FETCH_ALL_ASSOC);
+                        
+                        if (count($results) == 1 && isset($results[0]['id'])){
+                            $this->_last_insert_id = $results[0]['id'];
+                        }
+                    }
+                    
                     $this->trigger(self::EVENT_QUERY, array('sql' => $sql, 'host' => $host));
                     if ($write){
                         return true;
@@ -135,20 +159,8 @@ namespace adapt{
          * @return integer
          * The ID of the record.
          */
-        public function last_insert_id($table_name = ''){
-            $host = $this->get_host(true);
-            if (isset($host) && isset($host['handle'])){
-                $results = $this
-                    ->sql
-                    ->select("currval(pg_get_serial_sequence('{$table_name}','{$table_name}_id')) as val")
-                    ->execute()
-                    ->results();
-                if (!isset($results) && count($results) !== 1){
-                    $this->error('Unable to retrieve id');
-                    return false;
-                }
-                return $results[0]['val'];
-            }
+        public function last_insert_id(){
+            return $this->_last_insert_id;
         }
         
         /**
@@ -475,112 +487,7 @@ namespace adapt{
                 
                 /* Insert statement */
                 if(!is_null($sql->insert_into_table_name)){
-                    /* Insert statement */
-                    if (in_array($sql->insert_into_table_name, array_merge(array('data_type', 'field'), $this->get_dataset_list()))){
-                        $statement = "INSERT INTO {$sql->insert_into_table_name}\n";
-                        $insert_fields = $sql->insert_into_fields;
-                        if (is_array($insert_fields)){
-                            $statement .= "(";
-                            $first = true;
-                            foreach($insert_fields as $field){
-                                if (!$first){
-                                    $statement .= ", ";
-                                }
-                                
-                                $field = $this->escape($field);
-                                $statement .= "{$field}";
-                                $first = false;
-                            }
-                            
-                            $statement .= ")\n";
-                        }
-                        
-                        //print new html_pre($statement);
-                        
-                        /* Are we inserting values or a select? */
-                        if (is_array($sql->insert_into_values) && count($sql->insert_into_values)){
-                            /* Insert the values */
-                            $keys = array();
-                            
-                            $statement .= "VALUES\n";
-                            
-                            if (is_array($insert_fields)){
-                                $keys = $insert_fields;
-                            }else{
-                                //Get the fields for this table
-                                $keys = array_keys($schema); //TODO: BUG: $schema is not defined!
-                            }
-                            
-                            $rows = $sql->insert_into_values;
-                            $first_row = true;
-                            
-                            for($j = 0; $j < count($rows); $j++){
-                                $row = $rows[$j];
-                                
-                                if (count($row) == count($keys)){
-                                    if ($first_row){
-                                        $statement .= "(";
-                                        $first_row = false;
-                                    }else{
-                                        $statement .= ",\n(";
-                                    }
-                                    
-                                    for($i = 0; $i < count($row); $i++){
-                                        $value = $row[$i];
-                                        $key = $keys[$i];
-                                        
-                                        if ($i > 0) $statement .= ", ";
-                                        
-                                        if ($value instanceof \adapt\sql){
-                                            $statement .= $this->render_sql($value);
-                                        }elseif(is_string($value) || is_numeric($value)){
-                                            /* Unformat the value */
-                                            // This should be done at model level as we can not format from
-                                            // the select statement
-                                            //$value = $this->unformat($sql->insert_into_table_name, $keys[$i], $value);
-                                            
-                                            /* Escape the value */
-                                            $value = $this->escape($value);
-
-                                            // TODO: Needs review - this fails name validation on apostrophes in names; "O\'Brien" does not validate
-//                                            /* Validate the value */
-//                                            if (!$this->validate($sql->insert_into_table_name, $keys[$i], $value)){
-//                                                //TODO: Faild the insert
-//                                                //print new html_pre("The data for {$keys[$i]} on row " . ($j + 1) . " is not valid");
-//                                                $this->error("The data for {$keys[$i]} on row " . ($j + 1) . " is not valid");
-//                                                return null;
-//                                            }
-                                            
-                                            
-                                            $statement .= "'{$value}'";
-                                        }elseif (is_bool($value)) {
-                                            if ($value) {
-                                                $statement .= "true";
-                                            } else {
-                                                $statement .= "false";
-                                            }
-                                        } else {
-                                            $statement .= "DEFAULT";
-                                        }
-                                    }
-                                    
-                                    $statement .= ")";
-                                }else{
-                                    //Fail the entire insert
-                                    //print new html_pre("Unable in insert data into '{$sql->insert_into_table_name}' row " . ($j + 1) . " column count is incorrect");
-                                    $this->error("Unable in insert data into '{$sql->insert_into_table_name}' row " . ($j + 1) . " column count is incorrect");
-                                    return null;
-                                }
-                            }
-                            //print new html_pre($statement);
-                            $statement .= ";\n";
-                            //print new html_pre($statement);
-                            return $statement;
-                        }
-                    }else{
-                        $this->error("Unable to insert data into non-existant table '{$sql->insert_into_table_name}'");
-                        return null;
-                    }
+                    return $this->render_sql_insert($sql);
                 }
                 
                 /* Select Statement */
@@ -993,6 +900,113 @@ namespace adapt{
             
             
             return $statement;
+        }
+        
+        /**
+         * Renders a sql insert statement
+         * 
+         * @access public
+         * @param sql
+         * @return string
+         */
+        public function render_sql_insert($sql){
+            $statement = "";
+            
+            /* Insert statement */
+            if (in_array($sql->insert_into_table_name, array_merge(array('data_type', 'field'), $this->get_dataset_list()))){
+                $statement = "INSERT INTO {$sql->insert_into_table_name}\n";
+                $insert_fields = $sql->insert_into_fields;
+                if (is_array($insert_fields)){
+                    $statement .= "(";
+                    $first = true;
+                    foreach($insert_fields as $field){
+                        if (!$first){
+                            $statement .= ", ";
+                        }
+
+                        $field = $this->escape($field);
+                        $statement .= "{$field}";
+                        $first = false;
+                    }
+
+                    $statement .= ")\n";
+                }
+
+                /* Are we inserting values or a select? */
+                if (is_array($sql->insert_into_values) && count($sql->insert_into_values)){
+                    /* Insert the values */
+                    $keys = array();
+
+                    $statement .= "VALUES\n";
+
+                    if (is_array($insert_fields)){
+                        $keys = $insert_fields;
+                    }else{
+                        //Get the fields for this table
+                        $keys = array_keys($schema); //TODO: BUG: $schema is not defined!
+                    }
+
+                    $rows = $sql->insert_into_values;
+                    $first_row = true;
+
+                    for($j = 0; $j < count($rows); $j++){
+                        $row = $rows[$j];
+
+                        if (count($row) == count($keys)){
+                            if ($first_row){
+                                $statement .= "(";
+                                $first_row = false;
+                            }else{
+                                $statement .= ",\n(";
+                            }
+
+                            for($i = 0; $i < count($row); $i++){
+                                $value = $row[$i];
+                                $key = $keys[$i];
+
+                                if ($i > 0) $statement .= ", ";
+
+                                if ($value instanceof \adapt\sql){
+                                    $statement .= $this->render_sql($value);
+                                }elseif(is_string($value) || is_numeric($value)){
+
+                                    /* Escape the value */
+                                    $value = $this->escape($value);
+
+                                    $statement .= "'{$value}'";
+                                }elseif (is_bool($value)) {
+                                    if ($value) {
+                                        $statement .= "true";
+                                    } else {
+                                        $statement .= "false";
+                                    }
+                                } else {
+                                    $statement .= "DEFAULT";
+                                }
+                            }
+
+                            $statement .= ")";
+                        }else{
+                            //Fail the entire insert
+                            $this->error("Unable in insert data into '{$sql->insert_into_table_name}' row " . ($j + 1) . " column count is incorrect");
+                            return null;
+                        }
+                    }
+                    
+                    if (count($rows) == 1){
+                        $statement .= "\nRETURNING {$sql->insert_into_table_name}_id AS id;";
+                        $this->_last_rendered_insert_statement = $statement;
+                    }else{
+                        $statement .= ";";
+                        $this->_last_rendered_insert_statement = null;
+                    }
+                    
+                    return $statement;
+                }
+            }else{
+                $this->error("Unable to insert data into non-existant table '{$sql->insert_into_table_name}'");
+                return null;
+            }
         }
         
         /**

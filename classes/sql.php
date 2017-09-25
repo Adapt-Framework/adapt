@@ -802,7 +802,7 @@ namespace adapt{
         
         public function id(){
             if ($this->data_source instanceof \adapt\data_source_sql){
-                return $this->data_source->last_insert_id($this->_last_insert_id_table);
+                return $this->data_source->last_insert_id();
             }
             
             return null;

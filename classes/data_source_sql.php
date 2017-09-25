@@ -328,7 +328,7 @@ namespace adapt{
          * @return integer
          * The ID of the record.
          */
-        public function last_insert_id($table_name = ''){
+        public function last_insert_id(){
             
         }
         

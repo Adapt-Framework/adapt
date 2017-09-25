@@ -1781,8 +1781,12 @@ namespace adapt{
          * @access public
          */
         public function install(){
-            while($this->is_installing()){
+            $timeout = $this->setting('adapt.installation_timeout') ?: 60;
+            $timeout_count = 0;
+            
+            while($this->is_installing() && $timeout_count <= $timeout){
                 sleep(1);
+                $timeout_count++;
             }
             
             if ($this->is_installed()){
@@ -1797,7 +1801,10 @@ namespace adapt{
             }
             
             if (is_array($this->_schema) && $this->data_source instanceof data_source_sql){
-                $this->install_schema();
+                if ($this->install_schema() === false){
+                    $this->error("Failed to install schema");
+                    return false;
+                }
             }
             
             /* Process config handlers */

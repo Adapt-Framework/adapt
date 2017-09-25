@@ -211,9 +211,9 @@
             </category>
             <category name="Bundles">
                 <setting>
-                    <name>adapt.max_bundle_install_time</name>
-                    <label>How long can bundles take to install (minutes)?</label>
-                    <default_value>3</default_value>
+                    <name>adapt.installation_timeout</name>
+                    <label>How long can bundles take to install (seconds)?</label>
+                    <default_value>60</default_value>
                 </setting>
             </category>
         </settings>

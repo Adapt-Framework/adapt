@@ -137,7 +137,7 @@ namespace adapt{
          * @return integer
          * The ID of the record.
          */
-        public function last_insert_id($table_name = ""){
+        public function last_insert_id(){
             $host = $this->get_host(true);
             if (isset($host) && isset($host['handle'])){
                 return mysqli_insert_id($host['handle']);
