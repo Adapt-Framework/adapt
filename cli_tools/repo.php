@@ -4,7 +4,7 @@ error_reporting(E_ERROR | E_PARSE);
 
 define('TEMP_PATH', sys_get_temp_dir() . '/');
 define('ADAPT_PATH', "../../../");
-define('ADAPT_VERSION', "2.0.9");
+define('ADAPT_VERSION', "2.1.0");
 define('ADAPT_STARTED', true);
 require(ADAPT_PATH . 'adapt/adapt-' . ADAPT_VERSION . '/boot.php');
 
